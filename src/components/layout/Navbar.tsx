@@ -1,11 +1,37 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Выход выполнен",
+        description: "Вы успешно вышли из системы",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось выйти из системы",
+        variant: "destructive",
+      });
+    }
+  };
 
   const navItems = [
     { title: "Главная", path: "/" },
@@ -40,16 +66,29 @@ const Navbar = () => {
 
           <div className="hidden md:block">
             <div className="flex items-center space-x-4">
-              <Link to="/login">
-                <Button variant="ghost" className="hover:text-primary">
-                  Войти
+              {user ? (
+                <Button
+                  variant="ghost"
+                  className="hover:text-primary"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Выйти
                 </Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="default" className="neon-glow">
-                  Регистрация
-                </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" className="hover:text-primary">
+                      Войти
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button variant="default" className="neon-glow">
+                      Регистрация
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -80,20 +119,34 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="border-t border-white/10 mt-2 pt-2 space-y-2">
-              <Link
-                to="/login"
-                className="block px-3 py-2 text-foreground/80 hover:text-primary transition-colors duration-200"
-                onClick={() => setIsOpen(false)}
-              >
-                Войти
-              </Link>
-              <Link
-                to="/register"
-                className="block px-3 py-2 text-primary hover:text-primary/80 transition-colors duration-200"
-                onClick={() => setIsOpen(false)}
-              >
-                Регистрация
-              </Link>
+              {user ? (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-foreground/80 hover:text-primary transition-colors duration-200"
+                >
+                  Выйти
+                </button>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="block px-3 py-2 text-foreground/80 hover:text-primary transition-colors duration-200"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Войти
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="block px-3 py-2 text-primary hover:text-primary/80 transition-colors duration-200"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Регистрация
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

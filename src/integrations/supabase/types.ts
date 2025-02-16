@@ -9,16 +9,152 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      passes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          points_required: number
+          rewards: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          points_required: number
+          rewards?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          points_required?: number
+          rewards?: Json | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          available: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          points_cost: number
+          price: number
+        }
+        Insert: {
+          available?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          points_cost: number
+          price: number
+        }
+        Update: {
+          available?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          points_cost?: number
+          price?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          level: number | null
+          phone_number: string | null
+          points: number | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          level?: number | null
+          phone_number?: string | null
+          points?: number | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          level?: number | null
+          phone_number?: string | null
+          points?: number | null
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          status: string | null
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          status?: string | null
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          status?: string | null
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
