@@ -21,12 +21,15 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Database } from "@/integrations/supabase/types";
+
+type LogCategory = Database['public']['Enums']['log_category'];
 
 type ActivityLog = {
   id: string;
   created_at: string;
   user_id: string;
-  category: 'auth' | 'admin' | 'points' | 'rewards' | 'shop' | 'passes';
+  category: LogCategory;
   action: string;
   details: any;
   ip_address: string | null;
@@ -55,7 +58,7 @@ const categoryLabels = {
 } as const;
 
 const LogsTab = () => {
-  const [selectedCategory, setSelectedCategory] = useState<ActivityLog['category'] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<LogCategory | 'all'>('all');
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['activity-logs', selectedCategory],
@@ -76,14 +79,14 @@ const LogsTab = () => {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (selectedCategory) {
+      if (selectedCategory !== 'all') {
         query.eq('category', selectedCategory);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as unknown as ActivityLog[];
+      return data as ActivityLog[];
     }
   });
 
@@ -96,8 +99,8 @@ const LogsTab = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Логи активности</h2>
         <Select
-          value={selectedCategory ?? "all"}
-          onValueChange={(value) => setSelectedCategory(value === "all" ? null : value as ActivityLog['category'])}
+          value={selectedCategory}
+          onValueChange={(value: LogCategory | 'all') => setSelectedCategory(value)}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Все категории" />
@@ -105,7 +108,7 @@ const LogsTab = () => {
           <SelectContent>
             <SelectItem value="all">Все категории</SelectItem>
             {Object.entries(categoryLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
+              <SelectItem key={value} value={value as LogCategory}>
                 {label}
               </SelectItem>
             ))}
