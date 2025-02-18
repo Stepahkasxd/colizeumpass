@@ -36,13 +36,16 @@ export const BuyPassForm = ({ passId, passName, amount }: BuyPassFormProps) => {
     try {
       setIsLoading(true);
       
+      // Преобразуем номер телефона в формат без пробелов и с префиксом +7
+      const formattedPhoneNumber = phoneNumber.replace(/\s/g, '');
+      
       const { error } = await supabase
         .from('payment_requests')
         .insert([
           {
             user_id: user.id,
             pass_id: passId,
-            phone_number: phoneNumber,
+            phone_number: formattedPhoneNumber,
             amount: amount,
           }
         ]);
