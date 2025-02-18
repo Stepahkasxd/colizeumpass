@@ -165,9 +165,18 @@ const ProductsTab = () => {
 
   const handleCreateProduct = async (data: ProductFormValues) => {
     try {
+      // Убедимся, что все обязательные поля присутствуют
+      const productData = {
+        name: data.name,
+        price: data.price,
+        points_cost: data.points_cost,
+        description: data.description,
+        available: data.available
+      } satisfies Omit<Product, 'id' | 'created_at'>;
+
       const { error } = await supabase
         .from('products')
-        .insert([data]);
+        .insert([productData]);
 
       if (error) throw error;
 
@@ -192,9 +201,17 @@ const ProductsTab = () => {
     if (!editingProduct?.id) return;
 
     try {
+      const productData = {
+        name: data.name,
+        price: data.price,
+        points_cost: data.points_cost,
+        description: data.description,
+        available: data.available
+      } satisfies Omit<Product, 'id' | 'created_at'>;
+
       const { error } = await supabase
         .from('products')
-        .update(data)
+        .update(productData)
         .eq('id', editingProduct.id);
 
       if (error) throw error;
