@@ -20,6 +20,12 @@ const getStatusColor = (status: string) => {
   }
 };
 
+// Функция для форматирования ID в 6-значное число
+const formatId = (id: string) => {
+  const numericId = parseInt(id);
+  return isNaN(numericId) ? id : numericId.toString().padStart(6, '0');
+};
+
 export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) => {
   return (
     <div className="rounded-md border">
@@ -52,7 +58,7 @@ export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) =>
           ) : (
             users?.map((user) => (
               <tr key={user.id} className="border-b">
-                <td className="py-3 px-4">{user.id}</td>
+                <td className="py-3 px-4 font-medium">{formatId(user.id)}</td>
                 <td className="py-3 px-4">{user.display_name || "—"}</td>
                 <td className="py-3 px-4">{user.phone_number || "—"}</td>
                 <td className={`py-3 px-4 ${getStatusColor(user.status)}`}>
