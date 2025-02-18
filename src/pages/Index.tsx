@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ArrowRight, Clock, Shield, Users, Wallet } from "lucide-react";
 
 const Index = () => {
   const { user } = useAuth();
@@ -14,8 +15,8 @@ const Index = () => {
   const handleBuyPass = async () => {
     if (!user) {
       toast({
-        title: "Ошибка",
-        description: "Необходимо войти в систему",
+        title: "Необходима авторизация",
+        description: "Пожалуйста, войдите в систему для покупки пропуска",
         variant: "destructive",
       });
       navigate("/login");
@@ -23,7 +24,6 @@ const Index = () => {
     }
 
     try {
-      // Получаем номер телефона из профиля пользователя
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('phone_number')
@@ -32,7 +32,6 @@ const Index = () => {
 
       if (profileError) throw profileError;
 
-      // Проверяем, есть ли номер телефона
       if (!profile?.phone_number) {
         toast({
           title: "Ошибка",
@@ -42,7 +41,6 @@ const Index = () => {
         return;
       }
 
-      // Создаем заявку на оплату с номером телефона из профиля
       const { error } = await supabase
         .from('payment_requests')
         .insert([
@@ -82,30 +80,59 @@ const Index = () => {
           className="max-w-4xl mx-auto text-center"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-glow">
-            Добро пожаловать в Colizeum
+            Добро пожаловать в систему пропусков Colizeum
           </h1>
-          <p className="text-xl text-foreground/70 mb-8">
-            Ваш портал в мир киберспорта и развлечений
+          <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto">
+            Современная система контроля доступа для компьютерного клуба. 
+            Покупайте пропуска, получайте бонусы и наслаждайтесь игрой!
           </p>
 
-          <Button 
-            onClick={handleBuyPass}
-            size="lg"
-            className="mb-12"
-          >
-            Купить пропуск
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <Button 
+              onClick={handleBuyPass}
+              size="lg"
+              className="gap-2"
+            >
+              Купить пропуск
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate("/support")}
+            >
+              Техническая поддержка
+            </Button>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="glass-panel p-6 rounded-lg"
+              className="glass-panel p-6 rounded-lg text-left"
             >
-              <h2 className="text-xl font-semibold mb-4">Турниры</h2>
+              <div className="mb-4">
+                <Shield className="w-10 h-10 text-primary mb-2" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Безопасный доступ</h2>
               <p className="text-foreground/70">
-                Участвуйте в захватывающих турнирах и соревнуйтесь с лучшими игроками
+                Надёжная система аутентификации с подтверждением номера телефона
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="glass-panel p-6 rounded-lg text-left"
+            >
+              <div className="mb-4">
+                <Clock className="w-10 h-10 text-primary mb-2" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Быстрая покупка</h2>
+              <p className="text-foreground/70">
+                Мгновенное оформление пропуска через администратора клуба
               </p>
             </motion.div>
 
@@ -113,23 +140,29 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="glass-panel p-6 rounded-lg"
+              className="glass-panel p-6 rounded-lg text-left"
             >
-              <h2 className="text-xl font-semibold mb-4">Сообщество</h2>
+              <div className="mb-4">
+                <Wallet className="w-10 h-10 text-primary mb-2" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Система лояльности</h2>
               <p className="text-foreground/70">
-                Присоединяйтесь к активному сообществу единомышленников
+                Накапливайте баллы за покупки и получайте бонусы
               </p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="glass-panel p-6 rounded-lg"
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="glass-panel p-6 rounded-lg text-left"
             >
-              <h2 className="text-xl font-semibold mb-4">Награды</h2>
+              <div className="mb-4">
+                <Users className="w-10 h-10 text-primary mb-2" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Поддержка 24/7</h2>
               <p className="text-foreground/70">
-                Зарабатывайте очки и получайте эксклюзивные награды
+                Оперативная помощь от нашей службы поддержки в любое время
               </p>
             </motion.div>
           </div>
