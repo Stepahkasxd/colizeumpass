@@ -59,11 +59,11 @@ const PassesTab = () => {
     try {
       const { error } = await supabase
         .from('passes')
-        .insert([{
+        .insert({
           name: data.name,
           description: data.description,
           levels: data.levels
-        }]);
+        });
 
       if (error) throw error;
 
@@ -75,6 +75,7 @@ const PassesTab = () => {
       setIsCreateDialogOpen(false);
       refetch();
     } catch (error) {
+      console.error('Error creating pass:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось создать пропуск",
@@ -90,7 +91,7 @@ const PassesTab = () => {
         .update({
           name: data.name,
           description: data.description,
-          levels: data.levels,
+          levels: data.levels
         })
         .eq('id', data.id);
 
@@ -104,6 +105,7 @@ const PassesTab = () => {
       setEditingPass(null);
       refetch();
     } catch (error) {
+      console.error('Error updating pass:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось обновить пропуск",
