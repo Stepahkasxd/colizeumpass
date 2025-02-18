@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type PaymentRequest = {
   id: string;
@@ -134,6 +135,58 @@ const PaymentsTab = () => {
     }).format(amount);
   };
 
+  const activeRequests = requests?.filter(r => r.status !== 'approved') || [];
+  const archivedRequests = requests?.filter(r => r.status === 'approved') || [];
+
+  const RequestsList = ({ requests }: { requests: PaymentRequest[] }) => (
+    <div className="grid gap-4">
+      {requests.map((request) => (
+        <div
+          key={request.id}
+          className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <h3 className="font-semibold">
+                Пропуск: {request.passes?.name ?? 'Удален'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Телефон: {request.phone_number}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Сумма: {formatAmount(request.amount)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Создана: {formatDate(request.created_at)}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedRequest(request);
+                  setAdminNotes(request.admin_notes || "");
+                }}
+              >
+                Подробнее
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${getStatusColor(request.status)}`}>
+              {STATUS_LABELS[request.status]}
+            </span>
+            {request.updated_at !== request.created_at && (
+              <span className="text-sm text-muted-foreground">
+                · Обновлена: {formatDate(request.updated_at)}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-6">Заявки на оплату</h2>
@@ -141,52 +194,34 @@ const PaymentsTab = () => {
       {isLoading ? (
         <div>Загрузка заявок...</div>
       ) : (
-        <div className="grid gap-4">
-          {requests?.map((request) => (
-            <div
-              key={request.id}
-              className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-semibold">
-                    Пропуск: {request.passes?.name ?? 'Удален'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Телефон: {request.phone_number}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Сумма: {formatAmount(request.amount)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Создана: {formatDate(request.created_at)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedRequest(request);
-                      setAdminNotes(request.admin_notes || "");
-                    }}
-                  >
-                    Подробнее
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${getStatusColor(request.status)}`}>
-                  {STATUS_LABELS[request.status]}
+        <Tabs defaultValue="active" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="active" className="relative">
+              Активные
+              {activeRequests.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-500/10 text-yellow-500 rounded-full">
+                  {activeRequests.length}
                 </span>
-                {request.updated_at !== request.created_at && (
-                  <span className="text-sm text-muted-foreground">
-                    · Обновлена: {formatDate(request.updated_at)}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="archive" className="relative">
+              Архив
+              {archivedRequests.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs bg-green-500/10 text-green-500 rounded-full">
+                  {archivedRequests.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active">
+            <RequestsList requests={activeRequests} />
+          </TabsContent>
+
+          <TabsContent value="archive">
+            <RequestsList requests={archivedRequests} />
+          </TabsContent>
+        </Tabs>
       )}
 
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
