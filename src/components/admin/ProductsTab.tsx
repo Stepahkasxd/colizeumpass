@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,6 @@ type Product = {
 
 const productFormSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
-  price: z.number().min(0, "Цена не может быть отрицательной"),
   points_cost: z.number().min(0, "Стоимость в очках не может быть отрицательной"),
   description: z.string().nullable(),
   available: z.boolean().default(true),
@@ -58,7 +56,6 @@ const ProductForm = ({
     resolver: zodResolver(productFormSchema),
     defaultValues: initialData || {
       name: "",
-      price: 0,
       points_cost: 0,
       description: "",
       available: true,
@@ -76,24 +73,6 @@ const ProductForm = ({
               <FormLabel>Название</FormLabel>
               <FormControl>
                 <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Цена (₽)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -165,10 +144,9 @@ const ProductsTab = () => {
 
   const handleCreateProduct = async (data: ProductFormValues) => {
     try {
-      // Убедимся, что все обязательные поля присутствуют
       const productData = {
         name: data.name,
-        price: data.price,
+        price: 0,
         points_cost: data.points_cost,
         description: data.description,
         available: data.available
@@ -203,7 +181,7 @@ const ProductsTab = () => {
     try {
       const productData = {
         name: data.name,
-        price: data.price,
+        price: 0,
         points_cost: data.points_cost,
         description: data.description,
         available: data.available
@@ -299,9 +277,8 @@ const ProductsTab = () => {
               <p className="text-sm text-muted-foreground mb-2">
                 {product.description || "Нет описания"}
               </p>
-              <div className="flex justify-between text-sm">
-                <span>Цена: {product.price} ₽</span>
-                <span>Очки: {product.points_cost}</span>
+              <div className="text-sm">
+                <span>Стоимость: {product.points_cost} очков</span>
               </div>
             </div>
           ))}
