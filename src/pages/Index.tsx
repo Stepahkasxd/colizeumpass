@@ -8,13 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Clock, Users, Wallet, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
 
@@ -29,7 +22,8 @@ const Index = () => {
       const { data, error } = await supabase
         .from('passes')
         .select('*')
-        .order('price', { ascending: true });
+        .limit(1)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as Pass[];
@@ -106,36 +100,6 @@ const Index = () => {
     navigate(`/passes/${pass.id}`);
   };
 
-  const passTemplates = [
-    {
-      name: "Стандарт",
-      description: "Идеально для начинающих геймеров",
-      price: 399,
-      color: "from-[#F2FCE2] to-[#E5DEFF]",
-      highlight: "text-[#6E59A5]",
-      border: "border-[#6E59A5]/20",
-      features: ["Базовый доступ", "5 уровней наград", "Стандартная поддержка"]
-    },
-    {
-      name: "Продвинутый",
-      description: "Для опытных игроков",
-      price: 499,
-      color: "from-[#E5DEFF] to-[#FDE1D3]",
-      highlight: "text-[#7E69AB]",
-      border: "border-[#7E69AB]/20",
-      features: ["Расширенный доступ", "10 уровней наград", "Приоритетная поддержка"]
-    },
-    {
-      name: "Премиум",
-      description: "Максимум возможностей",
-      price: 999,
-      color: "from-[#9b87f5] to-[#8B5CF6]",
-      highlight: "text-white",
-      border: "border-white/20",
-      features: ["VIP доступ", "15 уровней наград", "24/7 VIP поддержка"]
-    }
-  ];
-
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container">
@@ -153,49 +117,69 @@ const Index = () => {
             Покупайте пропуска, получайте бонусы и наслаждайтесь игрой!
           </p>
 
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
-            {passTemplates.map((template, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card className={`relative overflow-hidden transition-all duration-300 hover:scale-105 border ${template.border}`}>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${template.color} opacity-10`} />
-                  <CardHeader>
-                    <CardTitle className={`text-2xl font-bold ${template.highlight}`}>
-                      {template.name}
-                    </CardTitle>
-                    <CardDescription className="text-lg">
-                      {template.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4">
-                      <span className={`text-3xl font-bold ${template.highlight}`}>
-                        {template.price} ₽
-                      </span>
+          {passes && passes.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-semibold mb-6">Пропуск</h2>
+              <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
+                {passes.map((pass) => (
+                  <motion.div
+                    key={pass.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="glass-panel p-6 rounded-lg text-left relative group cursor-pointer hover:shadow-lg transition-all duration-300"
+                    onClick={() => handlePassClick(pass)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                          {pass.name}
+                        </h3>
+                        <p className="text-foreground/70 mb-4 line-clamp-2">
+                          {pass.description}
+                        </p>
+                        {pass.levels && Array.isArray(pass.levels) && pass.levels.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-primary/80">Уровни и награды:</h4>
+                            <ul className="grid grid-cols-2 gap-2 text-sm text-foreground/70">
+                              {pass.levels.slice(0, 4).map((level: any, index: number) => (
+                                <li key={index} className="flex items-center gap-2">
+                                  <span className="inline-block w-2 h-2 bg-primary/40 rounded-full"></span>
+                                  Уровень {level.level}: {level.reward.name}
+                                </li>
+                              ))}
+                            </ul>
+                            {pass.levels.length > 4 && (
+                              <p className="text-sm text-primary/80 mt-2">И ещё {pass.levels.length - 4} уровней...</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors" />
                     </div>
-                    <ul className="space-y-2 text-sm">
-                      {template.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                          <ChevronRight className={`w-4 h-4 ${template.highlight}`} />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="w-full mt-6"
-                      onClick={handleBuyPass}
-                      variant={index === 2 ? "default" : "outline"}
-                    >
-                      Выбрать
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    <div className="absolute inset-0 border border-primary/10 rounded-lg group-hover:border-primary/30 transition-colors"></div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <Button 
+              onClick={handleBuyPass}
+              size="lg"
+              className="gap-2"
+            >
+              Купить пропуск
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate("/support")}
+            >
+              Техническая поддержка
+            </Button>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
