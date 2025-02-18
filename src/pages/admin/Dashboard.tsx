@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign } from "lucide-react";
@@ -13,29 +13,55 @@ import PaymentsTab from "@/components/admin/PaymentsTab";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
+      if (authLoading) return;
+
       if (!user) {
         navigate("/login");
         return;
       }
 
-      const { data, error } = await supabase.rpc('is_admin', {
-        user_id: user.id
-      });
+      try {
+        const { data, error } = await supabase.rpc('is_admin', {
+          user_id: user.id
+        });
 
-      if (error || !data) {
-        console.error('Not authorized as admin:', error);
+        if (error) {
+          console.error('Not authorized as admin:', error);
+          setIsAdmin(false);
+          navigate("/");
+          return;
+        }
+
+        setIsAdmin(!!data);
+        if (!data) {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
         navigate("/");
+      } finally {
+        setIsCheckingAdmin(false);
       }
     };
 
     checkAdminStatus();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
-  if (!user) return null;
+  // Show nothing while checking authentication
+  if (authLoading || isCheckingAdmin) {
+    return null;
+  }
+
+  // If not admin or not authenticated, don't render the dashboard
+  if (!isAdmin || !user) {
+    return null;
+  }
 
   return (
     <div className="container py-8">
