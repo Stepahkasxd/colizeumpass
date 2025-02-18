@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Error500 from "./pages/Error500";
 import Dashboard from "./pages/admin/Dashboard";
+import BuyPass from "./pages/passes/BuyPass";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/admin" element={<Dashboard />} />
+              <Route path="/passes/:passId/buy" element={<BuyPass />} />
               <Route path="/500" element={<Error500 />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
