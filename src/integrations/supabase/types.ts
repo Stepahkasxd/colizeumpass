@@ -77,6 +77,7 @@ export type Database = {
           level: number | null
           phone_number: string | null
           points: number | null
+          status: string | null
         }
         Insert: {
           created_at?: string
@@ -85,6 +86,7 @@ export type Database = {
           level?: number | null
           phone_number?: string | null
           points?: number | null
+          status?: string | null
         }
         Update: {
           created_at?: string
@@ -93,6 +95,7 @@ export type Database = {
           level?: number | null
           phone_number?: string | null
           points?: number | null
+          status?: string | null
         }
         Relationships: []
       }
