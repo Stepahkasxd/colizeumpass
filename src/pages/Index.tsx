@@ -5,12 +5,26 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Clock, Shield, Users, Wallet } from "lucide-react";
+import { ArrowRight, Clock, Users, Wallet } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const { data: passes } = useQuery({
+    queryKey: ['passes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('passes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleBuyPass = async () => {
     if (!user) {
@@ -80,12 +94,44 @@ const Index = () => {
           className="max-w-4xl mx-auto text-center"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-glow">
-            Добро пожаловать в систему пропусков Colizeum
+            Добро пожаловать в Colizeum на Родине
           </h1>
           <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto">
             Современная система контроля доступа для компьютерного клуба. 
             Покупайте пропуска, получайте бонусы и наслаждайтесь игрой!
           </p>
+
+          {passes && passes.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-semibold mb-6">Доступные пропуска</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                {passes.map((pass) => (
+                  <motion.div
+                    key={pass.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="glass-panel p-6 rounded-lg text-left"
+                  >
+                    <h3 className="text-xl font-semibold mb-2">{pass.name}</h3>
+                    <p className="text-foreground/70 mb-4">{pass.description}</p>
+                    {pass.levels && pass.levels.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Уровни и награды:</h4>
+                        <ul className="list-disc list-inside text-sm text-foreground/70">
+                          {pass.levels.map((level: any, index: number) => (
+                            <li key={index}>
+                              Уровень {level.level}: {level.reward.name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Button 
@@ -105,22 +151,7 @@ const Index = () => {
             </Button>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="glass-panel p-6 rounded-lg text-left"
-            >
-              <div className="mb-4">
-                <Shield className="w-10 h-10 text-primary mb-2" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Безопасный доступ</h2>
-              <p className="text-foreground/70">
-                Надёжная система аутентификации с подтверждением номера телефона
-              </p>
-            </motion.div>
-
+          <div className="grid md:grid-cols-3 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
