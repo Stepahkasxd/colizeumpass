@@ -65,17 +65,7 @@ const LogsTab = () => {
     queryFn: async () => {
       const query = supabase
         .from('activity_logs')
-        .select(`
-          id,
-          created_at,
-          user_id,
-          category,
-          action,
-          details,
-          ip_address,
-          user_agent,
-          profiles (display_name)
-        `)
+        .select('*, profiles!activity_logs_user_id_fkey (display_name)')
         .order('created_at', { ascending: false })
         .limit(100);
 
