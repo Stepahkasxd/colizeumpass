@@ -55,7 +55,7 @@ const categoryLabels = {
 } as const;
 
 const LogsTab = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ActivityLog['category'] | null>(null);
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['activity-logs', selectedCategory],
@@ -97,7 +97,7 @@ const LogsTab = () => {
         <h2 className="text-xl font-semibold">Логи активности</h2>
         <Select
           value={selectedCategory ?? "all"}
-          onValueChange={(value) => setSelectedCategory(value === "all" ? null : value)}
+          onValueChange={(value) => setSelectedCategory(value === "all" ? null : value as ActivityLog['category'])}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Все категории" />
