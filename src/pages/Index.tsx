@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -21,6 +22,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('passes')
         .select('*')
+        .limit(1)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -87,6 +89,14 @@ const Index = () => {
   };
 
   const handlePassClick = (pass: Pass) => {
+    if (!pass?.id) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось открыть информацию о пропуске",
+        variant: "destructive",
+      });
+      return;
+    }
     navigate(`/passes/${pass.id}`);
   };
 
@@ -128,19 +138,19 @@ const Index = () => {
                         <p className="text-foreground/70 mb-4 line-clamp-2">
                           {pass.description}
                         </p>
-                        {pass.levels && pass.levels.length > 0 && (
+                        {pass.levels && Array.isArray(pass.levels) && pass.levels.length > 0 && (
                           <div className="space-y-2">
                             <h4 className="font-medium text-primary/80">Уровни и награды:</h4>
                             <ul className="grid grid-cols-2 gap-2 text-sm text-foreground/70">
-                              {(pass.levels as any[]).slice(0, 4).map((level, index) => (
+                              {pass.levels.slice(0, 4).map((level: any, index: number) => (
                                 <li key={index} className="flex items-center gap-2">
                                   <span className="inline-block w-2 h-2 bg-primary/40 rounded-full"></span>
                                   Уровень {level.level}: {level.reward.name}
                                 </li>
                               ))}
                             </ul>
-                            {(pass.levels as any[]).length > 4 && (
-                              <p className="text-sm text-primary/80 mt-2">И ещё {(pass.levels as any[]).length - 4} уровней...</p>
+                            {pass.levels.length > 4 && (
+                              <p className="text-sm text-primary/80 mt-2">И ещё {pass.levels.length - 4} уровней...</p>
                             )}
                           </div>
                         )}
