@@ -48,7 +48,22 @@ const Login = () => {
         password: values.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('not confirmed')) {
+          toast({
+            title: "Подтвердите email",
+            description: "Пожалуйста, подтвердите ваш email перед входом. Проверьте почту.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Ошибка",
+            description: "Неверный email или пароль",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
 
       toast({
         title: "Успешный вход",
@@ -59,7 +74,7 @@ const Login = () => {
     } catch (error) {
       toast({
         title: "Ошибка",
-        description: "Неверный email или пароль",
+        description: "Произошла ошибка при входе",
         variant: "destructive",
       });
     } finally {
