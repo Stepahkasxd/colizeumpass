@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Clock, Users, Wallet, ChevronRight } from "lucide-react";
+import { ArrowRight, Clock, Users, Wallet, ChevronRight, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -29,6 +29,17 @@ const Index = () => {
       return data as Pass[];
     }
   });
+
+  const calculateDiscount = (price: number) => {
+    const originalPrice = 999;
+    if (price >= originalPrice) return null;
+    const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
+    return {
+      originalPrice,
+      discount,
+      currentPrice: price
+    };
+  };
 
   const handleBuyPass = async () => {
     if (!user) {
@@ -121,45 +132,76 @@ const Index = () => {
             <div className="mb-12">
               <h2 className="text-2xl font-semibold mb-6">Пропуск</h2>
               <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
-                {passes.map((pass) => (
-                  <motion.div
-                    key={pass.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="glass-panel p-6 rounded-lg text-left relative group cursor-pointer hover:shadow-lg transition-all duration-300"
-                    onClick={() => handlePassClick(pass)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
-                          {pass.name}
-                        </h3>
-                        <p className="text-foreground/70 mb-4 line-clamp-2">
-                          {pass.description}
-                        </p>
-                        {pass.levels && Array.isArray(pass.levels) && pass.levels.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-primary/80">Уровни и награды:</h4>
-                            <ul className="grid grid-cols-2 gap-2 text-sm text-foreground/70">
-                              {pass.levels.slice(0, 4).map((level: any, index: number) => (
-                                <li key={index} className="flex items-center gap-2">
-                                  <span className="inline-block w-2 h-2 bg-primary/40 rounded-full"></span>
-                                  Уровень {level.level}: {level.reward.name}
-                                </li>
-                              ))}
-                            </ul>
-                            {pass.levels.length > 4 && (
-                              <p className="text-sm text-primary/80 mt-2">И ещё {pass.levels.length - 4} уровней...</p>
-                            )}
+                {passes.map((pass) => {
+                  const priceInfo = calculateDiscount(pass.price);
+                  
+                  return (
+                    <motion.div
+                      key={pass.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="glass-panel p-6 rounded-lg text-left relative group cursor-pointer hover:shadow-lg transition-all duration-300"
+                      onClick={() => handlePassClick(pass)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                            {pass.name}
+                          </h3>
+                          <p className="text-foreground/70 mb-4 line-clamp-2">
+                            {pass.description}
+                          </p>
+                          {pass.levels && Array.isArray(pass.levels) && pass.levels.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-primary/80">Уровни и награды:</h4>
+                              <ul className="grid grid-cols-2 gap-2 text-sm text-foreground/70">
+                                {pass.levels.slice(0, 4).map((level: any, index: number) => (
+                                  <li key={index} className="flex items-center gap-2">
+                                    <span className="inline-block w-2 h-2 bg-primary/40 rounded-full"></span>
+                                    Уровень {level.level}: {level.reward.name}
+                                  </li>
+                                ))}
+                              </ul>
+                              {pass.levels.length > 4 && (
+                                <p className="text-sm text-primary/80 mt-2">И ещё {pass.levels.length - 4} уровней...</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors" />
+                      </div>
+
+                      {/* Блок с ценой */}
+                      <div className="absolute bottom-4 right-6 flex items-end gap-2">
+                        {priceInfo ? (
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Tag className="w-4 h-4 text-green-500" />
+                              <span className="text-sm font-medium text-green-500">
+                                Скидка {priceInfo.discount}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-foreground/50 line-through">
+                                {priceInfo.originalPrice} ₽
+                              </span>
+                              <span className="text-xl font-bold text-primary">
+                                {priceInfo.currentPrice} ₽
+                              </span>
+                            </div>
                           </div>
+                        ) : (
+                          <span className="text-xl font-bold text-primary">
+                            {pass.price} ₽
+                          </span>
                         )}
                       </div>
-                      <ChevronRight className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="absolute inset-0 border border-primary/10 rounded-lg group-hover:border-primary/30 transition-colors"></div>
-                  </motion.div>
-                ))}
+
+                      <div className="absolute inset-0 border border-primary/10 rounded-lg group-hover:border-primary/30 transition-colors"></div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           )}
