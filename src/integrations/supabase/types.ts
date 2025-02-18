@@ -12,21 +12,27 @@ export type Database = {
       passes: {
         Row: {
           created_at: string
+          description: string | null
           id: string
+          levels: Json | null
           name: string
           points_required: number
           rewards: Json | null
         }
         Insert: {
           created_at?: string
+          description?: string | null
           id?: string
+          levels?: Json | null
           name: string
           points_required: number
           rewards?: Json | null
         }
         Update: {
           created_at?: string
+          description?: string | null
           id?: string
+          levels?: Json | null
           name?: string
           points_required?: number
           rewards?: Json | null
