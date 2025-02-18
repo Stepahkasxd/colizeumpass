@@ -40,14 +40,13 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
-  // Redirect if user is already authenticated
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -61,6 +60,8 @@ const Register = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
+    if (authLoading) return;
+    
     setIsLoading(true);
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -98,6 +99,10 @@ const Register = () => {
       setIsLoading(false);
     }
   };
+
+  if (authLoading) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-12">
