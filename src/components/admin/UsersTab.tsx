@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -19,6 +18,13 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,8 +34,11 @@ type UserProfile = {
   phone_number: string | null;
   level: number;
   points: number;
-  status: string;
+  status: 'Standard' | 'Premium' | 'VIP';
+  has_pass: boolean;
 };
+
+const USER_STATUSES = ['Standard', 'Premium', 'VIP'] as const;
 
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,7 +54,7 @@ const UsersTab = () => {
         .select('*');
 
       if (searchTerm) {
-        query = query.or(`phone_number.ilike.%${searchTerm}%,id.ilike.%${searchTerm}%`);
+        query = query.or(`phone_number.ilike.%${searchTerm}%,id.eq.${searchTerm}`);
       }
 
       const { data, error } = await query;
@@ -66,6 +75,7 @@ const UsersTab = () => {
           level: data.level,
           points: data.points,
           status: data.status,
+          has_pass: data.has_pass,
         })
         .eq('id', data.id);
 
@@ -93,6 +103,17 @@ const UsersTab = () => {
     setIsEditDialogOpen(true);
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Premium':
+        return 'text-amber-500 font-medium';
+      case 'VIP':
+        return 'text-purple-500 font-medium';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -115,6 +136,7 @@ const UsersTab = () => {
               <th className="py-3 px-4 text-left">Имя</th>
               <th className="py-3 px-4 text-left">Телефон</th>
               <th className="py-3 px-4 text-left">Статус</th>
+              <th className="py-3 px-4 text-left">Пропуск</th>
               <th className="py-3 px-4 text-left">Уровень</th>
               <th className="py-3 px-4 text-left">Очки</th>
               <th className="py-3 px-4 text-left">Действия</th>
@@ -123,13 +145,13 @@ const UsersTab = () => {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="py-4 px-4 text-center">
+                <td colSpan={8} className="py-4 px-4 text-center">
                   Загрузка...
                 </td>
               </tr>
             ) : users?.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-4 px-4 text-center">
+                <td colSpan={8} className="py-4 px-4 text-center">
                   Пользователи не найдены
                 </td>
               </tr>
@@ -139,7 +161,12 @@ const UsersTab = () => {
                   <td className="py-3 px-4">{user.id}</td>
                   <td className="py-3 px-4">{user.display_name || "—"}</td>
                   <td className="py-3 px-4">{user.phone_number || "—"}</td>
-                  <td className="py-3 px-4">{user.status || "active"}</td>
+                  <td className={`py-3 px-4 ${getStatusColor(user.status)}`}>
+                    {user.status}
+                  </td>
+                  <td className="py-3 px-4">
+                    {user.has_pass ? "Есть" : "Нет"}
+                  </td>
                   <td className="py-3 px-4">{user.level}</td>
                   <td className="py-3 px-4">{user.points}</td>
                   <td className="py-3 px-4">
@@ -196,9 +223,46 @@ const UsersTab = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Статус</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || 'active'} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите статус" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {USER_STATUSES.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="has_pass"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Пропуск</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value === 'true')}
+                        defaultValue={field.value ? 'true' : 'false'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Наличие пропуска" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="true">Есть</SelectItem>
+                          <SelectItem value="false">Нет</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormItem>
                   )}
                 />

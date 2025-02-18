@@ -73,6 +73,7 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          has_pass: boolean | null
           id: string
           level: number | null
           phone_number: string | null
@@ -82,6 +83,7 @@ export type Database = {
         Insert: {
           created_at?: string
           display_name?: string | null
+          has_pass?: boolean | null
           id: string
           level?: number | null
           phone_number?: string | null
@@ -91,6 +93,7 @@ export type Database = {
         Update: {
           created_at?: string
           display_name?: string | null
+          has_pass?: boolean | null
           id?: string
           level?: number | null
           phone_number?: string | null
@@ -155,6 +158,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_short_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_admin: {
         Args: {
           user_id: string
