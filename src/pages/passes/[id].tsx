@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +12,20 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { BuyPassForm } from "@/components/passes/BuyPassForm";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
 
 const PassDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [showBuyDialog, setShowBuyDialog] = useState(false);
 
   const { data: pass, isLoading } = useQuery({
     queryKey: ['pass', id],
@@ -125,13 +132,32 @@ const PassDetails = () => {
           </div>
 
           <div className="flex justify-center">
-            <Button size="lg" className="gap-2" onClick={() => navigate('/passes/instructions')}>
+            <Button 
+              size="lg" 
+              className="gap-2" 
+              onClick={() => setShowBuyDialog(true)}
+            >
               Купить пропуск
               <Trophy className="w-4 h-4" />
             </Button>
           </div>
         </motion.div>
       </div>
+
+      <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Покупка пропуска</DialogTitle>
+          </DialogHeader>
+          {pass && (
+            <BuyPassForm
+              passId={pass.id}
+              passName={pass.name}
+              amount={10000} // Здесь нужно указать реальную стоимость пропуска
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
