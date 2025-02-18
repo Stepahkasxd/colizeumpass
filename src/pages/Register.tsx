@@ -20,9 +20,12 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
 
+const phoneRegex = /^\+7\d{10}$/;
+
 const formSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа"),
   email: z.string().email("Введите корректный email"),
+  phone: z.string().regex(phoneRegex, "Введите номер в формате +7XXXXXXXXXX"),
   password: z.string().min(6, "Минимальная длина пароля - 6 символов"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -42,6 +45,7 @@ const Register = () => {
     defaultValues: {
       name: "",
       email: "",
+      phone: "+7",
       password: "",
       confirmPassword: "",
     },
@@ -50,7 +54,7 @@ const Register = () => {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -60,7 +64,15 @@ const Register = () => {
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
+
+      // Обновляем профиль пользователя, добавляя номер телефона
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ phone_number: values.phone })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+
+      if (updateError) throw updateError;
 
       toast({
         title: "Регистрация успешна",
@@ -122,6 +134,24 @@ const Register = () => {
                       <Input
                         placeholder="example@mail.com"
                         type="email"
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Номер телефона</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="+7XXXXXXXXXX"
                         {...field}
                         disabled={isLoading}
                       />
