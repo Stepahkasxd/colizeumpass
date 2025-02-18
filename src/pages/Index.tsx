@@ -23,27 +23,44 @@ const Index = () => {
     }
 
     try {
-      // Создаем заявку на оплату сразу при нажатии кнопки
+      // Получаем номер телефона из профиля пользователя
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Проверяем, есть ли номер телефона
+      if (!profile?.phone_number) {
+        toast({
+          title: "Ошибка",
+          description: "Необходимо указать номер телефона в профиле",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Создаем заявку на оплату с номером телефона из профиля
       const { error } = await supabase
         .from('payment_requests')
         .insert([
           {
             user_id: user.id,
-            amount: 1000, // Фиксированная стоимость пропуска
-            phone_number: "Не указан", // Можно будет обновить позже
+            amount: 1000,
+            phone_number: profile.phone_number,
             status: 'pending'
           }
         ]);
 
       if (error) throw error;
 
-      // Уведомляем пользователя
       toast({
         title: "Заявка создана",
         description: "Подойдите к администратору для оплаты пропуска",
       });
 
-      // Перенаправляем на страницу с инструкциями
       navigate("/passes/instructions");
     } catch (error) {
       console.error('Error creating payment request:', error);
