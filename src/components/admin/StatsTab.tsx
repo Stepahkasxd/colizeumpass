@@ -48,17 +48,6 @@ const StatsTab = () => {
     }
   });
 
-  // Пример данных для графика (в реальном приложении эти данные должны приходить с бэкенда)
-  const chartData = [
-    { name: 'Пн', points: 240 },
-    { name: 'Вт', points: 300 },
-    { name: 'Ср', points: 280 },
-    { name: 'Чт', points: 420 },
-    { name: 'Пт', points: 380 },
-    { name: 'Сб', points: 560 },
-    { name: 'Вс', points: 480 }
-  ];
-
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -155,28 +144,18 @@ const StatsTab = () => {
         </motion.div>
       </motion.div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Статистика очков за неделю</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar
-                  dataKey="points"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {stats?.totalPoints > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Статистика очков</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center h-[300px]">
+            <p className="text-muted-foreground text-center">
+              Статистика будет доступна после начисления очков пользователям
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
