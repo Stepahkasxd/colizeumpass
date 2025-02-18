@@ -71,7 +71,7 @@ const LogsTab = () => {
           details,
           ip_address,
           user_agent,
-          profiles:profiles(display_name)
+          profiles (display_name)
         `)
         .order('created_at', { ascending: false })
         .limit(100);
