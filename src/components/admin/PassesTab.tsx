@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -85,17 +86,7 @@ const PassesTab = () => {
     }
   };
 
-  const handleEditPass = async (data: Omit<Pass, 'created_at'>) => {
-    if (!data.id) {
-      console.error('Pass ID is undefined');
-      toast({
-        title: "Ошибка",
-        description: "Некорректный ID пропуска",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleEditPass = async (data: Pass) => {
     try {
       const { error } = await supabase
         .from('passes')
@@ -127,16 +118,6 @@ const PassesTab = () => {
   };
 
   const handleDeletePass = async (id: string) => {
-    if (!id) {
-      console.error('Pass ID is undefined');
-      toast({
-        title: "Ошибка",
-        description: "Некорректный ID пропуска",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from('passes')
