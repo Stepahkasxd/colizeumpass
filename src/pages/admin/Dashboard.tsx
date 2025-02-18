@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign } from "lucide-react";
+import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import UsersTab from "@/components/admin/UsersTab";
@@ -10,6 +10,7 @@ import PassesTab from "@/components/admin/PassesTab";
 import ProductsTab from "@/components/admin/ProductsTab";
 import SupportTab from "@/components/admin/SupportTab";
 import PaymentsTab from "@/components/admin/PaymentsTab";
+import StatsTab from "@/components/admin/StatsTab";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -67,8 +68,12 @@ const Dashboard = () => {
     <div className="container py-8">
       <h1 className="text-2xl font-bold mb-6 text-glow">Панель администратора</h1>
       
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid grid-cols-5 gap-4 mb-8">
+      <Tabs defaultValue="stats" className="w-full">
+        <TabsList className="grid grid-cols-6 gap-4 mb-8">
+          <TabsTrigger value="stats" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Статистика</span>
+          </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Пользователи</span>
@@ -92,6 +97,9 @@ const Dashboard = () => {
         </TabsList>
 
         <div className="glass-panel p-6 rounded-lg">
+          <TabsContent value="stats">
+            <StatsTab />
+          </TabsContent>
           <TabsContent value="users">
             <UsersTab />
           </TabsContent>
