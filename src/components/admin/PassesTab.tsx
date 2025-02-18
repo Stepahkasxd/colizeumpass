@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -42,7 +43,15 @@ const PassesTab = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Pass[];
+      
+      // Преобразуем данные из базы в нужный формат
+      return (data as any[]).map(pass => ({
+        id: pass.id,
+        name: pass.name,
+        description: pass.description,
+        levels: pass.levels || [],
+        created_at: pass.created_at
+      })) as Pass[];
     }
   });
 
@@ -50,7 +59,11 @@ const PassesTab = () => {
     try {
       const { error } = await supabase
         .from('passes')
-        .insert([data]);
+        .insert([{
+          name: data.name,
+          description: data.description,
+          levels: data.levels
+        }]);
 
       if (error) throw error;
 
