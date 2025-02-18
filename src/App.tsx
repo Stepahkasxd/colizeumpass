@@ -11,6 +11,7 @@ import Support from "./pages/Support";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import Error500 from "./pages/Error500";
 
 const queryClient = new QueryClient();
 
@@ -19,13 +20,15 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <div className="min-h-screen bg-background">
+          <div className="min-h-screen bg-gradient-to-br from-background via-black/90 to-black/95 relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,204,0,0.05)_0%,transparent_50%)] pointer-events-none" />
             <Navbar />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/support" element={<Support />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/500" element={<Error500 />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
