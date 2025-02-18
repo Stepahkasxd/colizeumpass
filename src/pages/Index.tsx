@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -144,7 +143,7 @@ const Index = () => {
                       className="glass-panel p-6 rounded-lg text-left relative group cursor-pointer hover:shadow-lg transition-all duration-300"
                       onClick={() => handlePassClick(pass)}
                     >
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start pb-16">
                         <div className="flex-1">
                           <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
                             {pass.name}
@@ -172,27 +171,28 @@ const Index = () => {
                         <ChevronRight className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors" />
                       </div>
 
-                      {/* Блок с ценой */}
-                      <div className="absolute bottom-4 right-6 flex items-end gap-2">
+                      <div className="absolute bottom-6 right-6 flex flex-col items-end">
                         {priceInfo ? (
-                          <div className="text-right">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Tag className="w-4 h-4 text-green-500" />
-                              <span className="text-sm font-medium text-green-500">
-                                Скидка {priceInfo.discount}%
-                              </span>
+                          <>
+                            <div className="mb-1.5 px-2 py-0.5 bg-green-500/10 rounded-full">
+                              <div className="flex items-center gap-1.5">
+                                <Tag className="w-3.5 h-3.5 text-green-500" />
+                                <span className="text-sm font-medium text-green-500">
+                                  Скидка {priceInfo.discount}%
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-foreground/50 line-through">
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-sm text-foreground/40 line-through">
                                 {priceInfo.originalPrice} ₽
                               </span>
-                              <span className="text-xl font-bold text-primary">
+                              <span className="text-2xl font-bold bg-gradient-to-r from-primary/80 to-primary bg-clip-text text-transparent">
                                 {priceInfo.currentPrice} ₽
                               </span>
                             </div>
-                          </div>
+                          </>
                         ) : (
-                          <span className="text-xl font-bold text-primary">
+                          <span className="text-2xl font-bold bg-gradient-to-r from-primary/80 to-primary bg-clip-text text-transparent">
                             {pass.price} ₽
                           </span>
                         )}
