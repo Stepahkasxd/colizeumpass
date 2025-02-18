@@ -30,6 +30,9 @@ type PaymentRequest = {
   updated_at: string;
   pass_id: string | null;
   admin_notes: string | null;
+  passes?: {
+    name: string;
+  } | null;
 };
 
 const STATUS_LABELS = {
@@ -52,7 +55,7 @@ const PaymentsTab = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as (PaymentRequest & { passes: { name: string } | null })[];
+      return data as PaymentRequest[];
     }
   });
 
@@ -147,7 +150,7 @@ const PaymentsTab = () => {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="font-semibold">
-                    Пропуск: {request.passes?.name || 'Удален'}
+                    Пропуск: {request.passes?.name ?? 'Удален'}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Телефон: {request.phone_number}
