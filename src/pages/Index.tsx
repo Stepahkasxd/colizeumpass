@@ -1,12 +1,14 @@
-
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Clock, Users, Wallet } from "lucide-react";
+import { ArrowRight, Clock, Users, Wallet, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import type { Database } from "@/integrations/supabase/types";
+
+type Pass = Database["public"]["Tables"]["passes"]["Row"];
 
 const Index = () => {
   const { user } = useAuth();
@@ -22,7 +24,7 @@ const Index = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Pass[];
     }
   });
 
@@ -84,6 +86,10 @@ const Index = () => {
     }
   };
 
+  const handlePassClick = (pass: Pass) => {
+    navigate(`/passes/${pass.id}`);
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container">
@@ -103,30 +109,45 @@ const Index = () => {
 
           {passes && passes.length > 0 && (
             <div className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6">Доступные пропуска</h2>
-              <div className="grid md:grid-cols-2 gap-6">
+              <h2 className="text-2xl font-semibold mb-6">Пропуск</h2>
+              <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
                 {passes.map((pass) => (
                   <motion.div
                     key={pass.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="glass-panel p-6 rounded-lg text-left"
+                    className="glass-panel p-6 rounded-lg text-left relative group cursor-pointer hover:shadow-lg transition-all duration-300"
+                    onClick={() => handlePassClick(pass)}
                   >
-                    <h3 className="text-xl font-semibold mb-2">{pass.name}</h3>
-                    <p className="text-foreground/70 mb-4">{pass.description}</p>
-                    {pass.levels && pass.levels.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Уровни и награды:</h4>
-                        <ul className="list-disc list-inside text-sm text-foreground/70">
-                          {pass.levels.map((level: any, index: number) => (
-                            <li key={index}>
-                              Уровень {level.level}: {level.reward.name}
-                            </li>
-                          ))}
-                        </ul>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                          {pass.name}
+                        </h3>
+                        <p className="text-foreground/70 mb-4 line-clamp-2">
+                          {pass.description}
+                        </p>
+                        {pass.levels && pass.levels.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-primary/80">Уровни и награды:</h4>
+                            <ul className="grid grid-cols-2 gap-2 text-sm text-foreground/70">
+                              {(pass.levels as any[]).slice(0, 4).map((level, index) => (
+                                <li key={index} className="flex items-center gap-2">
+                                  <span className="inline-block w-2 h-2 bg-primary/40 rounded-full"></span>
+                                  Уровень {level.level}: {level.reward.name}
+                                </li>
+                              ))}
+                            </ul>
+                            {(pass.levels as any[]).length > 4 && (
+                              <p className="text-sm text-primary/80 mt-2">И ещё {(pass.levels as any[]).length - 4} уровней...</p>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      <ChevronRight className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="absolute inset-0 border border-primary/10 rounded-lg group-hover:border-primary/30 transition-colors"></div>
                   </motion.div>
                 ))}
               </div>
