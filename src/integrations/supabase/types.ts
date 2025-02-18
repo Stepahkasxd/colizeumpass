@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          category: Database["public"]["Enums"]["log_category"]
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          category: Database["public"]["Enums"]["log_category"]
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          category?: Database["public"]["Enums"]["log_category"]
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       passes: {
         Row: {
           created_at: string
@@ -209,8 +242,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_activity: {
+        Args: {
+          p_user_id: string
+          p_category: Database["public"]["Enums"]["log_category"]
+          p_action: string
+          p_details?: Json
+          p_ip_address?: string
+          p_user_agent?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
+      log_category: "auth" | "admin" | "points" | "rewards" | "shop" | "passes"
       payment_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "user"
     }

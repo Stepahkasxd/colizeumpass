@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
@@ -60,25 +60,30 @@ const LogsTab = () => {
   const { data: logs, isLoading } = useQuery({
     queryKey: ['activity-logs', selectedCategory],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from('activity_logs')
         .select(`
-          *,
-          profiles (
-            display_name
-          )
+          id,
+          created_at,
+          user_id,
+          category,
+          action,
+          details,
+          ip_address,
+          user_agent,
+          profiles:profiles(display_name)
         `)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (selectedCategory) {
-        query = query.eq('category', selectedCategory);
+        query.eq('category', selectedCategory);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as ActivityLog[];
+      return data as unknown as ActivityLog[];
     }
   });
 
