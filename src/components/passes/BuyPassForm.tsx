@@ -54,10 +54,10 @@ export const BuyPassForm = ({ passId, passName, amount }: BuyPassFormProps) => {
 
       toast({
         title: "Успешно",
-        description: "Заявка на покупку пропуска отправлена",
+        description: "Заявка создана. Сейчас вы получите инструкцию по оплате",
       });
 
-      navigate("/");
+      navigate("/passes/instructions");
     } catch (error) {
       console.error('Error creating payment request:', error);
       toast({
@@ -117,7 +117,7 @@ export const BuyPassForm = ({ passId, passName, amount }: BuyPassFormProps) => {
       </Button>
 
       <p className="text-sm text-muted-foreground text-center">
-        После отправки заявки администратор рассмотрит её и свяжется с вами для подтверждения оплаты.
+        После отправки заявки вы получите инструкцию по оплате пропуска.
       </p>
     </form>
   );
