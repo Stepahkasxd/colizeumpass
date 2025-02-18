@@ -86,7 +86,17 @@ const PassesTab = () => {
     }
   };
 
-  const handleEditPass = async (data: Pass) => {
+  const handleEditPass = async (data: Omit<Pass, 'created_at'>) => {
+    if (!editingPass?.id) {
+      console.error('Pass ID is undefined');
+      toast({
+        title: "Ошибка",
+        description: "Некорректный ID пропуска",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('passes')
@@ -96,7 +106,7 @@ const PassesTab = () => {
           price: data.price,
           levels: data.levels || []
         })
-        .eq('id', data.id);
+        .eq('id', editingPass.id);
 
       if (error) throw error;
 
