@@ -64,6 +64,23 @@ const Register = () => {
     
     setIsLoading(true);
     try {
+      // Сначала проверяем, существует ли пользователь с таким email
+      const { data: existingUsers, error: emailCheckError } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('phone_number', values.phone)
+        .single();
+
+      if (existingUsers) {
+        toast({
+          title: "Ошибка",
+          description: "Этот номер телефона уже зарегистрирован",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -76,8 +93,21 @@ const Register = () => {
       });
 
       if (signUpError) {
+        if (signUpError.message.includes('email')) {
+          toast({
+            title: "Ошибка",
+            description: "Этот email уже используется",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Ошибка",
+            description: "Произошла ошибка при регистрации",
+            variant: "destructive",
+          });
+        }
         console.error('Signup error:', signUpError);
-        throw signUpError;
+        return;
       }
       
       if (signUpData.user) {
@@ -85,14 +115,13 @@ const Register = () => {
           title: "Регистрация успешна",
           description: "Добро пожаловать в Colizeum!",
         });
-      } else {
-        throw new Error("Не удалось получить данные пользователя");
+        navigate("/");
       }
     } catch (error) {
       console.error('Registration error:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось создать аккаунт. Возможно, email уже используется.",
+        description: "Не удалось создать аккаунт. Пожалуйста, попробуйте позже.",
         variant: "destructive",
       });
     } finally {
@@ -101,7 +130,7 @@ const Register = () => {
   };
 
   if (authLoading) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   return (
