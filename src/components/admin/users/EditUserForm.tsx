@@ -17,6 +17,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const userFormSchema = z.object({
+  id: z.string(),
+  display_name: z.string().nullable(),
+  phone_number: z.string().nullable(),
+  level: z.number().min(0),
+  points: z.number().min(0),
+  status: z.enum(['Standard', 'Premium', 'VIP']),
+  has_pass: z.boolean()
+});
 
 interface EditUserFormProps {
   user: UserProfile;
@@ -26,7 +38,16 @@ interface EditUserFormProps {
 
 export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) => {
   const form = useForm<UserProfile>({
-    defaultValues: user
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      id: user.id,
+      display_name: user.display_name,
+      phone_number: user.phone_number,
+      level: user.level,
+      points: user.points,
+      status: user.status,
+      has_pass: user.has_pass
+    }
   });
 
   return (
@@ -90,7 +111,7 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
               <FormLabel>Пропуск</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(value === 'true')}
-                defaultValue={field.value ? 'true' : 'false'}
+                value={field.value ? 'true' : 'false'}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -114,9 +135,8 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
               <FormControl>
                 <Input 
                   type="number" 
-                  {...field} 
-                  value={field.value || 0}
-                  onChange={e => field.onChange(parseInt(e.target.value))}
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
                 />
               </FormControl>
             </FormItem>
@@ -131,9 +151,8 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
               <FormControl>
                 <Input 
                   type="number" 
-                  {...field} 
-                  value={field.value || 0}
-                  onChange={e => field.onChange(parseInt(e.target.value))}
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
                 />
               </FormControl>
             </FormItem>
