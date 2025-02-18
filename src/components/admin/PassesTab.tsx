@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,14 +17,13 @@ export type Pass = {
   id: string;
   name: string;
   description: string | null;
-  points_required: number;
   levels: {
     level: number;
     points_required: number;
-  }[];
-  rewards: {
-    name: string;
-    description: string;
+    reward: {
+      name: string;
+      description: string;
+    };
   }[];
   created_at: string;
 };
@@ -79,9 +77,7 @@ const PassesTab = () => {
         .update({
           name: data.name,
           description: data.description,
-          points_required: data.points_required,
           levels: data.levels,
-          rewards: data.rewards,
         })
         .eq('id', data.id);
 

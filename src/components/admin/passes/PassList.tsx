@@ -18,22 +18,20 @@ export const PassList = ({ passes, isLoading, onEdit, onDelete }: PassListProps)
           <tr className="border-b bg-muted/50">
             <th className="py-3 px-4 text-left">Название</th>
             <th className="py-3 px-4 text-left">Описание</th>
-            <th className="py-3 px-4 text-left">Требуемые очки</th>
             <th className="py-3 px-4 text-left">Уровни</th>
-            <th className="py-3 px-4 text-left">Награды</th>
             <th className="py-3 px-4 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={6} className="py-4 px-4 text-center">
+              <td colSpan={4} className="py-4 px-4 text-center">
                 Загрузка...
               </td>
             </tr>
           ) : passes?.length === 0 ? (
             <tr>
-              <td colSpan={6} className="py-4 px-4 text-center">
+              <td colSpan={4} className="py-4 px-4 text-center">
                 Пропуска не найдены
               </td>
             </tr>
@@ -42,9 +40,7 @@ export const PassList = ({ passes, isLoading, onEdit, onDelete }: PassListProps)
               <tr key={pass.id} className="border-b">
                 <td className="py-3 px-4 font-medium">{pass.name}</td>
                 <td className="py-3 px-4">{pass.description || "—"}</td>
-                <td className="py-3 px-4">{pass.points_required}</td>
                 <td className="py-3 px-4">{pass.levels.length} уровней</td>
-                <td className="py-3 px-4">{pass.rewards.length} наград</td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
                     <Button
