@@ -4,8 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Trophy, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
 
@@ -76,28 +83,43 @@ const PassDetails = () => {
                   <Trophy className="w-6 h-6 text-primary" />
                   Уровни и награды
                 </h2>
-                <div className="grid gap-4">
-                  {pass.levels.map((level: any, index: number) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-primary/5 border border-primary/10"
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-lg font-semibold">{level.level}</span>
-                      </div>
-                      <div>
-                        <h3 className="font-medium mb-1">Уровень {level.level}</h3>
-                        <p className="text-foreground/70">{level.reward.name}</p>
-                        {level.reward.description && (
-                          <p className="text-sm text-foreground/60 mt-1">{level.reward.description}</p>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-4">
+                    {pass.levels.map((level: any, index: number) => (
+                      <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          className="h-full p-4 rounded-lg bg-primary/5 border border-primary/10"
+                        >
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-lg font-semibold">{level.level}</span>
+                            </div>
+                            <div>
+                              <h3 className="font-medium">Уровень {level.level}</h3>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-foreground/70">{level.reward.name}</p>
+                            {level.reward.description && (
+                              <p className="text-sm text-foreground/60">{level.reward.description}</p>
+                            )}
+                          </div>
+                        </motion.div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden sm:flex left-2" />
+                  <CarouselNext className="hidden sm:flex right-2" />
+                </Carousel>
               </div>
             )}
           </div>
