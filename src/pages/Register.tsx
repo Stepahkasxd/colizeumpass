@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -60,6 +59,7 @@ const Register = () => {
         options: {
           data: {
             name: values.name,
+            phone: values.phone,
           },
         },
       });
@@ -67,14 +67,6 @@ const Register = () => {
       if (signUpError) throw signUpError;
       
       if (signUpData.user) {
-        // Обновляем профиль пользователя, добавляя номер телефона
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ phone_number: values.phone })
-          .eq('id', signUpData.user.id);
-
-        if (updateError) throw updateError;
-
         toast({
           title: "Регистрация успешна",
           description: "Добро пожаловать в Colizeum!",
@@ -85,6 +77,7 @@ const Register = () => {
         throw new Error("Не удалось получить данные пользователя");
       }
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось создать аккаунт. Возможно, email уже используется.",
