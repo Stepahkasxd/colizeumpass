@@ -44,7 +44,6 @@ const PassesTab = () => {
 
       if (error) throw error;
       
-      // Преобразуем данные из базы в нужный формат
       return (data as any[]).map(pass => ({
         id: pass.id,
         name: pass.name,
@@ -59,11 +58,11 @@ const PassesTab = () => {
     try {
       const { error } = await supabase
         .from('passes')
-        .insert({
+        .insert([{
           name: data.name,
           description: data.description,
-          levels: data.levels
-        });
+          levels: data.levels || []
+        }]);
 
       if (error) throw error;
 
@@ -91,7 +90,7 @@ const PassesTab = () => {
         .update({
           name: data.name,
           description: data.description,
-          levels: data.levels
+          levels: data.levels || []
         })
         .eq('id', data.id);
 
