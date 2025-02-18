@@ -54,7 +54,7 @@ const Register = () => {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -65,21 +65,25 @@ const Register = () => {
       });
 
       if (signUpError) throw signUpError;
+      
+      if (signUpData.user) {
+        // Обновляем профиль пользователя, добавляя номер телефона
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ phone_number: values.phone })
+          .eq('id', signUpData.user.id);
 
-      // Обновляем профиль пользователя, добавляя номер телефона
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ phone_number: values.phone })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        if (updateError) throw updateError;
 
-      if (updateError) throw updateError;
+        toast({
+          title: "Регистрация успешна",
+          description: "Добро пожаловать в Colizeum!",
+        });
 
-      toast({
-        title: "Регистрация успешна",
-        description: "Добро пожаловать в Colizeum!",
-      });
-
-      navigate("/");
+        navigate("/");
+      } else {
+        throw new Error("Не удалось получить данные пользователя");
+      }
     } catch (error) {
       toast({
         title: "Ошибка",
