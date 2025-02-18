@@ -19,6 +19,7 @@ import { Pass } from "../PassesTab";
 const passFormSchema = z.object({
   name: z.string().min(1, "Обязательное поле"),
   description: z.string().nullable(),
+  price: z.number().min(0, "Цена не может быть отрицательной"),
   levels: z.array(z.object({
     level: z.number().min(1),
     points_required: z.number().min(0),
@@ -43,6 +44,7 @@ export const PassForm = ({ initialData, onSubmit, onCancel }: PassFormProps) => 
     defaultValues: initialData || {
       name: "",
       description: "",
+      price: 0,
       levels: [{
         level: 1,
         points_required: 0,
@@ -83,6 +85,24 @@ export const PassForm = ({ initialData, onSubmit, onCancel }: PassFormProps) => 
                   <FormLabel>Описание</FormLabel>
                   <FormControl>
                     <Textarea {...field} value={field.value || ''} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Цена (в рублях)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                 </FormItem>
               )}

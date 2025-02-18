@@ -1,6 +1,5 @@
-
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react"; // Добавляем импорт useState
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,10 @@ const PassDetails = () => {
 
           <div className="glass-panel p-8 rounded-lg mb-8">
             <h1 className="text-3xl font-bold mb-4">{pass.name}</h1>
-            <p className="text-foreground/70 text-lg mb-8">{pass.description}</p>
+            <p className="text-foreground/70 text-lg mb-4">{pass.description}</p>
+            <p className="text-xl font-semibold mb-8">
+              Стоимость: {pass.price.toLocaleString('ru-RU')} ₽
+            </p>
 
             {pass.levels && Array.isArray(pass.levels) && pass.levels.length > 0 && (
               <div className="space-y-6">
@@ -155,7 +157,7 @@ const PassDetails = () => {
             <BuyPassForm
               passId={pass.id}
               passName={pass.name}
-              amount={10000} // Здесь нужно указать реальную стоимость пропуска
+              amount={pass.price}
             />
           )}
         </DialogContent>

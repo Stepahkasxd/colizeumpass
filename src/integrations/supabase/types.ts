@@ -57,6 +57,7 @@ export type Database = {
           id: string
           levels: Json | null
           name: string
+          price: number
           rewards: Json | null
         }
         Insert: {
@@ -65,6 +66,7 @@ export type Database = {
           id?: string
           levels?: Json | null
           name: string
+          price?: number
           rewards?: Json | null
         }
         Update: {
@@ -73,6 +75,7 @@ export type Database = {
           id?: string
           levels?: Json | null
           name?: string
+          price?: number
           rewards?: Json | null
         }
         Relationships: []

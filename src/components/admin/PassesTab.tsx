@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ export type Pass = {
   id: string;
   name: string;
   description: string | null;
+  price: number;
   levels: {
     level: number;
     points_required: number;
@@ -48,6 +48,7 @@ const PassesTab = () => {
         id: pass.id,
         name: pass.name,
         description: pass.description,
+        price: pass.price,
         levels: pass.levels || [],
         created_at: pass.created_at
       })) as Pass[];
@@ -61,6 +62,7 @@ const PassesTab = () => {
         .insert([{
           name: data.name,
           description: data.description,
+          price: data.price,
           levels: data.levels || []
         }]);
 
@@ -100,6 +102,7 @@ const PassesTab = () => {
         .update({
           name: data.name,
           description: data.description,
+          price: data.price,
           levels: data.levels || []
         })
         .eq('id', data.id);
