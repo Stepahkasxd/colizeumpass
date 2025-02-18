@@ -23,11 +23,18 @@ type SupportTicket = {
   id: string;
   subject: string;
   message: string;
-  status: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
   created_at: string;
   user_id: string;
   updated_at: string;
 };
+
+const STATUS_LABELS = {
+  open: 'Открыт',
+  in_progress: 'В работе',
+  resolved: 'Решен',
+  closed: 'Закрыт'
+} as const;
 
 const SupportTab = () => {
   const { toast } = useToast();
@@ -46,11 +53,14 @@ const SupportTab = () => {
     }
   });
 
-  const handleStatusChange = async (ticketId: string, newStatus: string) => {
+  const handleStatusChange = async (ticketId: string, newStatus: SupportTicket['status']) => {
     try {
       const { error } = await supabase
         .from('support_tickets')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .update({ 
+          status: newStatus, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', ticketId);
 
       if (error) throw error;
@@ -81,7 +91,7 @@ const SupportTab = () => {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: SupportTicket['status']) => {
     switch (status) {
       case 'open':
         return 'text-yellow-500';
@@ -122,16 +132,15 @@ const SupportTab = () => {
                 <div className="flex items-center gap-4">
                   <Select
                     defaultValue={ticket.status}
-                    onValueChange={(value) => handleStatusChange(ticket.id, value)}
+                    onValueChange={(value) => handleStatusChange(ticket.id, value as SupportTicket['status'])}
                   >
                     <SelectTrigger className="w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Открыт</SelectItem>
-                      <SelectItem value="in_progress">В работе</SelectItem>
-                      <SelectItem value="resolved">Решен</SelectItem>
-                      <SelectItem value="closed">Закрыт</SelectItem>
+                      {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Button
@@ -144,10 +153,7 @@ const SupportTab = () => {
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium ${getStatusColor(ticket.status)}`}>
-                  {ticket.status === 'open' && 'Открыт'}
-                  {ticket.status === 'in_progress' && 'В работе'}
-                  {ticket.status === 'resolved' && 'Решен'}
-                  {ticket.status === 'closed' && 'Закрыт'}
+                  {STATUS_LABELS[ticket.status]}
                 </span>
                 {ticket.updated_at !== ticket.created_at && (
                   <span className="text-sm text-muted-foreground">
@@ -185,16 +191,15 @@ const SupportTab = () => {
                     <span className="text-sm font-medium">Статус:</span>
                     <Select
                       defaultValue={selectedTicket.status}
-                      onValueChange={(value) => handleStatusChange(selectedTicket.id, value)}
+                      onValueChange={(value) => handleStatusChange(selectedTicket.id, value as SupportTicket['status'])}
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="open">Открыт</SelectItem>
-                        <SelectItem value="in_progress">В работе</SelectItem>
-                        <SelectItem value="resolved">Решен</SelectItem>
-                        <SelectItem value="closed">Закрыт</SelectItem>
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
