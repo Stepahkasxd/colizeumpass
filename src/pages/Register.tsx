@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -18,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const phoneRegex = /^\+7\d{10}$/;
 
@@ -38,6 +40,14 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -64,15 +74,16 @@ const Register = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        console.error('Signup error:', signUpError);
+        throw signUpError;
+      }
       
       if (signUpData.user) {
         toast({
           title: "Регистрация успешна",
           description: "Добро пожаловать в Colizeum!",
         });
-
-        navigate("/");
       } else {
         throw new Error("Не удалось получить данные пользователя");
       }
