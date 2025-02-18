@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3 } from "lucide-react";
+import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import UsersTab from "@/components/admin/UsersTab";
@@ -11,6 +11,7 @@ import ProductsTab from "@/components/admin/ProductsTab";
 import SupportTab from "@/components/admin/SupportTab";
 import PaymentsTab from "@/components/admin/PaymentsTab";
 import StatsTab from "@/components/admin/StatsTab";
+import LogsTab from "@/components/admin/LogsTab";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -54,12 +55,10 @@ const Dashboard = () => {
     checkAdminStatus();
   }, [user, authLoading, navigate]);
 
-  // Show nothing while checking authentication
   if (authLoading || isCheckingAdmin) {
     return null;
   }
 
-  // If not admin or not authenticated, don't render the dashboard
   if (!isAdmin || !user) {
     return null;
   }
@@ -69,7 +68,7 @@ const Dashboard = () => {
       <h1 className="text-2xl font-bold mb-6 text-glow">Панель администратора</h1>
       
       <Tabs defaultValue="stats" className="w-full">
-        <TabsList className="grid grid-cols-6 gap-4 mb-8">
+        <TabsList className="grid grid-cols-7 gap-4 mb-8">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Статистика</span>
@@ -94,6 +93,10 @@ const Dashboard = () => {
             <CircleDollarSign className="h-4 w-4" />
             <span className="hidden sm:inline">Платежи</span>
           </TabsTrigger>
+          <TabsTrigger value="logs" className="flex items-center gap-2">
+            <ActivitySquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Логи</span>
+          </TabsTrigger>
         </TabsList>
 
         <div className="glass-panel p-6 rounded-lg">
@@ -114,6 +117,9 @@ const Dashboard = () => {
           </TabsContent>
           <TabsContent value="payments">
             <PaymentsTab />
+          </TabsContent>
+          <TabsContent value="logs">
+            <LogsTab />
           </TabsContent>
         </div>
       </Tabs>
