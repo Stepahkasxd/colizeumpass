@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -32,6 +32,33 @@ const UsersTab = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isToggleAdminDialogOpen, setIsToggleAdminDialogOpen] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [adminUsers, setAdminUsers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchAdminUsers = async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      if (!error && data) {
+        setAdminUsers(data.map(role => role.user_id));
+      }
+    };
+    fetchAdminUsers();
+  }, []);
 
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['admin-users', searchTerm],
@@ -69,6 +96,11 @@ const UsersTab = () => {
   const handleDeleteUser = (user: UserProfile) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleToggleAdmin = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsToggleAdminDialogOpen(true);
   };
 
   const handleSubmit = async (data: UserProfile) => {
@@ -162,6 +194,65 @@ const UsersTab = () => {
     }
   };
 
+  const handleToggleAdminConfirm = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const isCurrentlyAdmin = adminUsers.includes(selectedUser.id);
+
+      if (isCurrentlyAdmin) {
+        // Удаляем права администратора
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', selectedUser.id)
+          .eq('role', 'admin');
+
+        if (error) throw error;
+      } else {
+        // Добавляем права администратора
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: selectedUser.id,
+            role: 'admin'
+          });
+
+        if (error) throw error;
+      }
+
+      // Обновляем список администраторов
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      if (!error && data) {
+        setAdminUsers(data.map(role => role.user_id));
+      }
+
+      toast({
+        title: "Успех",
+        description: isCurrentlyAdmin 
+          ? "Права администратора удалены" 
+          : "Права администратора добавлены",
+      });
+
+      setIsToggleAdminDialogOpen(false);
+    } catch (error) {
+      console.error('Error toggling admin status:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить права администратора",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isUserAdmin = (userId: string) => {
+    return adminUsers.includes(userId);
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -179,9 +270,12 @@ const UsersTab = () => {
       <UsersTable
         users={users}
         isLoading={isLoading}
+        currentUserEmail={currentUserEmail}
         onEditUser={handleEditUser}
         onBlockUser={handleBlockUser}
         onDeleteUser={handleDeleteUser}
+        onToggleAdmin={handleToggleAdmin}
+        isUserAdmin={isUserAdmin}
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -232,6 +326,29 @@ const UsersTab = () => {
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
               Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isToggleAdminDialogOpen} onOpenChange={setIsToggleAdminDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isUserAdmin(selectedUser?.id || '') 
+                ? "Удалить права администратора?" 
+                : "Добавить права администратора?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isUserAdmin(selectedUser?.id || '')
+                ? "Пользователь потеряет доступ к административной панели."
+                : "Пользователь получит доступ к административной панели."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleToggleAdminConfirm}>
+              {isUserAdmin(selectedUser?.id || '') ? "Удалить права" : "Добавить права"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

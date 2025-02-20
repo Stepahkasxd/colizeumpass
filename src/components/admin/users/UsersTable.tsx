@@ -1,14 +1,17 @@
 
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
-import { Edit2, Ban, Trash2 } from "lucide-react";
+import { Edit2, Ban, Trash2, Shield } from "lucide-react";
 
 interface UsersTableProps {
   users: UserProfile[] | null;
   isLoading: boolean;
+  currentUserEmail: string | null;
   onEditUser: (user: UserProfile) => void;
   onBlockUser: (user: UserProfile) => void;
   onDeleteUser: (user: UserProfile) => void;
+  onToggleAdmin: (user: UserProfile) => void;
+  isUserAdmin: (userId: string) => boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -30,10 +33,15 @@ const formatId = (id: string) => {
 export const UsersTable = ({ 
   users, 
   isLoading, 
+  currentUserEmail,
   onEditUser, 
   onBlockUser,
-  onDeleteUser 
+  onDeleteUser,
+  onToggleAdmin,
+  isUserAdmin
 }: UsersTableProps) => {
+  const isRoot = currentUserEmail === 'root@root.com';
+
   return (
     <div className="rounded-md border">
       <table className="w-full text-sm">
@@ -48,19 +56,20 @@ export const UsersTable = ({
             <th className="py-3 px-4 text-left">Очки прогресса</th>
             <th className="py-3 px-4 text-left">Свободные очки</th>
             <th className="py-3 px-4 text-left">Состояние</th>
+            <th className="py-3 px-4 text-left">Роль</th>
             <th className="py-3 px-4 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={10} className="py-4 px-4 text-center">
+              <td colSpan={11} className="py-4 px-4 text-center">
                 Загрузка...
               </td>
             </tr>
           ) : users?.length === 0 ? (
             <tr>
-              <td colSpan={10} className="py-4 px-4 text-center">
+              <td colSpan={11} className="py-4 px-4 text-center">
                 Пользователи не найдены
               </td>
             </tr>
@@ -84,6 +93,13 @@ export const UsersTable = ({
                     <span className="text-red-500 font-medium">Заблокирован</span>
                   ) : (
                     <span className="text-green-500 font-medium">Активен</span>
+                  )}
+                </td>
+                <td className="py-3 px-4">
+                  {isUserAdmin(user.id) ? (
+                    <span className="text-purple-500 font-medium">Админ</span>
+                  ) : (
+                    <span className="text-gray-600">Пользователь</span>
                   )}
                 </td>
                 <td className="py-3 px-4">
@@ -111,6 +127,16 @@ export const UsersTable = ({
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    {isRoot && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleAdmin(user)}
+                        className={isUserAdmin(user.id) ? "text-purple-500" : "text-gray-500"}
+                      >
+                        <Shield className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>
