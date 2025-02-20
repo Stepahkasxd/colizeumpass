@@ -15,7 +15,7 @@ type DatabaseMessage = {
   user_id: string;
   created_at: string;
   ticket_id: string;
-  profile: {
+  profiles: {
     display_name: string | null;
   } | null;
 };
@@ -43,7 +43,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           user_id,
           created_at,
           ticket_id,
-          profile:profiles!user_id (
+          profiles:user_id (
             display_name
           )
         `)
@@ -80,7 +80,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               user_id,
               created_at,
               ticket_id,
-              profile:profiles!user_id (
+              profiles:user_id (
                 display_name
               )
             `)
@@ -147,7 +147,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-medium">
-                  {message.profile?.display_name || "Пользователь"}
+                  {message.profiles?.display_name || "Пользователь"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(message.created_at)}
