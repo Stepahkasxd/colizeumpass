@@ -22,8 +22,9 @@ import { useAuth } from "@/context/AuthContext";
 import { logActivity } from "@/utils/logger";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TicketChat } from "@/components/TicketChat";
-import { format, ru } from "date-fns";
+import { TicketChat } from "@/components/support/TicketChat";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 const formSchema = z.object({
   subject: z.string().min(5, "Тема должна содержать минимум 5 символов"),
