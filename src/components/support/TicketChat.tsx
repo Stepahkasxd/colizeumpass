@@ -42,8 +42,11 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         const { data, error } = await supabase
           .from("ticket_messages")
           .select(`
-            *,
-            profiles:user_id (
+            id,
+            message,
+            user_id,
+            created_at,
+            profiles (
               display_name
             )
           `)
@@ -51,7 +54,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           .order("created_at", { ascending: true });
 
         if (error) throw error;
-        setMessages(data as Message[]);
+        setMessages((data || []) as Message[]);
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({

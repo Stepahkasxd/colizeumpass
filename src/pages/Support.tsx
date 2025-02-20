@@ -54,7 +54,13 @@ const Support = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setUserTickets(data);
+        
+        const typedData = (data || []).map(ticket => ({
+          ...ticket,
+          status: ticket.status as SupportTicket['status']
+        }));
+        
+        setUserTickets(typedData);
       } catch (error) {
         console.error('Error fetching user tickets:', error);
       }
