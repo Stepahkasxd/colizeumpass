@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -41,6 +42,19 @@ const Support = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Получаем ticket_id из URL, если он есть
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const ticketId = searchParams.get('ticket');
+    
+    if (ticketId && userTickets.length > 0) {
+      const ticket = userTickets.find(t => t.id === ticketId);
+      if (ticket) {
+        setSelectedTicket(ticket);
+      }
+    }
+  }, [userTickets]);
 
   useEffect(() => {
     if (!user) return;
@@ -129,6 +143,22 @@ const Support = () => {
     }
   };
 
+  // Обновляем URL при выборе тикета
+  const handleTicketSelect = (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set('ticket', ticket.id);
+    window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
+  };
+
+  // Обновляем URL при закрытии тикета
+  const handleTicketClose = () => {
+    setSelectedTicket(null);
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.delete('ticket');
+    window.history.pushState(null, '', window.location.pathname);
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container max-w-2xl">
@@ -165,7 +195,7 @@ const Support = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedTicket(ticket)}
+                          onClick={() => handleTicketSelect(ticket)}
                         >
                           Открыть чат
                         </Button>
@@ -237,7 +267,7 @@ const Support = () => {
         </motion.div>
       </div>
 
-      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+      <Dialog open={!!selectedTicket} onOpenChange={() => handleTicketClose()}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
