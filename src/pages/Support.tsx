@@ -97,10 +97,10 @@ const Support = () => {
           if (payload.eventType === 'INSERT') {
             // For new tickets, preserve all properties
             const newTicket: SupportTicket = {
-              ...payload.new,
-              status: payload.new.status as SupportTicket['status'],
+              id: payload.new.id,
               subject: payload.new.subject,
               message: payload.new.message,
+              status: payload.new.status as SupportTicket['status'],
               created_at: payload.new.created_at,
               updated_at: payload.new.updated_at,
               user_id: payload.new.user_id,
@@ -111,10 +111,10 @@ const Support = () => {
           else if (payload.eventType === 'UPDATE') {
             // For updates, preserve all properties
             const updatedTicket: SupportTicket = {
-              ...payload.new,
-              status: payload.new.status as SupportTicket['status'],
+              id: payload.new.id,
               subject: payload.new.subject,
               message: payload.new.message,
+              status: payload.new.status as SupportTicket['status'],
               created_at: payload.new.created_at,
               updated_at: payload.new.updated_at,
               user_id: payload.new.user_id,
