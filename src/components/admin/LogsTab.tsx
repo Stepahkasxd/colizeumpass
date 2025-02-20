@@ -45,7 +45,9 @@ const categoryColors = {
   points: "green",
   rewards: "yellow",
   shop: "purple",
-  passes: "orange"
+  passes: "orange",
+  user: "pink",
+  system: "gray"
 } as const;
 
 const categoryLabels = {
@@ -54,7 +56,9 @@ const categoryLabels = {
   points: "Очки",
   rewards: "Награды",
   shop: "Магазин",
-  passes: "Пропуска"
+  passes: "Пропуска",
+  user: "Пользователь",
+  system: "Система"
 } as const;
 
 const LogsTab = () => {
