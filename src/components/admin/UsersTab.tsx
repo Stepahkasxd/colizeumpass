@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -286,8 +285,7 @@ const UsersTab = () => {
           {selectedUser && (
             <EditUserForm
               user={selectedUser}
-              onSubmit={handleSubmit}
-              onCancel={() => setIsEditDialogOpen(false)}
+              onClose={() => setIsEditDialogOpen(false)}
             />
           )}
         </DialogContent>

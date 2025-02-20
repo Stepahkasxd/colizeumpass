@@ -63,7 +63,7 @@ export const EditUserForm = ({ user, onClose }: EditUserFormProps) => {
           category: 'admin',
           action: 'update_user',
           details: logDetails,
-          ip_address: window.location.hostname, // Простой способ получить IP для демонстрации
+          ip_address: window.location.hostname,
           user_agent: navigator.userAgent
         });
 
