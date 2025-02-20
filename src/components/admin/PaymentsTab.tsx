@@ -85,9 +85,13 @@ const PaymentsTab = () => {
       const { data, error } = await supabase
         .from('purchases')
         .select(`
-          *,
+          id,
+          user_id,
+          created_at,
+          status,
+          product_id,
           products (name, points_cost),
-          profiles (display_name, phone_number)
+          profiles!purchases_user_id_fkey (display_name, phone_number)
         `)
         .order('created_at', { ascending: false });
 
