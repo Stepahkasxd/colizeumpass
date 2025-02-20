@@ -20,19 +20,7 @@ const Dashboard = () => {
 
   return (
     <div className="container py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Личный кабинет</h1>
-        {isRootUser && (
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => navigate('/admin')}
-          >
-            <Shield className="h-4 w-4" />
-            Админ панель
-          </Button>
-        )}
-      </div>
+      <h1 className="text-3xl font-bold mb-8">Личный кабинет</h1>
       
       <Tabs defaultValue="stats" className="space-y-6">
         <TabsList>
@@ -58,6 +46,17 @@ const Dashboard = () => {
           <ProfileTab />
         </TabsContent>
       </Tabs>
+
+      {isRootUser && (
+        <Button
+          variant="outline"
+          className="fixed bottom-4 right-4 gap-2"
+          onClick={() => navigate('/admin')}
+        >
+          <Shield className="h-4 w-4" />
+          Админ панель
+        </Button>
+      )}
     </div>
   );
 };
