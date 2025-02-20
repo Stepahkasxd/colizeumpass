@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/context/AuthContext";
+import { logActivity } from "@/utils/logger";
 
 type SupportTicket = {
   id: string;
@@ -38,6 +40,7 @@ const STATUS_LABELS = {
 
 const SupportTab = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
 
   const { data: tickets, isLoading, refetch } = useQuery({
@@ -54,7 +57,10 @@ const SupportTab = () => {
   });
 
   const handleStatusChange = async (ticketId: string, newStatus: SupportTicket['status']) => {
+    if (!user) return;
+    
     try {
+      const originalTicket = tickets?.find(t => t.id === ticketId);
       const { error } = await supabase
         .from('support_tickets')
         .update({ 
@@ -64,6 +70,20 @@ const SupportTab = () => {
         .eq('id', ticketId);
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'admin',
+        action: 'update_ticket_status',
+        details: {
+          ticket_id: ticketId,
+          ticket_subject: originalTicket?.subject,
+          status_change: {
+            from: originalTicket?.status,
+            to: newStatus
+          }
+        }
+      });
 
       toast({
         title: "Статус обновлен",

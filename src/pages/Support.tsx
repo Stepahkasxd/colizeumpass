@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { logActivity } from "@/utils/logger";
 
 const formSchema = z.object({
   subject: z.string().min(5, "Тема должна содержать минимум 5 символов"),
@@ -55,13 +56,27 @@ const Support = () => {
         return;
       }
 
-      const { error } = await supabase.from("support_tickets").insert({
-        user_id: user.id,
-        subject: values.subject,
-        message: values.message,
-      });
+      const { error, data } = await supabase
+        .from("support_tickets")
+        .insert({
+          user_id: user.id,
+          subject: values.subject,
+          message: values.message,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'user',
+        action: 'create_support_ticket',
+        details: {
+          ticket_id: data.id,
+          subject: values.subject
+        }
+      });
 
       toast({
         title: "Обращение отправлено",
