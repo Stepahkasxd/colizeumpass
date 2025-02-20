@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { logActivity } from "@/utils/logger";
 
 const formSchema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -43,7 +44,7 @@ const Login = () => {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
@@ -62,7 +63,30 @@ const Login = () => {
             variant: "destructive",
           });
         }
+
+        // Логируем неудачную попытку входа
+        await logActivity({
+          user_id: values.email, // В случае неудачного входа используем email как идентификатор
+          category: 'auth',
+          action: 'login_failed',
+          details: {
+            email: values.email,
+            error: error.message
+          }
+        });
         return;
+      }
+
+      if (signInData.user) {
+        // Логируем успешный вход
+        await logActivity({
+          user_id: signInData.user.id,
+          category: 'auth',
+          action: 'login_success',
+          details: {
+            email: signInData.user.email
+          }
+        });
       }
 
       toast({

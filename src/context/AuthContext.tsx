@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/utils/logger";
 
 type AuthContextType = {
   user: User | null;
@@ -23,6 +24,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
+        if (session?.user) {
+          await logActivity({
+            user_id: session.user.id,
+            category: 'auth',
+            action: 'session_restored',
+            details: {
+              email: session.user.email
+            }
+          });
+        }
       } catch (error) {
         console.error("Error checking auth session:", error);
         setUser(null);
@@ -36,9 +47,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for changes on auth state (sign in, sign out, etc.)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
       setIsLoading(false);
+
+      if (_event === 'SIGNED_OUT' && currentUser) {
+        await logActivity({
+          user_id: currentUser.id,
+          category: 'auth',
+          action: 'signed_out',
+          details: {
+            email: currentUser.email
+          }
+        });
+      }
     });
 
     return () => subscription.unsubscribe();

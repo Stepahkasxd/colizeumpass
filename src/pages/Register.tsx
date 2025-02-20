@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -64,7 +63,7 @@ const Register = () => {
     
     setIsLoading(true);
     try {
-      // Сначала проверяем, существует ли пользователь с таким email
+      // Сначала проверяем, существует ли пользователь с таким телефоном
       const { data: existingUsers, error: emailCheckError } = await supabase
         .from('profiles')
         .select('phone_number')
@@ -106,11 +105,35 @@ const Register = () => {
             variant: "destructive",
           });
         }
+
+        // Логируем неудачную попытку регистрации
+        await logActivity({
+          user_id: values.email,
+          category: 'auth',
+          action: 'registration_failed',
+          details: {
+            email: values.email,
+            error: signUpError.message
+          }
+        });
+
         console.error('Signup error:', signUpError);
         return;
       }
       
       if (signUpData.user) {
+        // Логируем успешную регистрацию
+        await logActivity({
+          user_id: signUpData.user.id,
+          category: 'auth',
+          action: 'registration_success',
+          details: {
+            email: signUpData.user.email,
+            name: values.name,
+            phone: values.phone
+          }
+        });
+
         toast({
           title: "Регистрация успешна",
           description: "Добро пожаловать в Colizeum!",
