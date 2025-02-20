@@ -13,7 +13,7 @@ import PaymentsTab from "@/components/admin/PaymentsTab";
 import StatsTab from "@/components/admin/StatsTab";
 import LogsTab from "@/components/admin/LogsTab";
 
-const Dashboard = () => {
+const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -36,17 +36,17 @@ const Dashboard = () => {
         if (error) {
           console.error('Not authorized as admin:', error);
           setIsAdmin(false);
-          navigate("/");
+          navigate("/dashboard");
           return;
         }
 
         setIsAdmin(!!data);
         if (!data) {
-          navigate("/");
+          navigate("/dashboard");
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
-        navigate("/");
+        navigate("/dashboard");
       } finally {
         setIsCheckingAdmin(false);
       }
@@ -127,4 +127,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;

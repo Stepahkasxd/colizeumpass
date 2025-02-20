@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Error500 from "./pages/Error500";
+import AdminDashboard from "./pages/admin/Dashboard";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Instructions from "./pages/passes/Instructions";
 import PassDetails from "./pages/passes/[id]";
@@ -30,7 +31,7 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/admin" element={<Dashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/passes/instructions" element={<Instructions />} />
               <Route path="/passes/:id" element={<PassDetails />} />
