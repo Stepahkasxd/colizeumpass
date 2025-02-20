@@ -25,19 +25,29 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Reward } from "@/types/user";
 
+type PassLevel = {
+  level: number;
+  points_required: number;
+  reward: {
+    name: string;
+    description?: string;
+  };
+};
+
 type Pass = {
   id: string;
   name: string;
   description: string | null;
   price: number;
-  levels: Array<{
-    level: number;
-    points_required: number;
-    reward: {
-      name: string;
-      description?: string;
-    };
-  }>;
+  levels: PassLevel[];
+};
+
+type PassResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  levels: PassLevel[] | Json;
 };
 
 const PassDetails = () => {
@@ -57,13 +67,17 @@ const PassDetails = () => {
         .single();
 
       if (error) throw error;
+
+      const passData = data as PassResponse;
       
       return {
-        ...data,
-        levels: (data.levels || []).map((level: any) => ({
-          ...level,
-          points_required: level.points_required || level.level * 100 // Дефолтное значение если не указано
-        }))
+        ...passData,
+        levels: Array.isArray(passData.levels) 
+          ? passData.levels.map((level: PassLevel) => ({
+              ...level,
+              points_required: level.points_required || level.level * 100
+            }))
+          : []
       } as Pass;
     }
   });
