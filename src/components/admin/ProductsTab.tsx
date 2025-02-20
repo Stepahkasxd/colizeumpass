@@ -10,8 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ProductList } from "./products/ProductList";
-import { ProductForm } from "./products/ProductForm";
+import { ProductList } from "./products/ProductList.tsx";
+import { ProductForm } from "./products/ProductForm.tsx";
 import { useAuth } from "@/context/AuthContext";
 import { logActivity } from "@/utils/logger";
 
