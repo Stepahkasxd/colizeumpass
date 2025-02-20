@@ -3,43 +3,60 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Star, Target, Award } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export const StatsTab = () => {
-  const { data: profile } = useQuery({
-    queryKey: ['profile-stats'],
+  const { user } = useAuth();
+
+  const { data: stats } = useQuery({
+    queryKey: ['profile-stats', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!user?.id) return null;
+
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
-      return data;
-    }
+
+      // Получаем количество полученных наград
+      const rewards = profile.rewards as Array<{ id: string }> || [];
+      const rewardsCount = rewards.length;
+
+      return {
+        level: profile.level || 1,
+        points: profile.points || 0,
+        status: profile.status || "Стандарт",
+        rewardsCount
+      };
+    },
+    enabled: !!user?.id
   });
 
   const statCards = [
     {
       title: "Уровень",
-      value: profile?.level || 1,
+      value: stats?.level || 1,
       icon: Trophy,
       description: "Текущий уровень"
     },
     {
       title: "Очки",
-      value: profile?.points || 0,
+      value: stats?.points || 0,
       icon: Star,
       description: "Накопленные очки"
     },
     {
       title: "Статус",
-      value: profile?.status || "Стандарт",
+      value: stats?.status || "Стандарт",
       icon: Target,
       description: "Ваш статус"
     },
     {
       title: "Награды",
-      value: "Скоро",
+      value: stats?.rewardsCount || 0,
       icon: Award,
       description: "Полученные награды"
     }

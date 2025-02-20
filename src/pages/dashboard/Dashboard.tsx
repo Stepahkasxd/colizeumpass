@@ -21,7 +21,7 @@ const Dashboard = () => {
       <Tabs defaultValue="stats" className="space-y-6">
         <TabsList>
           <TabsTrigger value="stats">Статистика</TabsTrigger>
-          <TabsTrigger value="passes">Боевые пропуски</TabsTrigger>
+          <TabsTrigger value="passes">Пропуск</TabsTrigger>
           <TabsTrigger value="rewards">Награды</TabsTrigger>
           <TabsTrigger value="profile">Профиль</TabsTrigger>
         </TabsList>

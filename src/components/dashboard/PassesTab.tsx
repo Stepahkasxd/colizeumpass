@@ -15,22 +15,48 @@ export const PassesTab = () => {
   const { data: activePasses, isLoading } = useQuery({
     queryKey: ['active-passes', user?.id],
     queryFn: async () => {
-      const { data: profile } = await supabase
+      if (!user?.id) return null;
+
+      // Получаем данные о текущем уровне пользователя
+      const { data: userProfile } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
+        .select('level, points')
+        .eq('id', user.id)
         .single();
 
-      if (profile?.has_pass) {
-        const { data: passes, error } = await supabase
-          .from('passes')
-          .select('*')
-          .order('created_at', { ascending: false });
+      // Получаем данные о пропуске
+      const { data: passes } = await supabase
+        .from('passes')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        return passes;
-      }
-      return [];
+      if (!passes) return [];
+
+      // Для каждого пропуска вычисляем прогресс
+      return passes.map(pass => {
+        const levels = pass.levels as Array<{ level: number; points_required: number }>;
+        const currentLevel = userProfile?.level || 1;
+        const currentPoints = userProfile?.points || 0;
+        
+        // Находим текущий уровень в пропуске
+        const currentLevelData = levels.find(l => l.level === currentLevel);
+        const nextLevelData = levels.find(l => l.level === currentLevel + 1);
+        
+        // Вычисляем прогресс
+        let progress = 0;
+        if (currentLevelData && nextLevelData) {
+          const pointsForLevel = nextLevelData.points_required - currentLevelData.points_required;
+          const pointsProgress = currentPoints - currentLevelData.points_required;
+          progress = Math.min(Math.round((pointsProgress / pointsForLevel) * 100), 100);
+        }
+
+        return {
+          ...pass,
+          currentLevel,
+          maxLevel: levels.length,
+          progress
+        };
+      });
     },
     enabled: !!user?.id
   });
@@ -74,9 +100,11 @@ export const PassesTab = () => {
                       <Star className="w-4 h-4 text-primary" />
                       Прогресс
                     </span>
-                    <span className="text-primary">Уровень 3/10</span>
+                    <span className="text-primary">
+                      Уровень {pass.currentLevel}/{pass.maxLevel}
+                    </span>
                   </div>
-                  <Progress value={30} className="h-2" />
+                  <Progress value={pass.progress} className="h-2" />
                 </div>
 
                 <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
