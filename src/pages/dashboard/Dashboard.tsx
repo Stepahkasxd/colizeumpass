@@ -8,11 +8,30 @@ import { useAuth } from "@/context/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { UserProfile } from "@/types/user";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isRootUser = user?.email === 'root@root.com';
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return data as UserProfile;
+    },
+    enabled: !!user?.id
+  });
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -20,7 +39,12 @@ const Dashboard = () => {
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">Личный кабинет</h1>
+      <div className="flex flex-col gap-2 mb-8">
+        <h2 className="text-xl text-muted-foreground">
+          Привет, {profile?.display_name || 'Гость'}!
+        </h2>
+        <h1 className="text-3xl font-bold">Личный кабинет</h1>
+      </div>
       
       <Tabs defaultValue="stats" className="space-y-6">
         <TabsList>
