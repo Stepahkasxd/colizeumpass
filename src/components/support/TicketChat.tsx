@@ -48,8 +48,11 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         const { data, error } = await supabase
           .from("ticket_messages")
           .select(`
-            *,
-            profiles!ticket_messages_user_id_fkey (
+            id,
+            message,
+            user_id,
+            created_at,
+            profiles!inner (
               display_name
             )
           `)
@@ -64,7 +67,9 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             message: msg.message,
             user_id: msg.user_id,
             created_at: msg.created_at,
-            profiles: msg.profiles as { display_name: string | null } | null
+            profiles: {
+              display_name: msg.profiles?.display_name || null
+            }
           }));
           setMessages(formattedMessages);
         }
@@ -99,8 +104,11 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           const { data: newMessageData, error } = await supabase
             .from("ticket_messages")
             .select(`
-              *,
-              profiles!ticket_messages_user_id_fkey (
+              id,
+              message,
+              user_id,
+              created_at,
+              profiles!inner (
                 display_name
               )
             `)
@@ -113,7 +121,9 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               message: newMessageData.message,
               user_id: newMessageData.user_id,
               created_at: newMessageData.created_at,
-              profiles: newMessageData.profiles as { display_name: string | null } | null
+              profiles: {
+                display_name: newMessageData.profiles?.display_name || null
+              }
             };
             
             setMessages(prev => [...prev, formattedMessage]);
