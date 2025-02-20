@@ -1,12 +1,14 @@
 
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
-import { Edit2 } from "lucide-react";
+import { Edit2, Ban, Trash2 } from "lucide-react";
 
 interface UsersTableProps {
   users: UserProfile[] | null;
   isLoading: boolean;
   onEditUser: (user: UserProfile) => void;
+  onBlockUser: (user: UserProfile) => void;
+  onDeleteUser: (user: UserProfile) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -25,7 +27,13 @@ const formatId = (id: string) => {
   return isNaN(numericId) ? id : numericId.toString().padStart(6, '0');
 };
 
-export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) => {
+export const UsersTable = ({ 
+  users, 
+  isLoading, 
+  onEditUser, 
+  onBlockUser,
+  onDeleteUser 
+}: UsersTableProps) => {
   return (
     <div className="rounded-md border">
       <table className="w-full text-sm">
@@ -39,19 +47,20 @@ export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) =>
             <th className="py-3 px-4 text-left">Уровень</th>
             <th className="py-3 px-4 text-left">Очки прогресса</th>
             <th className="py-3 px-4 text-left">Свободные очки</th>
+            <th className="py-3 px-4 text-left">Состояние</th>
             <th className="py-3 px-4 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={9} className="py-4 px-4 text-center">
+              <td colSpan={10} className="py-4 px-4 text-center">
                 Загрузка...
               </td>
             </tr>
           ) : users?.length === 0 ? (
             <tr>
-              <td colSpan={9} className="py-4 px-4 text-center">
+              <td colSpan={10} className="py-4 px-4 text-center">
                 Пользователи не найдены
               </td>
             </tr>
@@ -71,13 +80,38 @@ export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) =>
                 <td className="py-3 px-4">{user.points}</td>
                 <td className="py-3 px-4">{user.free_points}</td>
                 <td className="py-3 px-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEditUser(user)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
+                  {user.is_blocked ? (
+                    <span className="text-red-500 font-medium">Заблокирован</span>
+                  ) : (
+                    <span className="text-green-500 font-medium">Активен</span>
+                  )}
+                </td>
+                <td className="py-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEditUser(user)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onBlockUser(user)}
+                      className={user.is_blocked ? "text-green-500" : "text-red-500"}
+                    >
+                      <Ban className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDeleteUser(user)}
+                      className="text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))

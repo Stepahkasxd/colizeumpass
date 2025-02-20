@@ -10,6 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UserProfile, Reward } from "@/types/user";
 import { UsersTable } from "./users/UsersTable";
@@ -20,6 +30,8 @@ const UsersTab = () => {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['admin-users', searchTerm],
@@ -47,6 +59,16 @@ const UsersTab = () => {
   const handleEditUser = (user: UserProfile) => {
     setSelectedUser(user);
     setIsEditDialogOpen(true);
+  };
+
+  const handleBlockUser = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsBlockDialogOpen(true);
+  };
+
+  const handleDeleteUser = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleSubmit = async (data: UserProfile) => {
@@ -82,6 +104,63 @@ const UsersTab = () => {
     }
   };
 
+  const handleBlockConfirm = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_blocked: !selectedUser.is_blocked
+        })
+        .eq('id', selectedUser.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Успех",
+        description: selectedUser.is_blocked 
+          ? "Пользователь разблокирован" 
+          : "Пользователь заблокирован",
+      });
+
+      setIsBlockDialogOpen(false);
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить статус блокировки",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const { error: authError } = await supabase.auth.admin.deleteUser(
+        selectedUser.id
+      );
+
+      if (authError) throw authError;
+
+      toast({
+        title: "Успех",
+        description: "Пользователь удален",
+      });
+
+      setIsDeleteDialogOpen(false);
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить пользователя",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -100,6 +179,8 @@ const UsersTab = () => {
         users={users}
         isLoading={isLoading}
         onEditUser={handleEditUser}
+        onBlockUser={handleBlockUser}
+        onDeleteUser={handleDeleteUser}
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -116,6 +197,44 @@ const UsersTab = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {selectedUser?.is_blocked ? "Разблокировать пользователя?" : "Заблокировать пользователя?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedUser?.is_blocked
+                ? "Пользователь снова сможет войти в систему."
+                : "Пользователь не сможет войти в систему, пока не будет разблокирован."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBlockConfirm}>
+              {selectedUser?.is_blocked ? "Разблокировать" : "Заблокировать"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить пользователя?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Все данные пользователя будут удалены.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
