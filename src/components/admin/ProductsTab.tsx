@@ -10,122 +10,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { ProductList } from "./products/ProductList";
+import { ProductForm } from "./products/ProductForm";
+import { useAuth } from "@/context/AuthContext";
+import { logActivity } from "@/utils/logger";
 
-type Product = {
+export type Product = {
   id: string;
   name: string;
-  price: number;
-  points_cost: number;
   description: string | null;
+  points_cost: number;
+  price: number;
   available: boolean;
   created_at: string;
 };
 
-const productFormSchema = z.object({
-  name: z.string().min(1, "Название обязательно"),
-  points_cost: z.number().min(0, "Стоимость в очках не может быть отрицательной"),
-  description: z.string().nullable(),
-  available: z.boolean().default(true),
-});
-
-type ProductFormValues = z.infer<typeof productFormSchema>;
-
-const ProductForm = ({
-  initialData,
-  onSubmit,
-  onCancel,
-}: {
-  initialData?: Product;
-  onSubmit: (data: ProductFormValues) => void;
-  onCancel: () => void;
-}) => {
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: initialData || {
-      name: "",
-      points_cost: 0,
-      description: "",
-      available: true,
-    },
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Название</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="points_cost"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Стоимость в очках</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Описание</FormLabel>
-              <FormControl>
-                <Textarea {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Отмена
-          </Button>
-          <Button type="submit">
-            {initialData ? "Сохранить" : "Создать"}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-};
-
 const ProductsTab = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -142,21 +44,35 @@ const ProductsTab = () => {
     }
   });
 
-  const handleCreateProduct = async (data: ProductFormValues) => {
+  const handleCreateProduct = async (data: Omit<Product, 'id' | 'created_at'>) => {
+    if (!user) return;
+    
     try {
-      const productData = {
-        name: data.name,
-        price: 0,
-        points_cost: data.points_cost,
-        description: data.description,
-        available: data.available
-      } satisfies Omit<Product, 'id' | 'created_at'>;
-
-      const { error } = await supabase
+      const { error, data: newProduct } = await supabase
         .from('products')
-        .insert([productData]);
+        .insert([{
+          name: data.name,
+          description: data.description,
+          points_cost: data.points_cost,
+          price: data.price,
+          available: data.available
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'create_product',
+        details: {
+          product_id: newProduct.id,
+          product_name: data.name,
+          points_cost: data.points_cost,
+          price: data.price
+        }
+      });
 
       toast({
         title: "Успех",
@@ -175,24 +91,43 @@ const ProductsTab = () => {
     }
   };
 
-  const handleEditProduct = async (data: ProductFormValues) => {
-    if (!editingProduct?.id) return;
-
+  const handleEditProduct = async (data: Product) => {
+    if (!user) return;
+    
     try {
-      const productData = {
-        name: data.name,
-        price: 0,
-        points_cost: data.points_cost,
-        description: data.description,
-        available: data.available
-      } satisfies Omit<Product, 'id' | 'created_at'>;
-
+      const originalProduct = products?.find(p => p.id === data.id);
       const { error } = await supabase
         .from('products')
-        .update(productData)
-        .eq('id', editingProduct.id);
+        .update({
+          name: data.name,
+          description: data.description,
+          points_cost: data.points_cost,
+          price: data.price,
+          available: data.available
+        })
+        .eq('id', data.id);
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'update_product',
+        details: {
+          product_id: data.id,
+          product_name: data.name,
+          changes: {
+            name: data.name !== originalProduct?.name ? 
+              { from: originalProduct?.name, to: data.name } : undefined,
+            points_cost: data.points_cost !== originalProduct?.points_cost ? 
+              { from: originalProduct?.points_cost, to: data.points_cost } : undefined,
+            price: data.price !== originalProduct?.price ? 
+              { from: originalProduct?.price, to: data.price } : undefined,
+            available: data.available !== originalProduct?.available ? 
+              { from: originalProduct?.available, to: data.available } : undefined
+          }
+        }
+      });
 
       toast({
         title: "Успех",
@@ -212,13 +147,28 @@ const ProductsTab = () => {
   };
 
   const handleDeleteProduct = async (id: string) => {
+    if (!user) return;
+    
     try {
+      const productToDelete = products?.find(p => p.id === id);
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'delete_product',
+        details: {
+          product_id: id,
+          product_name: productToDelete?.name,
+          points_cost: productToDelete?.points_cost,
+          price: productToDelete?.price
+        }
+      });
 
       toast({
         title: "Успех",
@@ -242,48 +192,16 @@ const ProductsTab = () => {
         <h2 className="text-xl font-semibold">Управление товарами</h2>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Добавить товар
+          Создать товар
         </Button>
       </div>
 
-      {isLoading ? (
-        <div>Загрузка...</div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {products?.map((product) => (
-            <div
-              key={product.id}
-              className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold">{product.name}</h3>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingProduct(product)}
-                  >
-                    Изменить
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteProduct(product.id)}
-                  >
-                    Удалить
-                  </Button>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                {product.description || "Нет описания"}
-              </p>
-              <div className="text-sm">
-                <span>Стоимость: {product.points_cost} очков</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <ProductList
+        products={products}
+        isLoading={isLoading}
+        onEdit={setEditingProduct}
+        onDelete={handleDeleteProduct}
+      />
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>

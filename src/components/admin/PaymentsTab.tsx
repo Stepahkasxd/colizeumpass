@@ -19,6 +19,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { logActivity } from "@/utils/logger";
 
 type PaymentRequest = {
   id: string;
@@ -116,6 +117,8 @@ const PaymentsTab = () => {
   });
 
   const handleStatusChange = async (requestId: string, newStatus: PaymentRequest['status']) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('payment_requests')
@@ -140,6 +143,36 @@ const PaymentsTab = () => {
             .eq('id', request.user_id);
 
           if (profileError) throw profileError;
+
+          await logActivity({
+            user_id: request.user_id,
+            category: 'passes',
+            action: 'pass_approved',
+            details: {
+              pass_id: request.pass_id,
+              pass_name: request.passes?.name,
+              amount: request.amount,
+              admin_id: user.id,
+              admin_notes: adminNotes
+            }
+          });
+        }
+      } else if (newStatus === 'rejected') {
+        const request = requests?.find(r => r.id === requestId);
+        if (request) {
+          await logActivity({
+            user_id: request.user_id,
+            category: 'passes',
+            action: 'pass_rejected',
+            details: {
+              pass_id: request.pass_id,
+              pass_name: request.passes?.name,
+              amount: request.amount,
+              admin_id: user.id,
+              admin_notes: adminNotes,
+              reason: adminNotes || 'No reason provided'
+            }
+          });
         }
       }
 
@@ -161,13 +194,30 @@ const PaymentsTab = () => {
   };
 
   const handlePurchaseComplete = async (purchaseId: string) => {
+    if (!user) return;
+    
     try {
+      const purchase = purchases?.find(p => p.id === purchaseId);
       const { error } = await supabase
         .from('purchases')
         .update({ status: 'completed' })
         .eq('id', purchaseId);
 
       if (error) throw error;
+
+      if (purchase) {
+        await logActivity({
+          user_id: purchase.user_id,
+          category: 'shop',
+          action: 'purchase_completed',
+          details: {
+            purchase_id: purchaseId,
+            product_id: purchase.product_id,
+            product_name: purchase.products.name,
+            admin_id: user.id
+          }
+        });
+      }
 
       toast({
         title: "Статус обновлен",
@@ -206,13 +256,6 @@ const PaymentsTab = () => {
       default:
         return 'text-gray-500';
     }
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB'
-    }).format(amount);
   };
 
   const PaymentRequestsList = ({ requests }: { requests: PaymentRequest[] }) => (
