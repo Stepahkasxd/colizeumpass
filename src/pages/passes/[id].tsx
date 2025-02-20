@@ -86,8 +86,10 @@ const PassDetails = () => {
   });
 
   const isRewardClaimed = (level: number, rewardName: string) => {
-    const currentRewards = profile?.rewards || [];
-    return currentRewards.some(
+    if (!profile?.rewards || !Array.isArray(profile.rewards)) {
+      return false;
+    }
+    return profile.rewards.some(
       (r: Reward) => r.passLevel === level && r.name === rewardName && r.status === "claimed"
     );
   };

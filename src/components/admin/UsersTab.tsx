@@ -37,8 +37,9 @@ const UsersTab = () => {
       
       return (data || []).map(profile => ({
         ...profile,
-        rewards: (profile.rewards || []) as Reward[],
-        free_points: profile.free_points || 0
+        rewards: Array.isArray(profile.rewards) ? profile.rewards as Reward[] : [],
+        free_points: typeof profile.free_points === 'number' ? profile.free_points : 0,
+        status: profile.status || 'Standard'
       })) as UserProfile[];
     }
   });

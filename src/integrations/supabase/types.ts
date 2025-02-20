@@ -158,6 +158,7 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          free_points: number | null
           has_pass: boolean | null
           id: string
           level: number | null
@@ -169,6 +170,7 @@ export type Database = {
         Insert: {
           created_at?: string
           display_name?: string | null
+          free_points?: number | null
           has_pass?: boolean | null
           id: string
           level?: number | null
@@ -180,6 +182,7 @@ export type Database = {
         Update: {
           created_at?: string
           display_name?: string | null
+          free_points?: number | null
           has_pass?: boolean | null
           id?: string
           level?: number | null
