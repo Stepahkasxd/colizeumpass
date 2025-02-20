@@ -20,6 +20,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { logActivity } from "@/utils/logger";
+import { useAuth } from "@/context/AuthContext";
+
+const formatAmount = (amount: number): string => {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
 type PaymentRequest = {
   id: string;
@@ -59,11 +69,11 @@ const STATUS_LABELS = {
 } as const;
 
 const PaymentsTab = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
 
-  // Запрос на получение платежей
   const { data: requests, isLoading: isLoadingRequests, refetch: refetchRequests } = useQuery({
     queryKey: ['payment_requests'],
     queryFn: async () => {
@@ -77,7 +87,6 @@ const PaymentsTab = () => {
     }
   });
 
-  // Запрос на получение покупок с правильным join
   const { data: purchases, isLoading: isLoadingPurchases, refetch: refetchPurchases } = useQuery({
     queryKey: ['purchases'],
     queryFn: async () => {
@@ -98,7 +107,6 @@ const PaymentsTab = () => {
 
       if (error) throw error;
 
-      // Получаем профили отдельным запросом
       const purchasesWithProfiles = await Promise.all((data || []).map(async (purchase) => {
         const { data: profileData } = await supabase
           .from('profiles')
@@ -131,7 +139,6 @@ const PaymentsTab = () => {
 
       if (error) throw error;
 
-      // Если статус изменен на "approved", обновляем профиль пользователя
       if (newStatus === 'approved') {
         const request = requests?.find(r => r.id === requestId);
         if (request) {
