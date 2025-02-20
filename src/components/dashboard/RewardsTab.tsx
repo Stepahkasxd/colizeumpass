@@ -7,15 +7,7 @@ import { Clock, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-
-type Reward = {
-  id: string;
-  name: string;
-  status: "available" | "claimed";
-  earnedAt: string;
-  description?: string;
-  passLevel?: number;
-};
+import type { Reward } from "@/types/user";
 
 export const RewardsTab = () => {
   const { user } = useAuth();
@@ -31,7 +23,7 @@ export const RewardsTab = () => {
         .eq('id', user?.id)
         .single();
 
-      return profile?.rewards as Reward[] || [];
+      return (profile?.rewards || []) as Reward[];
     },
     enabled: !!user?.id
   });

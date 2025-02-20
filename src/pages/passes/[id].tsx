@@ -24,6 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
+type Reward = Database["public"]["Tables"]["rewards"]["Row"];
 
 const PassDetails = () => {
   const { id } = useParams();
@@ -69,9 +70,9 @@ const PassDetails = () => {
         .eq('id', user?.id)
         .single();
 
-      const currentRewards = profile?.rewards || [];
+      const currentRewards = (profile?.rewards || []) as Reward[];
       
-      const newReward = {
+      const newReward: Reward = {
         id: crypto.randomUUID(),
         name: reward.name,
         description: reward.description,
