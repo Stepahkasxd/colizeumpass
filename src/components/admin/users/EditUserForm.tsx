@@ -20,6 +20,8 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useAuth } from "@/context/AuthContext";
+import { logActivity } from "@/utils/logger";
 
 const userFormSchema = z.object({
   id: z.string(),
@@ -39,6 +41,8 @@ interface EditUserFormProps {
 }
 
 export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) => {
+  const { user: currentUser } = useAuth();
+  
   const form = useForm<UserProfile>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -53,9 +57,40 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
     }
   });
 
+  const handleSubmit = async (data: UserProfile) => {
+    if (!currentUser) return;
+
+    // Находим измененные поля
+    const changes = Object.entries(data).reduce((acc, [key, value]) => {
+      if (user[key as keyof UserProfile] !== value) {
+        acc[key] = {
+          from: user[key as keyof UserProfile],
+          to: value
+        };
+      }
+      return acc;
+    }, {} as Record<string, { from: any; to: any }>);
+
+    // Если есть изменения, логируем их
+    if (Object.keys(changes).length > 0) {
+      await logActivity({
+        user_id: currentUser.id,
+        category: 'admin',
+        action: 'update_user',
+        details: {
+          target_user_id: user.id,
+          target_user_name: user.display_name,
+          changes
+        }
+      });
+    }
+
+    await onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="display_name"
