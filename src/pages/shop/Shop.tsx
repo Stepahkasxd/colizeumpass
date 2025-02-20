@@ -92,11 +92,11 @@ const Shop = () => {
       // Создаем запись о покупке
       const { error: purchaseError } = await supabase
         .from('purchases')
-        .insert({
+        .insert([{
           user_id: user.id,
           product_id: product.id,
           status: 'pending'
-        });
+        }]);
 
       if (purchaseError) throw purchaseError;
 

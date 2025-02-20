@@ -9,6 +9,7 @@ type Purchase = {
   id: string;
   created_at: string;
   status: string;
+  product_id: string;
   products: {
     name: string;
     description: string | null;
@@ -22,17 +23,22 @@ export const PurchasesTab = () => {
   const { data: purchases, isLoading } = useQuery({
     queryKey: ['purchases', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('purchases')
         .select(`
-          *,
+          id,
+          created_at,
+          status,
+          product_id,
           products (
             name,
             description,
             points_cost
           )
         `)
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
