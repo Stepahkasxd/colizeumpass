@@ -56,7 +56,6 @@ const PassDetails = () => {
 
       if (error) throw error;
       
-      // Преобразуем JSON данные в правильный тип
       const passData = {
         ...data,
         levels: (data.levels || []) as Array<{
@@ -89,6 +88,7 @@ const PassDetails = () => {
 
   const handleClaimReward = async (level: number, reward: any) => {
     try {
+      // Проверяем, есть ли уже такая награда у пользователя
       const { data: profile } = await supabase
         .from('profiles')
         .select('rewards')
@@ -97,11 +97,25 @@ const PassDetails = () => {
 
       const currentRewards = (profile?.rewards || []) as Reward[];
       
+      // Проверяем, не получена ли уже награда за этот уровень
+      const existingReward = currentRewards.find(r => 
+        r.passLevel === level && r.name === reward.name
+      );
+
+      if (existingReward) {
+        toast({
+          title: "Награда уже получена",
+          description: "Вы уже получили награду за этот уровень",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const newReward: Reward = {
         id: crypto.randomUUID(),
         name: reward.name,
         description: reward.description,
-        status: "available",
+        status: "claimed", // Сразу устанавливаем статус "claimed"
         earnedAt: new Date().toISOString(),
         passLevel: level
       };
@@ -117,7 +131,7 @@ const PassDetails = () => {
 
       toast({
         title: "Награда добавлена!",
-        description: "Перейдите в раздел Награды, чтобы получить её",
+        description: "Перейдите в раздел Награды, чтобы увидеть её",
       });
     } catch (error) {
       console.error('Error claiming reward:', error);
