@@ -52,7 +52,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             message,
             user_id,
             created_at,
-            profiles (
+            profiles:user_id (
               display_name
             )
           `)
@@ -61,12 +61,16 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
 
         if (error) throw error;
 
-        const typedMessages = (data || []).map(msg => ({
-          ...msg,
-          profiles: msg.profiles || null
-        })) as Message[];
-
-        setMessages(typedMessages);
+        if (data) {
+          const formattedMessages: Message[] = data.map(msg => ({
+            id: msg.id,
+            message: msg.message,
+            user_id: msg.user_id,
+            created_at: msg.created_at,
+            profiles: msg.profiles as { display_name: string | null } | null
+          }));
+          setMessages(formattedMessages);
+        }
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
@@ -95,27 +99,30 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         },
         async (payload) => {
           // Получаем полные данные сообщения вместе с профилем
-          const { data: newMessage, error } = await supabase
+          const { data: newMessageData, error } = await supabase
             .from("ticket_messages")
             .select(`
               id,
               message,
               user_id,
               created_at,
-              profiles (
+              profiles:user_id (
                 display_name
               )
             `)
             .eq("id", payload.new.id)
             .single();
 
-          if (!error && newMessage) {
-            const typedMessage = {
-              ...newMessage,
-              profiles: newMessage.profiles || null
-            } as Message;
+          if (!error && newMessageData) {
+            const formattedMessage: Message = {
+              id: newMessageData.id,
+              message: newMessageData.message,
+              user_id: newMessageData.user_id,
+              created_at: newMessageData.created_at,
+              profiles: newMessageData.profiles as { display_name: string | null } | null
+            };
             
-            setMessages(prev => [...prev, typedMessage]);
+            setMessages(prev => [...prev, formattedMessage]);
             setTimeout(scrollToBottom, 100);
           }
         }
