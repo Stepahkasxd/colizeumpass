@@ -9,16 +9,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
-type DatabaseMessage = {
+interface Profile {
+  display_name: string | null;
+}
+
+interface Message {
   id: string;
   message: string;
   user_id: string;
   created_at: string;
   ticket_id: string;
-  profiles: {
-    display_name: string | null;
-  } | null;
-};
+  profile: Profile | null;
+}
 
 interface TicketChatProps {
   ticketId: string;
@@ -27,7 +29,7 @@ interface TicketChatProps {
 
 export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<DatabaseMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,27 +37,43 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     if (!ticketId) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await supabase
+      // Сначала получаем сообщения
+      const { data: messageData, error: messageError } = await supabase
         .from('ticket_messages')
-        .select(`
-          id,
-          message,
-          user_id,
-          created_at,
-          ticket_id,
-          profiles (
-            display_name
-          )
-        `)
+        .select('*')
         .eq('ticket_id', ticketId)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching messages:', error);
+      if (messageError) {
+        console.error('Error fetching messages:', messageError);
         return;
       }
 
-      setMessages(data || []);
+      // Затем получаем профили для всех пользователей
+      const userIds = [...new Set(messageData?.map(m => m.user_id) || [])];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return;
+      }
+
+      // Создаем мапу профилей
+      const profilesMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, Profile>);
+
+      // Комбинируем данные
+      const combinedMessages = (messageData || []).map(message => ({
+        ...message,
+        profile: profilesMap[message.user_id] || null
+      }));
+
+      setMessages(combinedMessages);
     };
 
     fetchMessages();
@@ -72,29 +90,19 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           filter: `ticket_id=eq.${ticketId}`,
         },
         async (payload) => {
-          const { data: messageData, error } = await supabase
-            .from('ticket_messages')
-            .select(`
-              id,
-              message,
-              user_id,
-              created_at,
-              ticket_id,
-              profiles (
-                display_name
-              )
-            `)
-            .eq('id', payload.new.id)
+          // Получаем профиль для нового сообщения
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, display_name')
+            .eq('id', payload.new.user_id)
             .single();
 
-          if (error) {
-            console.error('Error fetching new message:', error);
-            return;
-          }
+          const newMessage = {
+            ...payload.new,
+            profile: profileData || null
+          };
 
-          if (messageData) {
-            setMessages(current => [...current, messageData]);
-          }
+          setMessages(current => [...current, newMessage]);
         }
       )
       .subscribe();
@@ -147,7 +155,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-medium">
-                  {message.profiles?.display_name || "Пользователь"}
+                  {message.profile?.display_name || "Пользователь"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(message.created_at)}
