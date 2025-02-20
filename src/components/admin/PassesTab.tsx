@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PassList } from "./passes/PassList";
 import { PassForm } from "./passes/PassForm";
+import { useAuth } from "@/context/AuthContext";
+import { logActivity } from "@/utils/logger";
 
 export type Pass = {
   id: string;
@@ -32,6 +33,7 @@ export type Pass = {
 
 const PassesTab = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingPass, setEditingPass] = useState<Pass | null>(null);
 
@@ -57,17 +59,33 @@ const PassesTab = () => {
   });
 
   const handleCreatePass = async (data: Omit<Pass, 'id' | 'created_at'>) => {
+    if (!user) return;
+
     try {
-      const { error } = await supabase
+      const { error, data: newPass } = await supabase
         .from('passes')
         .insert([{
           name: data.name,
           description: data.description,
           price: data.price,
           levels: data.levels || []
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'passes',
+        action: 'create_pass',
+        details: {
+          pass_id: newPass.id,
+          pass_name: data.name,
+          price: data.price,
+          levels_count: data.levels?.length || 0
+        }
+      });
 
       toast({
         title: "Успех",
@@ -87,7 +105,7 @@ const PassesTab = () => {
   };
 
   const handleEditPass = async (data: Omit<Pass, 'created_at'>) => {
-    if (!editingPass?.id) {
+    if (!editingPass?.id || !user) {
       console.error('Pass ID is undefined');
       toast({
         title: "Ошибка",
@@ -110,6 +128,22 @@ const PassesTab = () => {
 
       if (error) throw error;
 
+      await logActivity({
+        user_id: user.id,
+        category: 'passes',
+        action: 'update_pass',
+        details: {
+          pass_id: editingPass.id,
+          pass_name: data.name,
+          changes: {
+            name: data.name !== editingPass.name ? { from: editingPass.name, to: data.name } : undefined,
+            price: data.price !== editingPass.price ? { from: editingPass.price, to: data.price } : undefined,
+            levels_count: data.levels?.length !== editingPass.levels?.length ? 
+              { from: editingPass.levels?.length, to: data.levels?.length } : undefined
+          }
+        }
+      });
+
       toast({
         title: "Успех",
         description: "Пропуск успешно обновлен",
@@ -128,13 +162,26 @@ const PassesTab = () => {
   };
 
   const handleDeletePass = async (id: string) => {
+    if (!user) return;
+
     try {
+      const passToDelete = passes?.find(p => p.id === id);
       const { error } = await supabase
         .from('passes')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'passes',
+        action: 'delete_pass',
+        details: {
+          pass_id: id,
+          pass_name: passToDelete?.name
+        }
+      });
 
       toast({
         title: "Успех",

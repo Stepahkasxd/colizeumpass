@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { logActivity } from "@/utils/logger";
 
 const phoneRegex = /^\+7\d{10}$/;
 
