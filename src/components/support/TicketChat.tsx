@@ -16,7 +16,7 @@ type Message = {
   message: string;
   user_id: string;
   created_at: string;
-  profiles?: {
+  profiles: {
     display_name: string | null;
   } | null;
 };
@@ -45,22 +45,28 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
-        const { data: messageData, error: messageError } = await supabase
+        const { data, error } = await supabase
           .from("ticket_messages")
           .select(`
             id,
             message,
             user_id,
             created_at,
-            profiles!ticket_messages_user_id_fkey (
+            profiles (
               display_name
             )
           `)
           .eq("ticket_id", ticketId)
           .order("created_at", { ascending: true });
 
-        if (messageError) throw messageError;
-        setMessages(messageData || []);
+        if (error) throw error;
+
+        const typedMessages = (data || []).map(msg => ({
+          ...msg,
+          profiles: msg.profiles || null
+        })) as Message[];
+
+        setMessages(typedMessages);
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
@@ -88,22 +94,28 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           filter: `ticket_id=eq.${ticketId}`,
         },
         async (payload) => {
-          const { data: messageWithProfile } = await supabase
+          // Получаем полные данные сообщения вместе с профилем
+          const { data: newMessage, error } = await supabase
             .from("ticket_messages")
             .select(`
               id,
               message,
               user_id,
               created_at,
-              profiles!ticket_messages_user_id_fkey (
+              profiles (
                 display_name
               )
             `)
             .eq("id", payload.new.id)
             .single();
 
-          if (messageWithProfile) {
-            setMessages(prev => [...prev, messageWithProfile as Message]);
+          if (!error && newMessage) {
+            const typedMessage = {
+              ...newMessage,
+              profiles: newMessage.profiles || null
+            } as Message;
+            
+            setMessages(prev => [...prev, typedMessage]);
             setTimeout(scrollToBottom, 100);
           }
         }
