@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TicketChat } from "@/components/support/TicketChat";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { SupportTicket, STATUS_LABELS } from "@/types/support";
 
 const formSchema = z.object({
   subject: z.string().min(5, "Тема должна содержать минимум 5 символов"),

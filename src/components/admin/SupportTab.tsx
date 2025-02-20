@@ -19,23 +19,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/AuthContext";
 import { logActivity } from "@/utils/logger";
-
-type SupportTicket = {
-  id: string;
-  subject: string;
-  message: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  created_at: string;
-  user_id: string;
-  updated_at: string;
-};
-
-const STATUS_LABELS = {
-  open: 'Открыт',
-  in_progress: 'В работе',
-  resolved: 'Решен',
-  closed: 'Закрыт'
-} as const;
+import { TicketChat } from "@/components/support/TicketChat";
+import { SupportTicket, STATUS_LABELS } from "@/types/support";
 
 const SupportTab = () => {
   const { toast } = useToast();

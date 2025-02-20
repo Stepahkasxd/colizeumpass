@@ -41,12 +41,17 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
       try {
         const { data, error } = await supabase
           .from("ticket_messages")
-          .select("*, profiles!ticket_messages_user_id_fkey (display_name)")
+          .select(`
+            *,
+            profiles:user_id (
+              display_name
+            )
+          `)
           .eq("ticket_id", ticketId)
           .order("created_at", { ascending: true });
 
         if (error) throw error;
-        setMessages(data);
+        setMessages(data as Message[]);
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
