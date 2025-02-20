@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -85,7 +86,7 @@ const Support = () => {
       .on(
         'postgres_changes',
         {
-          event: '*', // Слушаем все события (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'support_tickets',
           filter: `user_id=eq.${user.id}`,
@@ -94,17 +95,32 @@ const Support = () => {
           console.log('Ticket change received:', payload);
           
           if (payload.eventType === 'INSERT') {
-            const newTicket = {
+            // For new tickets, preserve all properties
+            const newTicket: SupportTicket = {
               ...payload.new,
-              status: payload.new.status as SupportTicket['status']
+              status: payload.new.status as SupportTicket['status'],
+              subject: payload.new.subject,
+              message: payload.new.message,
+              created_at: payload.new.created_at,
+              updated_at: payload.new.updated_at,
+              user_id: payload.new.user_id,
+              assigned_to: payload.new.assigned_to
             };
             setUserTickets(current => [newTicket, ...current]);
           } 
           else if (payload.eventType === 'UPDATE') {
-            const updatedTicket = {
+            // For updates, preserve all properties
+            const updatedTicket: SupportTicket = {
               ...payload.new,
-              status: payload.new.status as SupportTicket['status']
+              status: payload.new.status as SupportTicket['status'],
+              subject: payload.new.subject,
+              message: payload.new.message,
+              created_at: payload.new.created_at,
+              updated_at: payload.new.updated_at,
+              user_id: payload.new.user_id,
+              assigned_to: payload.new.assigned_to
             };
+            
             setUserTickets(current =>
               current.map(ticket =>
                 ticket.id === updatedTicket.id ? updatedTicket : ticket

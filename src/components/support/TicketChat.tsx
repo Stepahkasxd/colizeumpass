@@ -45,22 +45,34 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
+        // First fetch messages
         const { data: messageData, error: messageError } = await supabase
           .from("ticket_messages")
-          .select(`
-            id,
-            message,
-            user_id,
-            created_at,
-            profiles (
-              display_name
-            )
-          `)
+          .select('id, message, user_id, created_at')
           .eq("ticket_id", ticketId)
           .order("created_at", { ascending: true });
 
         if (messageError) throw messageError;
-        setMessages(messageData as Message[]);
+
+        if (messageData) {
+          // Then fetch profile data for each message
+          const messagesWithProfiles = await Promise.all(
+            messageData.map(async (message) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("display_name")
+                .eq("id", message.user_id)
+                .single();
+
+              return {
+                ...message,
+                profiles: profileData || null
+              } as Message;
+            })
+          );
+
+          setMessages(messagesWithProfiles);
+        }
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
@@ -70,7 +82,6 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         });
       } finally {
         setIsLoading(false);
-        // Прокручиваем к последнему сообщению после загрузки
         setTimeout(scrollToBottom, 100);
       }
     };
