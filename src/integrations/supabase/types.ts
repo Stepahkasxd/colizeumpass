@@ -307,7 +307,15 @@ export type Database = {
       }
     }
     Enums: {
-      log_category: "auth" | "admin" | "points" | "rewards" | "shop" | "passes"
+      log_category:
+        | "auth"
+        | "admin"
+        | "points"
+        | "rewards"
+        | "shop"
+        | "passes"
+        | "user"
+        | "system"
       payment_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "user"
     }

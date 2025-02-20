@@ -43,7 +43,7 @@ export const EditUserForm = ({ user, onClose }: EditUserFormProps) => {
 
       if (error) throw error;
 
-      // Логируем действие в activity_logs
+      // Логируем изменения в activity_logs с детальной информацией
       const logDetails = {
         previous: {
           points: user.points,
@@ -51,7 +51,9 @@ export const EditUserForm = ({ user, onClose }: EditUserFormProps) => {
           is_blocked: user.is_blocked
         },
         updated: data,
-        user_display_name: user.display_name
+        user_display_name: user.display_name,
+        modified_by: currentUser?.id,
+        timestamp: new Date().toISOString()
       };
 
       const { error: logError } = await supabase
@@ -60,7 +62,9 @@ export const EditUserForm = ({ user, onClose }: EditUserFormProps) => {
           user_id: currentUser?.id,
           category: 'admin',
           action: 'update_user',
-          details: logDetails
+          details: logDetails,
+          ip_address: window.location.hostname, // Простой способ получить IP для демонстрации
+          user_agent: navigator.userAgent
         });
 
       if (logError) {
@@ -69,6 +73,7 @@ export const EditUserForm = ({ user, onClose }: EditUserFormProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast({
         title: "Успешно",
         description: "Данные пользователя обновлены",

@@ -45,7 +45,9 @@ const categoryColors = {
   points: "green",
   rewards: "yellow",
   shop: "purple",
-  passes: "orange"
+  passes: "orange",
+  user: "slate",
+  system: "zinc"
 } as const;
 
 const categoryLabels = {
@@ -54,8 +56,22 @@ const categoryLabels = {
   points: "Очки",
   rewards: "Награды",
   shop: "Магазин",
-  passes: "Пропуска"
+  passes: "Пропуска",
+  user: "Пользователь",
+  system: "Система"
 } as const;
+
+const formatUserAgent = (userAgent: string | null) => {
+  if (!userAgent) return "Неизвестно";
+  // Упрощаем вывод User Agent для читаемости
+  const ua = userAgent.toLowerCase();
+  if (ua.includes("mobile")) return "Мобильное устройство";
+  if (ua.includes("firefox")) return "Firefox";
+  if (ua.includes("chrome")) return "Chrome";
+  if (ua.includes("safari")) return "Safari";
+  if (ua.includes("edge")) return "Edge";
+  return "Браузер";
+};
 
 const LogsTab = () => {
   const [selectedCategory, setSelectedCategory] = useState<LogCategory | 'all'>('all');
@@ -66,22 +82,20 @@ const LogsTab = () => {
       let query = supabase
         .from('activity_logs')
         .select('*, profiles!activity_logs_user_id_fkey (display_name)')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100); // Ограничиваем количество загружаемых логов
 
       if (selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
 
-      console.log('Fetching logs with query:', query); // Добавляем логирование
-
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching logs:', error); // Логируем ошибки
+        console.error('Error fetching logs:', error);
         throw error;
       }
 
-      console.log('Fetched logs:', data); // Логируем полученные данные
       return data as ActivityLog[];
     }
   });
@@ -130,6 +144,8 @@ const LogsTab = () => {
                 <TableHead>Пользователь</TableHead>
                 <TableHead>Действие</TableHead>
                 <TableHead>Детали</TableHead>
+                <TableHead>IP адрес</TableHead>
+                <TableHead>Устройство</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -150,6 +166,8 @@ const LogsTab = () => {
                   <TableCell className="max-w-md truncate">
                     {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}
                   </TableCell>
+                  <TableCell>{log.ip_address || 'Неизвестно'}</TableCell>
+                  <TableCell>{formatUserAgent(log.user_agent)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
