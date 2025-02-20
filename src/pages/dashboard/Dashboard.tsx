@@ -8,25 +8,11 @@ import { useAuth } from "@/context/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const { data: isAdmin } = useQuery({
-    queryKey: ['is-admin', user?.id],
-    queryFn: async () => {
-      if (!user) return false;
-      const { data, error } = await supabase.rpc('is_admin', {
-        user_id: user.id
-      });
-      if (error) throw error;
-      return !!data;
-    },
-    enabled: !!user
-  });
+  const isRootUser = user?.email === 'root@root.com';
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -36,7 +22,7 @@ const Dashboard = () => {
     <div className="container py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Личный кабинет</h1>
-        {isAdmin && (
+        {isRootUser && (
           <Button
             variant="outline"
             className="gap-2"
