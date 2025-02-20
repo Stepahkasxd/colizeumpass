@@ -34,6 +34,23 @@ const Dashboard = () => {
     enabled: !!user?.id
   });
 
+  const { data: isAdmin } = useQuery({
+    queryKey: ['isAdmin', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+      
+      if (error) return false;
+      return !!data;
+    },
+    enabled: !!user?.id
+  });
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -77,7 +94,7 @@ const Dashboard = () => {
         </TabsContent>
       </Tabs>
 
-      {isRootUser && (
+      {(isRootUser || isAdmin) && (
         <Button
           variant="outline"
           className="fixed bottom-4 right-4 gap-2"
