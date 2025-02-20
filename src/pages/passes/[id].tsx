@@ -24,6 +24,7 @@ import { BuyPassForm } from "@/components/passes/BuyPassForm";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Reward } from "@/types/user";
+import type { Json } from "@/integrations/supabase/types";
 
 type PassLevel = {
   level: number;
@@ -104,6 +105,29 @@ const PassDetails = () => {
     return profile.rewards.some(
       (r: Reward) => r.passLevel === level && r.name === rewardName && r.status === "claimed"
     );
+  };
+
+  const getCurrentLevel = () => {
+    if (!pass?.levels || !profile?.points) return 1;
+    const currentLevel = pass.levels.findIndex(level => profile.points < level.points_required);
+    return currentLevel === -1 ? pass.levels.length : currentLevel;
+  };
+
+  const calculateTotalProgress = () => {
+    if (!pass?.levels || !profile?.points) return 0;
+    const currentLevel = getCurrentLevel();
+    const previousLevelPoints = currentLevel > 0 ? pass.levels[currentLevel - 1]?.points_required || 0 : 0;
+    const nextLevelPoints = pass.levels[currentLevel]?.points_required || previousLevelPoints;
+    const totalPoints = pass.levels[pass.levels.length - 1]?.points_required || 0;
+    
+    return Math.min(Math.round((profile.points / totalPoints) * 100), 100);
+  };
+
+  const shouldShowProgressBar = (levelIndex: number) => {
+    if (!profile?.points) return false;
+    const currentLevel = getCurrentLevel();
+    // Показываем прогресс-бар только для текущего уровня
+    return levelIndex === currentLevel;
   };
 
   const calculateProgress = (requiredPoints: number) => {
@@ -228,6 +252,20 @@ const PassDetails = () => {
           <div className="glass-panel p-8 rounded-lg mb-8">
             <h1 className="text-3xl font-bold mb-4">{pass.name}</h1>
             <p className="text-foreground/70 text-lg mb-4">{pass.description}</p>
+            
+            {/* Общий прогресс пропуска */}
+            {profile?.has_pass && (
+              <div className="mb-8 space-y-2">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Общий прогресс</h3>
+                  <span className="text-sm text-muted-foreground">
+                    Уровень {getCurrentLevel()} из {pass.levels.length}
+                  </span>
+                </div>
+                <Progress value={calculateTotalProgress()} className="h-3" />
+              </div>
+            )}
+
             <p className="text-xl font-semibold mb-8">
               Стоимость: {pass.price.toLocaleString('ru-RU')} ₽
             </p>
@@ -249,7 +287,7 @@ const PassDetails = () => {
                     {pass.levels.map((level, index) => {
                       const isClaimed = isRewardClaimed(level.level, level.reward.name);
                       const progress = calculateProgress(level.points_required);
-                      const pointsText = getPointsText(level.points_required);
+                      const showProgress = shouldShowProgressBar(index);
                       
                       return (
                         <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
@@ -258,17 +296,19 @@ const PassDetails = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                             className={`h-full p-4 rounded-lg border ${
-                              progress >= 100 
+                              isClaimed 
                                 ? 'bg-primary/5 border-primary/10' 
                                 : 'bg-muted/5 border-muted/10'
                             }`}
                           >
-                            <div className="space-y-3 mb-4">
-                              <p className="text-sm text-muted-foreground">
-                                Осталось очков: {pointsText}
-                              </p>
-                              <Progress value={progress} className="h-2" />
-                            </div>
+                            {showProgress && (
+                              <div className="space-y-3 mb-4">
+                                <p className="text-sm text-muted-foreground">
+                                  Осталось очков: {getPointsText(level.points_required)}
+                                </p>
+                                <Progress value={progress} className="h-2" />
+                              </div>
+                            )}
                             
                             <div className="flex items-center gap-4 mb-3">
                               <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
