@@ -135,7 +135,7 @@ const Shop = () => {
         </div>
       ) : !products?.length ? (
         <div className="text-center text-muted-foreground">
-          В магазине пока нет доступных товаров
+          Сейчас тут пусто, но скоро тут будут товары которые вы сможете купить за свободные очки :3
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
