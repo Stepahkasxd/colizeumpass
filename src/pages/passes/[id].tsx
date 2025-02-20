@@ -1,10 +1,11 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowLeft, Trophy, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Trophy, Lock } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import {
   Carousel,
@@ -20,15 +21,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BuyPassForm } from "@/components/passes/BuyPassForm";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
 
 const PassDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [showBuyDialog, setShowBuyDialog] = useState(false);
 
-  const { data: pass, isLoading } = useQuery({
+  // Получаем информацию о пропуске
+  const { data: pass, isLoading: passLoading } = useQuery({
     queryKey: ['pass', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -42,7 +48,33 @@ const PassDetails = () => {
     }
   });
 
-  if (isLoading) {
+  // Получаем профиль пользователя, чтобы проверить наличие пропуска
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  const handleClaimReward = (level: number) => {
+    // Здесь будет логика получения награды
+    toast({
+      title: "Награда получена!",
+      description: `Вы получили награду за уровень ${level}`,
+    });
+  };
+
+  const currentLevel = profile?.level || 1;
+
+  if (passLoading || profileLoading) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
         <div className="animate-pulse">Загрузка...</div>
@@ -75,7 +107,7 @@ const PassDetails = () => {
           <Button
             variant="ghost"
             className="mb-6 -ml-4 gap-2"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(-1)}
           >
             <ArrowLeft className="w-4 h-4" />
             Назад
@@ -108,14 +140,25 @@ const PassDetails = () => {
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="h-full p-4 rounded-lg bg-primary/5 border border-primary/10"
+                          className={`h-full p-4 rounded-lg border ${
+                            currentLevel >= level.level 
+                              ? 'bg-primary/5 border-primary/10' 
+                              : 'bg-muted/5 border-muted/10'
+                          }`}
                         >
                           <div className="flex items-center gap-4 mb-3">
                             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-lg font-semibold">{level.level}</span>
+                              {currentLevel >= level.level ? (
+                                <span className="text-lg font-semibold">{level.level}</span>
+                              ) : (
+                                <Lock className="w-5 h-5 text-muted-foreground" />
+                              )}
                             </div>
                             <div>
                               <h3 className="font-medium">Уровень {level.level}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {currentLevel >= level.level ? 'Доступно' : 'Заблокировано'}
+                              </p>
                             </div>
                           </div>
                           <div className="space-y-2">
@@ -123,28 +166,39 @@ const PassDetails = () => {
                             {level.reward.description && (
                               <p className="text-sm text-foreground/60">{level.reward.description}</p>
                             )}
+                            {currentLevel >= level.level && (
+                              <Button 
+                                className="w-full mt-2" 
+                                variant="outline"
+                                onClick={() => handleClaimReward(level.level)}
+                              >
+                                Получить награду
+                              </Button>
+                            )}
                           </div>
                         </motion.div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex left-2" />
-                  <CarouselNext className="hidden sm:flex right-2" />
+                  <CarouselPrevious className="hidden sm:flex" />
+                  <CarouselNext className="hidden sm:flex" />
                 </Carousel>
               </div>
             )}
           </div>
 
-          <div className="flex justify-center">
-            <Button 
-              size="lg" 
-              className="gap-2" 
-              onClick={() => setShowBuyDialog(true)}
-            >
-              Купить пропуск
-              <Trophy className="w-4 h-4" />
-            </Button>
-          </div>
+          {(!user?.id || !profile?.has_pass) && (
+            <div className="flex justify-center">
+              <Button 
+                size="lg" 
+                className="gap-2" 
+                onClick={() => setShowBuyDialog(true)}
+              >
+                Купить пропуск
+                <Trophy className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </motion.div>
       </div>
 
