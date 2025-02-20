@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,14 +67,24 @@ const Navbar = () => {
           <div className="hidden md:block">
             <div className="flex items-center space-x-4">
               {user ? (
-                <Button
-                  variant="ghost"
-                  className="hover:text-primary"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Выйти
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    className="hover:text-primary"
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Личный кабинет
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="hover:text-primary"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Выйти
+                  </Button>
+                </>
               ) : (
                 <>
                   <Link to="/login">
@@ -120,15 +130,26 @@ const Navbar = () => {
             ))}
             <div className="border-t border-white/10 mt-2 pt-2 space-y-2">
               {user ? (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-foreground/80 hover:text-primary transition-colors duration-200"
-                >
-                  Выйти
-                </button>
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center px-3 py-2 text-foreground/80 hover:text-primary transition-colors duration-200"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Личный кабинет
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="flex w-full items-center px-3 py-2 text-foreground/80 hover:text-primary transition-colors duration-200"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Выйти
+                  </button>
+                </>
               ) : (
                 <>
                   <Link
