@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +95,46 @@ const SupportTab = () => {
       toast({
         title: "Ошибка",
         description: "Не удалось обновить статус тикета",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAssignTicket = async (ticketId: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ 
+          assigned_to: user.id,
+          status: 'in_progress',
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'admin',
+        action: 'assign_ticket',
+        details: {
+          ticket_id: ticketId
+        }
+      });
+
+      toast({
+        title: "Тикет назначен",
+        description: "Вы взяли тикет в работу",
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error assigning ticket:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось взять тикет в работу",
         variant: "destructive",
       });
     }
@@ -203,7 +242,7 @@ const SupportTab = () => {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <h4 className="font-medium mb-2">Сообщение:</h4>
+                  <h4 className="font-medium mb-2">Первоначальное сообщение:</h4>
                   <p className="text-sm whitespace-pre-wrap">{selectedTicket.message}</p>
                 </div>
                 <div className="flex items-center justify-between mt-4">
@@ -211,7 +250,9 @@ const SupportTab = () => {
                     <span className="text-sm font-medium">Статус:</span>
                     <Select
                       defaultValue={selectedTicket.status}
-                      onValueChange={(value) => handleStatusChange(selectedTicket.id, value as SupportTicket['status'])}
+                      onValueChange={(value) => 
+                        handleStatusChange(selectedTicket.id, value as SupportTicket['status'])
+                      }
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />
@@ -223,12 +264,18 @@ const SupportTab = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  {selectedTicket.updated_at !== selectedTicket.created_at && (
-                    <span className="text-sm text-muted-foreground">
-                      Последнее обновление: {formatDate(selectedTicket.updated_at)}
-                    </span>
+                  {selectedTicket.status === 'open' && (
+                    <Button onClick={() => handleAssignTicket(selectedTicket.id)}>
+                      Взять в работу
+                    </Button>
                   )}
                 </div>
+                {selectedTicket.status !== 'open' && (
+                  <div className="mt-6">
+                    <h4 className="font-medium mb-4">Чат с пользователем:</h4>
+                    <TicketChat ticketId={selectedTicket.id} isAdmin />
+                  </div>
+                )}
               </div>
             </ScrollArea>
           )}
