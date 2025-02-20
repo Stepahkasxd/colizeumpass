@@ -45,9 +45,7 @@ const categoryColors = {
   points: "green",
   rewards: "yellow",
   shop: "purple",
-  passes: "orange",
-  user: "slate",
-  system: "zinc"
+  passes: "orange"
 } as const;
 
 const categoryLabels = {
@@ -56,22 +54,8 @@ const categoryLabels = {
   points: "Очки",
   rewards: "Награды",
   shop: "Магазин",
-  passes: "Пропуска",
-  user: "Пользователь",
-  system: "Система"
+  passes: "Пропуска"
 } as const;
-
-const formatUserAgent = (userAgent: string | null) => {
-  if (!userAgent) return "Неизвестно";
-  // Упрощаем вывод User Agent для читаемости
-  const ua = userAgent.toLowerCase();
-  if (ua.includes("mobile")) return "Мобильное устройство";
-  if (ua.includes("firefox")) return "Firefox";
-  if (ua.includes("chrome")) return "Chrome";
-  if (ua.includes("safari")) return "Safari";
-  if (ua.includes("edge")) return "Edge";
-  return "Браузер";
-};
 
 const LogsTab = () => {
   const [selectedCategory, setSelectedCategory] = useState<LogCategory | 'all'>('all');
@@ -79,37 +63,25 @@ const LogsTab = () => {
   const { data: logs, isLoading } = useQuery({
     queryKey: ['activity-logs', selectedCategory],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from('activity_logs')
         .select('*, profiles!activity_logs_user_id_fkey (display_name)')
         .order('created_at', { ascending: false })
-        .limit(100); // Ограничиваем количество загружаемых логов
+        .limit(100);
 
       if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
+        query.eq('category', selectedCategory);
       }
 
       const { data, error } = await query;
 
-      if (error) {
-        console.error('Error fetching logs:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data as ActivityLog[];
     }
   });
 
   if (isLoading) {
-    return <div className="text-center py-4">Загрузка логов...</div>;
-  }
-
-  if (!logs || logs.length === 0) {
-    return (
-      <div className="text-center py-4 text-white/70">
-        Логи отсутствуют
-      </div>
-    );
+    return <div>Загрузка логов...</div>;
   }
 
   return (
@@ -135,21 +107,19 @@ const LogsTab = () => {
       </div>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Время</TableHead>
+                <TableHead>Время</TableHead>
                 <TableHead>Категория</TableHead>
                 <TableHead>Пользователь</TableHead>
                 <TableHead>Действие</TableHead>
                 <TableHead>Детали</TableHead>
-                <TableHead>IP адрес</TableHead>
-                <TableHead>Устройство</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((log) => (
+              {logs?.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="whitespace-nowrap">
                     {format(new Date(log.created_at), 'dd MMM yyyy HH:mm:ss', { locale: ru })}
@@ -164,10 +134,8 @@ const LogsTab = () => {
                   </TableCell>
                   <TableCell>{log.action}</TableCell>
                   <TableCell className="max-w-md truncate">
-                    {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}
+                    {JSON.stringify(log.details)}
                   </TableCell>
-                  <TableCell>{log.ip_address || 'Неизвестно'}</TableCell>
-                  <TableCell>{formatUserAgent(log.user_agent)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

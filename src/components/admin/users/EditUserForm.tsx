@@ -1,181 +1,201 @@
 
-import { useState } from "react";
+import { UserProfile, USER_STATUSES } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormDescription,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-type EditUserFormProps = {
-  user: {
-    id: string;
-    points: number;
-    free_points: number;
-    is_blocked: boolean;
-    display_name: string | null;
-  };
-  onClose: () => void;
-};
+const userFormSchema = z.object({
+  id: z.string(),
+  display_name: z.string().nullable(),
+  phone_number: z.string().nullable(),
+  level: z.number().min(0),
+  points: z.number().min(0),
+  free_points: z.number().min(0),
+  status: z.enum(['Standard', 'Premium', 'VIP']),
+  has_pass: z.boolean()
+});
 
-export const EditUserForm = ({ user, onClose }: EditUserFormProps) => {
-  const { user: currentUser } = useAuth();
-  const [points, setPoints] = useState(user.points.toString());
-  const [freePoints, setFreePoints] = useState(user.free_points.toString());
-  const [isBlocked, setIsBlocked] = useState(user.is_blocked);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+interface EditUserFormProps {
+  user: UserProfile;
+  onSubmit: (data: UserProfile) => Promise<void>;
+  onCancel: () => void;
+}
 
-  const updateUserMutation = useMutation({
-    mutationFn: async (data: {
-      points?: number;
-      free_points?: number;
-      is_blocked?: boolean;
-    }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      // Логируем изменения в activity_logs с детальной информацией
-      const logDetails = {
-        previous: {
-          points: user.points,
-          free_points: user.free_points,
-          is_blocked: user.is_blocked
-        },
-        updated: data,
-        user_display_name: user.display_name,
-        modified_by: currentUser?.id,
-        timestamp: new Date().toISOString()
-      };
-
-      const { error: logError } = await supabase
-        .from('activity_logs')
-        .insert({
-          user_id: currentUser?.id,
-          category: 'admin',
-          action: 'update_user',
-          details: logDetails,
-          ip_address: window.location.hostname,
-          user_agent: navigator.userAgent
-        });
-
-      if (logError) {
-        console.error('Error logging activity:', logError);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
-      toast({
-        title: "Успешно",
-        description: "Данные пользователя обновлены",
-      });
-      onClose();
-    },
-    onError: (error) => {
-      console.error('Error updating user:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить данные пользователя",
-        variant: "destructive",
-      });
-    },
+export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) => {
+  const form = useForm<UserProfile>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      id: user.id,
+      display_name: user.display_name,
+      phone_number: user.phone_number,
+      level: user.level,
+      points: user.points,
+      free_points: user.free_points || 0,
+      status: user.status,
+      has_pass: user.has_pass
+    }
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const updates: {
-      points?: number;
-      free_points?: number;
-      is_blocked?: boolean;
-    } = {};
-
-    if (points !== user.points.toString()) {
-      updates.points = parseInt(points);
-    }
-
-    if (freePoints !== user.free_points.toString()) {
-      updates.free_points = parseInt(freePoints);
-    }
-
-    if (isBlocked !== user.is_blocked) {
-      updates.is_blocked = isBlocked;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      updateUserMutation.mutate(updates);
-    } else {
-      onClose();
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="points">Очки</Label>
-        <Input
-          id="points"
-          type="number"
-          value={points}
-          onChange={(e) => setPoints(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="freePoints">Бесплатные очки</Label>
-        <Input
-          id="freePoints"
-          type="number"
-          value={freePoints}
-          onChange={(e) => setFreePoints(e.target.value)}
-        />
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="blocked"
-          checked={isBlocked}
-          onCheckedChange={setIsBlocked}
-        />
-        <Label htmlFor="blocked">Заблокирован</Label>
-      </div>
-
-      {isBlocked && (
-        <Alert>
-          <AlertDescription>
-            Заблокированные пользователи не смогут войти в систему
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={updateUserMutation.isPending}
-        >
-          Отмена
-        </Button>
-        <Button 
-          type="submit"
-          disabled={updateUserMutation.isPending}
-        >
-          {updateUserMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="display_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Имя</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value || ''} />
+              </FormControl>
+            </FormItem>
           )}
-          Сохранить
-        </Button>
-      </div>
-    </form>
+        />
+        <FormField
+          control={form.control}
+          name="phone_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Телефон</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value || ''} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Статус</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите статус" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {USER_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="has_pass"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Пропуск</FormLabel>
+              <Select
+                onValueChange={(value) => field.onChange(value === 'true')}
+                value={field.value ? 'true' : 'false'}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Наличие пропуска" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="true">Есть</SelectItem>
+                  <SelectItem value="false">Нет</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="level"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Уровень</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="points"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Очки прогресса</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              </FormControl>
+              <FormDescription>
+                Очки, используемые для прогресса в боевом пропуске
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="free_points"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Свободные очки</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              </FormControl>
+              <FormDescription>
+                Очки, которые можно потратить на покупку товаров
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+          >
+            Отмена
+          </Button>
+          <Button type="submit">
+            Сохранить
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
