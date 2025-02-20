@@ -20,7 +20,6 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Функция для форматирования ID в 6-значное число
 const formatId = (id: string) => {
   const numericId = parseInt(id);
   return isNaN(numericId) ? id : numericId.toString().padStart(6, '0');
@@ -38,20 +37,21 @@ export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) =>
             <th className="py-3 px-4 text-left">Статус</th>
             <th className="py-3 px-4 text-left">Пропуск</th>
             <th className="py-3 px-4 text-left">Уровень</th>
-            <th className="py-3 px-4 text-left">Очки</th>
+            <th className="py-3 px-4 text-left">Очки прогресса</th>
+            <th className="py-3 px-4 text-left">Свободные очки</th>
             <th className="py-3 px-4 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={8} className="py-4 px-4 text-center">
+              <td colSpan={9} className="py-4 px-4 text-center">
                 Загрузка...
               </td>
             </tr>
           ) : users?.length === 0 ? (
             <tr>
-              <td colSpan={8} className="py-4 px-4 text-center">
+              <td colSpan={9} className="py-4 px-4 text-center">
                 Пользователи не найдены
               </td>
             </tr>
@@ -69,6 +69,7 @@ export const UsersTable = ({ users, isLoading, onEditUser }: UsersTableProps) =>
                 </td>
                 <td className="py-3 px-4">{user.level}</td>
                 <td className="py-3 px-4">{user.points}</td>
+                <td className="py-3 px-4">{user.free_points}</td>
                 <td className="py-3 px-4">
                   <Button
                     variant="ghost"

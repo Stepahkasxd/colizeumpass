@@ -15,6 +15,7 @@ export type UserProfile = {
   phone_number: string | null;
   level: number;
   points: number;
+  free_points: number;
   status: 'Standard' | 'Premium' | 'VIP';
   has_pass: boolean;
   rewards: Reward[];

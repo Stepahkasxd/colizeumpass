@@ -8,6 +8,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -26,6 +27,7 @@ const userFormSchema = z.object({
   phone_number: z.string().nullable(),
   level: z.number().min(0),
   points: z.number().min(0),
+  free_points: z.number().min(0),
   status: z.enum(['Standard', 'Premium', 'VIP']),
   has_pass: z.boolean()
 });
@@ -45,6 +47,7 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
       phone_number: user.phone_number,
       level: user.level,
       points: user.points,
+      free_points: user.free_points || 0,
       status: user.status,
       has_pass: user.has_pass
     }
@@ -147,7 +150,7 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
           name="points"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Очки</FormLabel>
+              <FormLabel>Очки прогресса</FormLabel>
               <FormControl>
                 <Input 
                   type="number" 
@@ -155,6 +158,28 @@ export const EditUserForm = ({ user, onSubmit, onCancel }: EditUserFormProps) =>
                   onChange={(e) => field.onChange(Number(e.target.value))}
                 />
               </FormControl>
+              <FormDescription>
+                Очки, используемые для прогресса в боевом пропуске
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="free_points"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Свободные очки</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              </FormControl>
+              <FormDescription>
+                Очки, которые можно потратить на покупку товаров
+              </FormDescription>
             </FormItem>
           )}
         />

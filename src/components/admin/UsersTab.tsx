@@ -35,10 +35,10 @@ const UsersTab = () => {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Приводим данные к нужному типу
       return (data || []).map(profile => ({
         ...profile,
         rewards: (profile.rewards || []) as Reward[],
+        free_points: profile.free_points || 0
       })) as UserProfile[];
     }
   });
@@ -57,6 +57,7 @@ const UsersTab = () => {
           phone_number: data.phone_number,
           level: data.level,
           points: data.points,
+          free_points: data.free_points,
           status: data.status,
           has_pass: data.has_pass,
         })
