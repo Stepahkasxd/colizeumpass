@@ -3,19 +3,24 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Star, Target, Award } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export const StatsTab = () => {
+  const { user } = useAuth();
+
   const { data: profile } = useQuery({
-    queryKey: ['profile-stats'],
+    queryKey: ['profile-stats', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('id', user?.id)
         .single();
 
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!user?.id,
   });
 
   const statCards = [

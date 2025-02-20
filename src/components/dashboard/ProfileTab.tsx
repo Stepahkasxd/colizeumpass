@@ -8,19 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export const ProfileTab = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const { data: profile, refetch } = useQuery({
-    queryKey: ['user-profile'],
+    queryKey: ['user-profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('id', user?.id)
         .single();
 
       if (error) throw error;
@@ -29,7 +32,8 @@ export const ProfileTab = () => {
       setPhoneNumber(data.phone_number || "");
 
       return data;
-    }
+    },
+    enabled: !!user?.id,
   });
 
   const handleSave = async () => {
@@ -40,7 +44,7 @@ export const ProfileTab = () => {
           display_name: displayName,
           phone_number: phoneNumber
         })
-        .eq('id', profile?.id);
+        .eq('id', user?.id);
 
       if (error) throw error;
 
