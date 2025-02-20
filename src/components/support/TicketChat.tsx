@@ -37,7 +37,16 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from('ticket_messages')
-        .select('*, profiles:user_id(display_name)')
+        .select(`
+          id,
+          message,
+          user_id,
+          created_at,
+          ticket_id,
+          profiles (
+            display_name
+          )
+        `)
         .eq('ticket_id', ticketId)
         .order('created_at', { ascending: true });
 
@@ -65,7 +74,16 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         async (payload) => {
           const { data: messageData, error } = await supabase
             .from('ticket_messages')
-            .select('*, profiles:user_id(display_name)')
+            .select(`
+              id,
+              message,
+              user_id,
+              created_at,
+              ticket_id,
+              profiles (
+                display_name
+              )
+            `)
             .eq('id', payload.new.id)
             .single();
 
