@@ -233,6 +233,7 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           id: string
+          is_archived: boolean | null
           message: string
           status: string | null
           subject: string
@@ -243,6 +244,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           id?: string
+          is_archived?: boolean | null
           message: string
           status?: string | null
           subject: string
@@ -253,6 +255,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           id?: string
+          is_archived?: boolean | null
           message?: string
           status?: string | null
           subject?: string

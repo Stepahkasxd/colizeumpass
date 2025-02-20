@@ -8,6 +8,7 @@ export type SupportTicket = {
   user_id: string;
   updated_at: string;
   assigned_to?: string | null;
+  is_archived: boolean;
 };
 
 export const STATUS_LABELS = {

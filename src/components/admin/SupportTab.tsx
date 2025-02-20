@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import { logActivity } from "@/utils/logger";
 import { TicketChat } from "@/components/support/TicketChat";
 import { SupportTicket, STATUS_LABELS } from "@/types/support";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type SortOption = 'newest' | 'oldest' | 'status';
 
@@ -30,13 +30,15 @@ const SupportTab = () => {
   const { user } = useAuth();
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [showArchived, setShowArchived] = useState(false);
 
   const { data: tickets = [], isLoading, refetch } = useQuery({
-    queryKey: ['support_tickets'],
+    queryKey: ['support_tickets', showArchived],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('support_tickets')
         .select('*')
+        .eq('is_archived', showArchived)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -44,7 +46,6 @@ const SupportTab = () => {
     }
   });
 
-  // Функция сортировки тикетов
   const getSortedTickets = (tickets: SupportTicket[]) => {
     const sortedTickets = [...tickets];
     switch (sortBy) {
@@ -180,20 +181,32 @@ const SupportTab = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Тикеты технической поддержки</h2>
-        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Сортировка" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Сначала новые</SelectItem>
-            <SelectItem value="oldest">Сначала старые</SelectItem>
-            <SelectItem value="status">По статусу</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-4">
+          <Tabs value={showArchived ? "archived" : "active"} onValueChange={(value) => setShowArchived(value === "archived")}>
+            <TabsList>
+              <TabsTrigger value="active">Активные</TabsTrigger>
+              <TabsTrigger value="archived">Архив</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Сначала новые</SelectItem>
+              <SelectItem value="oldest">Сначала старые</SelectItem>
+              <SelectItem value="status">По статусу</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
         <div>Загрузка тикетов...</div>
+      ) : tickets.length === 0 ? (
+        <div className="text-center text-muted-foreground py-8">
+          {showArchived ? "В архиве нет тикетов" : "Активных тикетов нет"}
+        </div>
       ) : (
         <div className="grid gap-4">
           {getSortedTickets(tickets).map((ticket) => (
