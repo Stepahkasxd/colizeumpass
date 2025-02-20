@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
+import { logActivity } from "@/utils/logger";
 
 type Purchase = {
   id: string;
@@ -42,6 +43,17 @@ export const PurchasesTab = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Логируем просмотр истории покупок
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'view_purchase_history',
+        details: {
+          purchases_count: data?.length || 0
+        }
+      });
+
       return data as Purchase[];
     },
     enabled: !!user?.id

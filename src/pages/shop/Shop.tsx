@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { logActivity } from "@/utils/logger";
 
 type Product = {
   id: string;
@@ -25,7 +26,6 @@ const Shop = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Получаем список товаров
   const { data: products, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
@@ -40,7 +40,6 @@ const Shop = () => {
     }
   });
 
-  // Получаем баланс пользователя
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -57,7 +56,6 @@ const Shop = () => {
     enabled: !!user?.id
   });
 
-  // Обработчик покупки товара
   const handlePurchase = async (product: Product) => {
     if (!user) {
       toast({
@@ -75,6 +73,19 @@ const Shop = () => {
         description: "У вас недостаточно свободных очков для покупки этого товара",
         variant: "destructive",
       });
+
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'purchase_failed',
+        details: {
+          product_id: product.id,
+          product_name: product.name,
+          reason: 'insufficient_points',
+          required_points: product.points_cost,
+          available_points: profile?.free_points || 0
+        }
+      });
       return;
     }
 
@@ -90,15 +101,29 @@ const Shop = () => {
       if (updateError) throw updateError;
 
       // Создаем запись о покупке
-      const { error: purchaseError } = await supabase
+      const { error: purchaseError, data: purchaseData } = await supabase
         .from('purchases')
         .insert([{
           user_id: user.id,
           product_id: product.id,
           status: 'pending'
-        }]);
+        }])
+        .select()
+        .single();
 
       if (purchaseError) throw purchaseError;
+
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'purchase_success',
+        details: {
+          product_id: product.id,
+          product_name: product.name,
+          points_spent: product.points_cost,
+          purchase_id: purchaseData.id
+        }
+      });
 
       toast({
         title: "Успешная покупка",
@@ -110,10 +135,22 @@ const Shop = () => {
       // Перенаправляем на страницу с покупками
       navigate("/dashboard?tab=purchases");
     } catch (error) {
+      console.error('Purchase error:', error);
       toast({
         title: "Ошибка при покупке",
         description: "Не удалось совершить покупку. Попробуйте позже",
         variant: "destructive",
+      });
+
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'purchase_error',
+        details: {
+          product_id: product.id,
+          product_name: product.name,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
       });
     }
   };
