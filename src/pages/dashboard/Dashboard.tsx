@@ -38,7 +38,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container py-8">
+    <div className="container pt-24 pb-8">
       <div className="flex flex-col gap-2 mb-8">
         <h2 className="text-xl text-muted-foreground">
           Привет, {profile?.display_name || 'Гость'}!
