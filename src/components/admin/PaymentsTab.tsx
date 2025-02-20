@@ -19,7 +19,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
 
 type PaymentRequest = {
   id: string;
@@ -77,11 +76,11 @@ const PaymentsTab = () => {
     }
   });
 
-  // Запрос на получение покупок
+  // Запрос на получение покупок с правильным join
   const { data: purchases, isLoading: isLoadingPurchases, refetch: refetchPurchases } = useQuery({
     queryKey: ['purchases'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('purchases')
         .select(`
           id,
@@ -89,19 +88,30 @@ const PaymentsTab = () => {
           created_at,
           status,
           product_id,
-          products (
+          products:product_id (
             name,
             points_cost
-          ),
-          profiles (
-            display_name,
-            phone_number
           )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Purchase[];
+
+      // Получаем профили отдельным запросом
+      const purchasesWithProfiles = await Promise.all((data || []).map(async (purchase) => {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('display_name, phone_number')
+          .eq('id', purchase.user_id)
+          .single();
+
+        return {
+          ...purchase,
+          profiles: profileData
+        };
+      }));
+
+      return purchasesWithProfiles as Purchase[];
     }
   });
 
