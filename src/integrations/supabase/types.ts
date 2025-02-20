@@ -161,6 +161,7 @@ export type Database = {
           free_points: number | null
           has_pass: boolean | null
           id: string
+          is_blocked: boolean | null
           level: number | null
           phone_number: string | null
           points: number | null
@@ -173,6 +174,7 @@ export type Database = {
           free_points?: number | null
           has_pass?: boolean | null
           id: string
+          is_blocked?: boolean | null
           level?: number | null
           phone_number?: string | null
           points?: number | null
@@ -185,6 +187,7 @@ export type Database = {
           free_points?: number | null
           has_pass?: boolean | null
           id?: string
+          is_blocked?: boolean | null
           level?: number | null
           phone_number?: string | null
           points?: number | null

@@ -19,6 +19,7 @@ export type UserProfile = {
   status: 'Standard' | 'Premium' | 'VIP';
   has_pass: boolean;
   rewards: Reward[];
+  is_blocked: boolean;
 };
 
 export const USER_STATUSES = ['Standard', 'Premium', 'VIP'] as const;
