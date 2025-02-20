@@ -4,6 +4,7 @@ import { ProfileTab } from "@/components/dashboard/ProfileTab";
 import { PassesTab } from "@/components/dashboard/PassesTab";
 import { RewardsTab } from "@/components/dashboard/RewardsTab";
 import { StatsTab } from "@/components/dashboard/StatsTab";
+import { PurchasesTab } from "@/components/dashboard/PurchasesTab";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const Dashboard = () => {
           <TabsTrigger value="stats">Статистика</TabsTrigger>
           <TabsTrigger value="passes">Пропуск</TabsTrigger>
           <TabsTrigger value="rewards">Награды</TabsTrigger>
+          <TabsTrigger value="purchases">Покупки</TabsTrigger>
           <TabsTrigger value="profile">Профиль</TabsTrigger>
         </TabsList>
 
@@ -64,6 +66,10 @@ const Dashboard = () => {
 
         <TabsContent value="rewards" className="space-y-4">
           <RewardsTab />
+        </TabsContent>
+
+        <TabsContent value="purchases" className="space-y-4">
+          <PurchasesTab />
         </TabsContent>
 
         <TabsContent value="profile" className="space-y-4">

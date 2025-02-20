@@ -79,21 +79,36 @@ const Shop = () => {
     }
 
     try {
-      const { error } = await supabase
+      // Начинаем транзакцию
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           free_points: profile.free_points - product.points_cost
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Создаем запись о покупке
+      const { error: purchaseError } = await supabase
+        .from('purchases')
+        .insert({
+          user_id: user.id,
+          product_id: product.id,
+          status: 'pending'
+        });
+
+      if (purchaseError) throw purchaseError;
 
       toast({
         title: "Успешная покупка",
-        description: `Вы успешно приобрели ${product.name}`,
+        description: `Вы успешно приобрели ${product.name}. Для получения товара обратитесь к администратору.`,
       });
 
       refetchProfile();
+      
+      // Перенаправляем на страницу с покупками
+      navigate("/dashboard?tab=purchases");
     } catch (error) {
       toast({
         title: "Ошибка при покупке",
