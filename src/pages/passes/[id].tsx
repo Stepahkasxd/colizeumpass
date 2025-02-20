@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -54,7 +55,20 @@ const PassDetails = () => {
         .single();
 
       if (error) throw error;
-      return data as Pass;
+      
+      // Преобразуем JSON данные в правильный тип
+      const passData = {
+        ...data,
+        levels: (data.levels || []) as Array<{
+          level: number;
+          reward: {
+            name: string;
+            description?: string;
+          };
+        }>,
+      };
+      
+      return passData as Pass;
     }
   });
 

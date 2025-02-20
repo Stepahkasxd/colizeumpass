@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { UserProfile } from "@/types/user";
+import { UserProfile, Reward } from "@/types/user";
 import { UsersTable } from "./users/UsersTable";
 import { EditUserForm } from "./users/EditUserForm";
 
