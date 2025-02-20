@@ -39,22 +39,33 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data: messageData, error: messageError } = await supabase
           .from("ticket_messages")
-          .select(`
-            id,
-            message,
-            user_id,
-            created_at,
-            profiles (
-              display_name
-            )
-          `)
+          .select('id, message, user_id, created_at')
           .eq("ticket_id", ticketId)
           .order("created_at", { ascending: true });
 
-        if (error) throw error;
-        setMessages((data || []) as Message[]);
+        if (messageError) throw messageError;
+
+        if (messageData) {
+          // Fetch profiles separately to ensure proper typing
+          const messagesWithProfiles = await Promise.all(
+            messageData.map(async (message) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("display_name")
+                .eq("id", message.user_id)
+                .single();
+
+              return {
+                ...message,
+                profiles: profileData
+              } as Message;
+            })
+          );
+
+          setMessages(messagesWithProfiles);
+        }
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
@@ -81,19 +92,18 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           filter: `ticket_id=eq.${ticketId}`,
         },
         async (payload) => {
-          const { data, error } = await supabase
+          const { data: profileData } = await supabase
             .from("profiles")
             .select("display_name")
             .eq("id", payload.new.user_id)
             .single();
 
-          if (!error) {
-            const newMessage = {
-              ...payload.new,
-              profiles: data,
-            } as Message;
-            setMessages((prev) => [...prev, newMessage]);
-          }
+          const newMessage = {
+            ...payload.new,
+            profiles: profileData
+          } as Message;
+          
+          setMessages((prev) => [...prev, newMessage]);
         }
       )
       .subscribe();
