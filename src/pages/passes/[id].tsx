@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -5,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trophy, Lock } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import {
   Carousel,
   CarouselContent,
@@ -30,6 +32,7 @@ type Pass = {
   price: number;
   levels: Array<{
     level: number;
+    points_required: number;
     reward: {
       name: string;
       description?: string;
@@ -55,18 +58,13 @@ const PassDetails = () => {
 
       if (error) throw error;
       
-      const passData = {
+      return {
         ...data,
-        levels: (data.levels || []) as Array<{
-          level: number;
-          reward: {
-            name: string;
-            description?: string;
-          };
-        }>,
-      };
-      
-      return passData as Pass;
+        levels: (data.levels || []).map((level: any) => ({
+          ...level,
+          points_required: level.points_required || level.level * 100 // Дефолтное значение если не указано
+        }))
+      } as Pass;
     }
   });
 
@@ -94,15 +92,40 @@ const PassDetails = () => {
     );
   };
 
+  const calculateProgress = (requiredPoints: number) => {
+    const currentPoints = profile?.points || 0;
+    return Math.min(Math.round((currentPoints / requiredPoints) * 100), 100);
+  };
+
+  const getPointsText = (requiredPoints: number) => {
+    const currentPoints = profile?.points || 0;
+    return `${currentPoints}/${requiredPoints}`;
+  };
+
   const handleClaimReward = async (level: number, reward: any) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('rewards')
+        .select('rewards, points')
         .eq('id', user?.id)
         .single();
 
       const currentRewards = (profile?.rewards || []) as Reward[];
+      const currentPoints = profile?.points || 0;
+      const levelData = pass?.levels.find(l => l.level === level);
+      
+      if (!levelData) {
+        throw new Error('Уровень не найден');
+      }
+
+      if (currentPoints < levelData.points_required) {
+        toast({
+          title: "Недостаточно очков",
+          description: `Необходимо набрать ${levelData.points_required} очков`,
+          variant: "destructive",
+        });
+        return;
+      }
       
       const existingReward = currentRewards.find(r => 
         r.passLevel === level && r.name === reward.name
@@ -148,8 +171,6 @@ const PassDetails = () => {
       });
     }
   };
-
-  const currentLevel = profile?.level || 1;
 
   if (passLoading || profileLoading) {
     return (
@@ -211,8 +232,10 @@ const PassDetails = () => {
                   className="w-full"
                 >
                   <CarouselContent className="-ml-4">
-                    {pass.levels.map((level: any, index: number) => {
+                    {pass.levels.map((level, index) => {
                       const isClaimed = isRewardClaimed(level.level, level.reward.name);
+                      const progress = calculateProgress(level.points_required);
+                      const pointsText = getPointsText(level.points_required);
                       
                       return (
                         <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
@@ -221,20 +244,27 @@ const PassDetails = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                             className={`h-full p-4 rounded-lg border ${
-                              currentLevel >= level.level 
+                              progress >= 100 
                                 ? 'bg-primary/5 border-primary/10' 
                                 : 'bg-muted/5 border-muted/10'
                             }`}
                           >
+                            <div className="space-y-3 mb-4">
+                              <p className="text-sm text-muted-foreground">
+                                Осталось очков: {pointsText}
+                              </p>
+                              <Progress value={progress} className="h-2" />
+                            </div>
+                            
                             <div className="flex items-center gap-4 mb-3">
                               <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
                                 ${isClaimed 
                                   ? 'bg-primary text-primary-foreground' 
-                                  : currentLevel >= level.level 
+                                  : progress >= 100 
                                     ? 'bg-primary/10' 
                                     : 'bg-muted/10'}`}
                               >
-                                {currentLevel >= level.level ? (
+                                {progress >= 100 ? (
                                   isClaimed ? (
                                     <Trophy className="w-5 h-5" />
                                   ) : (
@@ -249,7 +279,7 @@ const PassDetails = () => {
                                 <p className="text-sm text-muted-foreground">
                                   {isClaimed 
                                     ? 'Получено' 
-                                    : currentLevel >= level.level 
+                                    : progress >= 100 
                                       ? 'Доступно' 
                                       : 'Заблокировано'}
                                 </p>
@@ -260,7 +290,7 @@ const PassDetails = () => {
                               {level.reward.description && (
                                 <p className="text-sm text-foreground/60">{level.reward.description}</p>
                               )}
-                              {currentLevel >= level.level && !isClaimed && (
+                              {progress >= 100 && !isClaimed && (
                                 <Button 
                                   className="w-full mt-2" 
                                   variant="outline"
