@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +49,7 @@ type Purchase = {
   profiles: {
     display_name: string | null;
     phone_number: string | null;
-  };
+  } | null;
 };
 
 const STATUS_LABELS = {
@@ -94,7 +93,7 @@ const PaymentsTab = () => {
             name,
             points_cost
           ),
-          profiles:user_id (
+          profiles (
             display_name,
             phone_number
           )
@@ -206,7 +205,6 @@ const PaymentsTab = () => {
     }).format(amount);
   };
 
-  // Компонент списка заявок на оплату
   const PaymentRequestsList = ({ requests }: { requests: PaymentRequest[] }) => (
     <div className="grid gap-4">
       {requests.map((request) => (
@@ -256,7 +254,6 @@ const PaymentsTab = () => {
     </div>
   );
 
-  // Компонент списка покупок
   const PurchasesList = ({ purchases }: { purchases: Purchase[] }) => (
     <div className="grid gap-4">
       {purchases.map((purchase) => (
