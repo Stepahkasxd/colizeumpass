@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -86,9 +85,15 @@ const PassDetails = () => {
     enabled: !!user?.id
   });
 
+  const isRewardClaimed = (level: number, rewardName: string) => {
+    const currentRewards = profile?.rewards || [];
+    return currentRewards.some(
+      (r: Reward) => r.passLevel === level && r.name === rewardName && r.status === "claimed"
+    );
+  };
+
   const handleClaimReward = async (level: number, reward: any) => {
     try {
-      // Проверяем, есть ли уже такая награда у пользователя
       const { data: profile } = await supabase
         .from('profiles')
         .select('rewards')
@@ -97,7 +102,6 @@ const PassDetails = () => {
 
       const currentRewards = (profile?.rewards || []) as Reward[];
       
-      // Проверяем, не получена ли уже награда за этот уровень
       const existingReward = currentRewards.find(r => 
         r.passLevel === level && r.name === reward.name
       );
@@ -115,7 +119,7 @@ const PassDetails = () => {
         id: crypto.randomUUID(),
         name: reward.name,
         description: reward.description,
-        status: "claimed", // Сразу устанавливаем статус "claimed"
+        status: "claimed",
         earnedAt: new Date().toISOString(),
         passLevel: level
       };
@@ -205,51 +209,69 @@ const PassDetails = () => {
                   className="w-full"
                 >
                   <CarouselContent className="-ml-4">
-                    {pass.levels.map((level: any, index: number) => (
-                      <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                        <motion.div
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className={`h-full p-4 rounded-lg border ${
-                            currentLevel >= level.level 
-                              ? 'bg-primary/5 border-primary/10' 
-                              : 'bg-muted/5 border-muted/10'
-                          }`}
-                        >
-                          <div className="flex items-center gap-4 mb-3">
-                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                              {currentLevel >= level.level ? (
-                                <span className="text-lg font-semibold">{level.level}</span>
-                              ) : (
-                                <Lock className="w-5 h-5 text-muted-foreground" />
+                    {pass.levels.map((level: any, index: number) => {
+                      const isClaimed = isRewardClaimed(level.level, level.reward.name);
+                      
+                      return (
+                        <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                          <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            className={`h-full p-4 rounded-lg border ${
+                              currentLevel >= level.level 
+                                ? 'bg-primary/5 border-primary/10' 
+                                : 'bg-muted/5 border-muted/10'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4 mb-3">
+                              <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
+                                ${isClaimed 
+                                  ? 'bg-primary text-primary-foreground' 
+                                  : currentLevel >= level.level 
+                                    ? 'bg-primary/10' 
+                                    : 'bg-muted/10'}`}
+                              >
+                                {currentLevel >= level.level ? (
+                                  isClaimed ? (
+                                    <Trophy className="w-5 h-5" />
+                                  ) : (
+                                    <span className="text-lg font-semibold">{level.level}</span>
+                                  )
+                                ) : (
+                                  <Lock className="w-5 h-5 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-medium">Уровень {level.level}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {isClaimed 
+                                    ? 'Получено' 
+                                    : currentLevel >= level.level 
+                                      ? 'Доступно' 
+                                      : 'Заблокировано'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-foreground/70">{level.reward.name}</p>
+                              {level.reward.description && (
+                                <p className="text-sm text-foreground/60">{level.reward.description}</p>
+                              )}
+                              {currentLevel >= level.level && !isClaimed && (
+                                <Button 
+                                  className="w-full mt-2" 
+                                  variant="outline"
+                                  onClick={() => handleClaimReward(level.level, level.reward)}
+                                >
+                                  Получить награду
+                                </Button>
                               )}
                             </div>
-                            <div>
-                              <h3 className="font-medium">Уровень {level.level}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {currentLevel >= level.level ? 'Доступно' : 'Заблокировано'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-foreground/70">{level.reward.name}</p>
-                            {level.reward.description && (
-                              <p className="text-sm text-foreground/60">{level.reward.description}</p>
-                            )}
-                            {currentLevel >= level.level && (
-                              <Button 
-                                className="w-full mt-2" 
-                                variant="outline"
-                                onClick={() => handleClaimReward(level.level, level.reward)}
-                              >
-                                Получить награду
-                              </Button>
-                            )}
-                          </div>
-                        </motion.div>
-                      </CarouselItem>
-                    ))}
+                          </motion.div>
+                        </CarouselItem>
+                      );
+                    })}
                   </CarouselContent>
                   <CarouselPrevious className="hidden sm:flex" />
                   <CarouselNext className="hidden sm:flex" />
