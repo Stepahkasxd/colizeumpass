@@ -45,34 +45,22 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
-        // First fetch messages
         const { data: messageData, error: messageError } = await supabase
           .from("ticket_messages")
-          .select('id, message, user_id, created_at')
+          .select(`
+            id,
+            message,
+            user_id,
+            created_at,
+            profiles!ticket_messages_user_id_fkey (
+              display_name
+            )
+          `)
           .eq("ticket_id", ticketId)
           .order("created_at", { ascending: true });
 
         if (messageError) throw messageError;
-
-        if (messageData) {
-          // Then fetch profile data for each message
-          const messagesWithProfiles = await Promise.all(
-            messageData.map(async (message) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("display_name")
-                .eq("id", message.user_id)
-                .single();
-
-              return {
-                ...message,
-                profiles: profileData || null
-              } as Message;
-            })
-          );
-
-          setMessages(messagesWithProfiles);
-        }
+        setMessages(messageData || []);
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
@@ -94,26 +82,28 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "ticket_messages",
           filter: `ticket_id=eq.${ticketId}`,
         },
         async (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const { data: profileData } = await supabase
-              .from("profiles")
-              .select("display_name")
-              .eq("id", payload.new.user_id)
-              .single();
+          const { data: messageWithProfile } = await supabase
+            .from("ticket_messages")
+            .select(`
+              id,
+              message,
+              user_id,
+              created_at,
+              profiles!ticket_messages_user_id_fkey (
+                display_name
+              )
+            `)
+            .eq("id", payload.new.id)
+            .single();
 
-            const newMessage = {
-              ...payload.new,
-              profiles: profileData
-            } as Message;
-            
-            setMessages(prev => [...prev, newMessage]);
-            // Прокручиваем к новому сообщению
+          if (messageWithProfile) {
+            setMessages(prev => [...prev, messageWithProfile as Message]);
             setTimeout(scrollToBottom, 100);
           }
         }
@@ -124,12 +114,6 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
       supabase.removeChannel(channel);
     };
   }, [ticketId, toast]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;

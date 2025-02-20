@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,12 +23,15 @@ import { logActivity } from "@/utils/logger";
 import { TicketChat } from "@/components/support/TicketChat";
 import { SupportTicket, STATUS_LABELS } from "@/types/support";
 
+type SortOption = 'newest' | 'oldest' | 'status';
+
 const SupportTab = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
-  const { data: tickets, isLoading, refetch } = useQuery({
+  const { data: tickets = [], isLoading, refetch } = useQuery({
     queryKey: ['support_tickets'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,6 +43,28 @@ const SupportTab = () => {
       return data as SupportTicket[];
     }
   });
+
+  // Функция сортировки тикетов
+  const getSortedTickets = (tickets: SupportTicket[]) => {
+    const sortedTickets = [...tickets];
+    switch (sortBy) {
+      case 'newest':
+        return sortedTickets.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      case 'oldest':
+        return sortedTickets.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      case 'status':
+        return sortedTickets.sort((a, b) => {
+          const statusOrder = { open: 0, in_progress: 1, resolved: 2, closed: 3 };
+          return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
+        });
+      default:
+        return sortedTickets;
+    }
+  };
 
   const handleStatusChange = async (ticketId: string, newStatus: SupportTicket['status']) => {
     if (!user) return;
@@ -152,13 +178,25 @@ const SupportTab = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-6">Тикеты технической поддержки</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">Тикеты технической поддержки</h2>
+        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Сортировка" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Сначала новые</SelectItem>
+            <SelectItem value="oldest">Сначала старые</SelectItem>
+            <SelectItem value="status">По статусу</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {isLoading ? (
         <div>Загрузка тикетов...</div>
       ) : (
         <div className="grid gap-4">
-          {tickets?.map((ticket) => (
+          {getSortedTickets(tickets).map((ticket) => (
             <div
               key={ticket.id}
               className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
