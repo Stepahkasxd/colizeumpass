@@ -64,13 +64,15 @@ const Support = () => {
           .from('support_tickets')
           .select('*')
           .eq('user_id', user.id)
+          .eq('is_archived', false)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
         
-        const typedData = (data || []).map(ticket => ({
+        const typedData = data.map(ticket => ({
           ...ticket,
-          status: ticket.status as SupportTicket['status']
+          status: ticket.status as SupportTicket['status'],
+          is_archived: ticket.is_archived || false
         }));
         
         setUserTickets(typedData);
@@ -95,7 +97,6 @@ const Support = () => {
           console.log('Ticket change received:', payload);
           
           if (payload.eventType === 'INSERT') {
-            // For new tickets, preserve all properties
             const newTicket: SupportTicket = {
               id: payload.new.id,
               subject: payload.new.subject,
@@ -104,12 +105,12 @@ const Support = () => {
               created_at: payload.new.created_at,
               updated_at: payload.new.updated_at,
               user_id: payload.new.user_id,
-              assigned_to: payload.new.assigned_to
+              assigned_to: payload.new.assigned_to,
+              is_archived: payload.new.is_archived || false
             };
             setUserTickets(current => [newTicket, ...current]);
           } 
           else if (payload.eventType === 'UPDATE') {
-            // For updates, preserve all properties
             const updatedTicket: SupportTicket = {
               id: payload.new.id,
               subject: payload.new.subject,
@@ -118,7 +119,8 @@ const Support = () => {
               created_at: payload.new.created_at,
               updated_at: payload.new.updated_at,
               user_id: payload.new.user_id,
-              assigned_to: payload.new.assigned_to
+              assigned_to: payload.new.assigned_to,
+              is_archived: payload.new.is_archived || false
             };
             
             setUserTickets(current =>
