@@ -63,25 +63,39 @@ const LogsTab = () => {
   const { data: logs, isLoading } = useQuery({
     queryKey: ['activity-logs', selectedCategory],
     queryFn: async () => {
-      const query = supabase
+      let query = supabase
         .from('activity_logs')
         .select('*, profiles!activity_logs_user_id_fkey (display_name)')
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false });
 
       if (selectedCategory !== 'all') {
-        query.eq('category', selectedCategory);
+        query = query.eq('category', selectedCategory);
       }
+
+      console.log('Fetching logs with query:', query); // Добавляем логирование
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching logs:', error); // Логируем ошибки
+        throw error;
+      }
+
+      console.log('Fetched logs:', data); // Логируем полученные данные
       return data as ActivityLog[];
     }
   });
 
   if (isLoading) {
-    return <div>Загрузка логов...</div>;
+    return <div className="text-center py-4">Загрузка логов...</div>;
+  }
+
+  if (!logs || logs.length === 0) {
+    return (
+      <div className="text-center py-4 text-white/70">
+        Логи отсутствуют
+      </div>
+    );
   }
 
   return (
@@ -107,11 +121,11 @@ const LogsTab = () => {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-4">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Время</TableHead>
+                <TableHead className="w-[180px]">Время</TableHead>
                 <TableHead>Категория</TableHead>
                 <TableHead>Пользователь</TableHead>
                 <TableHead>Действие</TableHead>
@@ -119,7 +133,7 @@ const LogsTab = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs?.map((log) => (
+              {logs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="whitespace-nowrap">
                     {format(new Date(log.created_at), 'dd MMM yyyy HH:mm:ss', { locale: ru })}
@@ -134,7 +148,7 @@ const LogsTab = () => {
                   </TableCell>
                   <TableCell>{log.action}</TableCell>
                   <TableCell className="max-w-md truncate">
-                    {JSON.stringify(log.details)}
+                    {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}
                   </TableCell>
                 </TableRow>
               ))}
