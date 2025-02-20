@@ -139,11 +139,11 @@ const UsersTab = () => {
     if (!selectedUser) return;
 
     try {
-      const { error: authError } = await supabase.auth.admin.deleteUser(
-        selectedUser.id
-      );
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: selectedUser.id },
+      });
 
-      if (authError) throw authError;
+      if (error) throw error;
 
       toast({
         title: "Успех",
@@ -153,6 +153,7 @@ const UsersTab = () => {
       setIsDeleteDialogOpen(false);
       refetch();
     } catch (error) {
+      console.error('Error deleting user:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось удалить пользователя",
