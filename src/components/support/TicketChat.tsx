@@ -14,6 +14,7 @@ type DatabaseMessage = {
   message: string;
   user_id: string;
   created_at: string;
+  ticket_id: string;
   profiles?: {
     display_name: string | null;
   } | null;
@@ -37,11 +38,8 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
       const { data, error } = await supabase
         .from('ticket_messages')
         .select(`
-          id,
-          message,
-          user_id,
-          created_at,
-          profiles:user_id (
+          *,
+          profiles (
             display_name
           )
         `)
@@ -73,11 +71,8 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           const { data: messageData, error } = await supabase
             .from('ticket_messages')
             .select(`
-              id,
-              message,
-              user_id,
-              created_at,
-              profiles:user_id (
+              *,
+              profiles (
                 display_name
               )
             `)
