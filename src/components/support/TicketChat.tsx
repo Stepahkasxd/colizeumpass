@@ -14,9 +14,9 @@ type DatabaseMessage = {
   message: string;
   user_id: string;
   created_at: string;
-  profiles: {
-    display_name: string;
-  };
+  profiles?: {
+    display_name: string | null;
+  } | null;
 };
 
 interface TicketChatProps {
@@ -41,7 +41,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           message,
           user_id,
           created_at,
-          profiles (
+          profiles:user_id (
             display_name
           )
         `)
@@ -53,7 +53,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         return;
       }
 
-      setMessages(data as DatabaseMessage[]);
+      setMessages(data || []);
     };
 
     fetchMessages();
@@ -77,7 +77,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               message,
               user_id,
               created_at,
-              profiles (
+              profiles:user_id (
                 display_name
               )
             `)
@@ -89,7 +89,9 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             return;
           }
 
-          setMessages(current => [...current, messageData as DatabaseMessage]);
+          if (messageData) {
+            setMessages(current => [...current, messageData]);
+          }
         }
       )
       .subscribe();
