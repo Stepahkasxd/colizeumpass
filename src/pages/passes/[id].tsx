@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +32,6 @@ const PassDetails = () => {
   const { toast } = useToast();
   const [showBuyDialog, setShowBuyDialog] = useState(false);
 
-  // Получаем информацию о пропуске
   const { data: pass, isLoading: passLoading } = useQuery({
     queryKey: ['pass', id],
     queryFn: async () => {
@@ -48,7 +46,6 @@ const PassDetails = () => {
     }
   });
 
-  // Получаем профиль пользователя, чтобы проверить наличие пропуска
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -64,12 +61,46 @@ const PassDetails = () => {
     enabled: !!user?.id
   });
 
-  const handleClaimReward = (level: number) => {
-    // Здесь будет логика получения награды
-    toast({
-      title: "Награда получена!",
-      description: `Вы получили награду за уровень ${level}`,
-    });
+  const handleClaimReward = async (level: number, reward: any) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('rewards')
+        .eq('id', user?.id)
+        .single();
+
+      const currentRewards = profile?.rewards || [];
+      
+      const newReward = {
+        id: crypto.randomUUID(),
+        name: reward.name,
+        description: reward.description,
+        status: "available",
+        earnedAt: new Date().toISOString(),
+        passLevel: level
+      };
+
+      const updatedRewards = [...currentRewards, newReward];
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ rewards: updatedRewards })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Награда добавлена!",
+        description: "Перейдите в раздел Награды, чтобы получить её",
+      });
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось получить награду",
+        variant: "destructive",
+      });
+    }
   };
 
   const currentLevel = profile?.level || 1;
@@ -170,7 +201,7 @@ const PassDetails = () => {
                               <Button 
                                 className="w-full mt-2" 
                                 variant="outline"
-                                onClick={() => handleClaimReward(level.level)}
+                                onClick={() => handleClaimReward(level.level, level.reward)}
                               >
                                 Получить награду
                               </Button>
