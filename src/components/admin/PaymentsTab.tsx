@@ -90,8 +90,14 @@ const PaymentsTab = () => {
           created_at,
           status,
           product_id,
-          products (name, points_cost),
-          profiles!purchases_user_id_fkey (display_name, phone_number)
+          products (
+            name,
+            points_cost
+          ),
+          profiles:user_id (
+            display_name,
+            phone_number
+          )
         `)
         .order('created_at', { ascending: false });
 
