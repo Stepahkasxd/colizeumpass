@@ -2,7 +2,7 @@
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Edit2, Ban, Trash2, Shield } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface UsersTableProps {
   users: UserProfile[] | null;
@@ -45,7 +45,7 @@ export const UsersTable = ({
 
   return (
     <div className="rounded-md border">
-      <ScrollArea className="w-full whitespace-nowrap">
+      <ScrollArea className="h-[calc(100vh-300px)]">
         <div className="min-w-[1200px]">
           <table className="w-full text-sm">
             <thead>
@@ -148,6 +148,7 @@ export const UsersTable = ({
             </tbody>
           </table>
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </div>
   );
