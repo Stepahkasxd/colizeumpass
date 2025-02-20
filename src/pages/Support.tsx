@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -43,7 +42,6 @@ const Support = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Получаем ticket_id из URL, если он есть
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const ticketId = searchParams.get('ticket');
@@ -81,7 +79,59 @@ const Support = () => {
     };
 
     fetchUserTickets();
-  }, [user]);
+
+    const channel = supabase
+      .channel('support_tickets_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Слушаем все события (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'support_tickets',
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          console.log('Ticket change received:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            const newTicket = {
+              ...payload.new,
+              status: payload.new.status as SupportTicket['status']
+            };
+            setUserTickets(current => [newTicket, ...current]);
+          } 
+          else if (payload.eventType === 'UPDATE') {
+            const updatedTicket = {
+              ...payload.new,
+              status: payload.new.status as SupportTicket['status']
+            };
+            setUserTickets(current =>
+              current.map(ticket =>
+                ticket.id === updatedTicket.id ? updatedTicket : ticket
+              )
+            );
+            
+            if (selectedTicket?.id === updatedTicket.id) {
+              setSelectedTicket(updatedTicket);
+            }
+          } 
+          else if (payload.eventType === 'DELETE') {
+            setUserTickets(current =>
+              current.filter(ticket => ticket.id !== payload.old.id)
+            );
+            
+            if (selectedTicket?.id === payload.old.id) {
+              handleTicketClose();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, selectedTicket?.id]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -143,7 +193,6 @@ const Support = () => {
     }
   };
 
-  // Обновляем URL при выборе тикета
   const handleTicketSelect = (ticket: SupportTicket) => {
     setSelectedTicket(ticket);
     const searchParams = new URLSearchParams(window.location.search);
@@ -151,7 +200,6 @@ const Support = () => {
     window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
   };
 
-  // Обновляем URL при закрытии тикета
   const handleTicketClose = () => {
     setSelectedTicket(null);
     const searchParams = new URLSearchParams(window.location.search);

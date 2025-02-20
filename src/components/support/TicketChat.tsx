@@ -35,37 +35,32 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
   useEffect(() => {
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
         const { data: messageData, error: messageError } = await supabase
           .from("ticket_messages")
-          .select('id, message, user_id, created_at')
+          .select(`
+            id,
+            message,
+            user_id,
+            created_at,
+            profiles (
+              display_name
+            )
+          `)
           .eq("ticket_id", ticketId)
           .order("created_at", { ascending: true });
 
         if (messageError) throw messageError;
-
-        if (messageData) {
-          // Fetch profiles separately to ensure proper typing
-          const messagesWithProfiles = await Promise.all(
-            messageData.map(async (message) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("display_name")
-                .eq("id", message.user_id)
-                .single();
-
-              return {
-                ...message,
-                profiles: profileData
-              } as Message;
-            })
-          );
-
-          setMessages(messagesWithProfiles);
-        }
+        setMessages(messageData as Message[]);
       } catch (error) {
         console.error("Error fetching messages:", error);
         toast({
@@ -75,6 +70,8 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         });
       } finally {
         setIsLoading(false);
+        // Прокручиваем к последнему сообщению после загрузки
+        setTimeout(scrollToBottom, 100);
       }
     };
 
@@ -82,28 +79,32 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
 
     // Подписываемся на новые сообщения
     const channel = supabase
-      .channel("ticket_messages")
+      .channel(`ticket_messages_${ticketId}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "ticket_messages",
           filter: `ticket_id=eq.${ticketId}`,
         },
         async (payload) => {
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", payload.new.user_id)
-            .single();
+          if (payload.eventType === 'INSERT') {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", payload.new.user_id)
+              .single();
 
-          const newMessage = {
-            ...payload.new,
-            profiles: profileData
-          } as Message;
-          
-          setMessages((prev) => [...prev, newMessage]);
+            const newMessage = {
+              ...payload.new,
+              profiles: profileData
+            } as Message;
+            
+            setMessages(prev => [...prev, newMessage]);
+            // Прокручиваем к новому сообщению
+            setTimeout(scrollToBottom, 100);
+          }
         }
       )
       .subscribe();
