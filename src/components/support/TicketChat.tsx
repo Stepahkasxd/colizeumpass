@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,11 +47,8 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         const { data, error } = await supabase
           .from("ticket_messages")
           .select(`
-            id,
-            message,
-            user_id,
-            created_at,
-            profiles:user_id (
+            *,
+            profiles!ticket_messages_user_id_fkey (
               display_name
             )
           `)
@@ -102,11 +98,8 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           const { data: newMessageData, error } = await supabase
             .from("ticket_messages")
             .select(`
-              id,
-              message,
-              user_id,
-              created_at,
-              profiles:user_id (
+              *,
+              profiles!ticket_messages_user_id_fkey (
                 display_name
               )
             `)
