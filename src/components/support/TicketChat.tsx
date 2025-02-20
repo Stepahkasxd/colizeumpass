@@ -11,6 +11,16 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { logActivity } from "@/utils/logger";
 
+type DatabaseMessage = {
+  id: string;
+  message: string;
+  user_id: string;
+  created_at: string;
+  profiles: {
+    display_name: string | null;
+  };
+}
+
 type Message = {
   id: string;
   message: string;
@@ -52,7 +62,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             message,
             user_id,
             created_at,
-            profiles!inner (
+            profiles (
               display_name
             )
           `)
@@ -62,14 +72,12 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         if (error) throw error;
 
         if (data) {
-          const formattedMessages: Message[] = data.map(msg => ({
+          const formattedMessages: Message[] = (data as DatabaseMessage[]).map(msg => ({
             id: msg.id,
             message: msg.message,
             user_id: msg.user_id,
             created_at: msg.created_at,
-            profiles: {
-              display_name: msg.profiles?.display_name || null
-            }
+            profiles: msg.profiles || null
           }));
           setMessages(formattedMessages);
         }
@@ -108,7 +116,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               message,
               user_id,
               created_at,
-              profiles!inner (
+              profiles (
                 display_name
               )
             `)
@@ -121,9 +129,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               message: newMessageData.message,
               user_id: newMessageData.user_id,
               created_at: newMessageData.created_at,
-              profiles: {
-                display_name: newMessageData.profiles?.display_name || null
-              }
+              profiles: (newMessageData as DatabaseMessage).profiles || null
             };
             
             setMessages(prev => [...prev, formattedMessage]);
