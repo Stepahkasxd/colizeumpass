@@ -58,7 +58,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-black/90 to-black/95 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,204,0,0.05)_0%,transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(234,179,8,0.03)_0%,transparent_50%)] pointer-events-none" />
       
       <div className="container relative pt-24 pb-8">
         <motion.div 
@@ -67,47 +67,47 @@ const Dashboard = () => {
           transition={{ duration: 0.5 }}
           className="flex flex-col gap-2 mb-8"
         >
-          <h2 className="text-xl text-yellow-400/70">
+          <h2 className="text-xl text-yellow-600/70">
             Привет, {profile?.display_name || 'Гость'}!
           </h2>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400/50 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600/50 bg-clip-text text-transparent">
             Личный кабинет
           </h1>
         </motion.div>
         
         <Tabs defaultValue="stats" className="space-y-6">
-          <TabsList className="bg-black/40 backdrop-blur-lg border border-yellow-400/10 h-14 p-1 w-full sm:w-fit">
+          <TabsList className="bg-black/40 backdrop-blur-lg border border-yellow-600/10 h-14 p-1 w-full sm:w-fit">
             <TabsTrigger 
               value="stats" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-yellow-600/90 data-[state=active]:text-white gap-2"
             >
               <Trophy className="h-4 w-4" />
               <span className="hidden sm:inline">Статистика</span>
             </TabsTrigger>
             <TabsTrigger 
               value="passes" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-yellow-600/90 data-[state=active]:text-white gap-2"
             >
               <Ticket className="h-4 w-4" />
               <span className="hidden sm:inline">Пропуск</span>
             </TabsTrigger>
             <TabsTrigger 
               value="rewards" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-yellow-600/90 data-[state=active]:text-white gap-2"
             >
               <Star className="h-4 w-4" />
               <span className="hidden sm:inline">Награды</span>
             </TabsTrigger>
             <TabsTrigger 
               value="purchases" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-yellow-600/90 data-[state=active]:text-white gap-2"
             >
               <ShoppingCart className="h-4 w-4" />
               <span className="hidden sm:inline">Покупки</span>
             </TabsTrigger>
             <TabsTrigger 
               value="profile" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-yellow-600/90 data-[state=active]:text-white gap-2"
             >
               <User2 className="h-4 w-4" />
               <span className="hidden sm:inline">Профиль</span>
@@ -144,7 +144,7 @@ const Dashboard = () => {
         {(isRootUser || isAdmin) && (
           <Button
             variant="outline"
-            className="fixed bottom-4 right-4 gap-2 bg-black/40 backdrop-blur-lg border-yellow-400/20 hover:bg-yellow-400/10 hover:border-yellow-400/30 transition-all duration-300"
+            className="fixed bottom-4 right-4 gap-2 bg-black/40 backdrop-blur-lg border-yellow-600/20 hover:bg-yellow-600/10 hover:border-yellow-600/30 transition-all duration-300"
             onClick={() => navigate('/admin')}
           >
             <Shield className="h-4 w-4" />
