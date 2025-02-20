@@ -34,7 +34,12 @@ const UsersTab = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as UserProfile[];
+      
+      // Приводим данные к нужному типу
+      return (data || []).map(profile => ({
+        ...profile,
+        rewards: (profile.rewards || []) as Reward[],
+      })) as UserProfile[];
     }
   });
 

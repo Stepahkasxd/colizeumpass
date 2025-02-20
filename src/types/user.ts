@@ -10,6 +10,7 @@ export type Reward = {
 
 export type UserProfile = {
   id: string;
+  created_at: string;
   display_name: string | null;
   phone_number: string | null;
   level: number;

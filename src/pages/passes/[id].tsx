@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trophy, Lock } from "lucide-react";
-import type { Database } from "@/integrations/supabase/types";
 import {
   Carousel,
   CarouselContent,
@@ -22,9 +21,21 @@ import {
 import { BuyPassForm } from "@/components/passes/BuyPassForm";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import type { Reward } from "@/types/user";
 
-type Pass = Database["public"]["Tables"]["passes"]["Row"];
-type Reward = Database["public"]["Tables"]["rewards"]["Row"];
+type Pass = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  levels: Array<{
+    level: number;
+    reward: {
+      name: string;
+      description?: string;
+    };
+  }>;
+};
 
 const PassDetails = () => {
   const { id } = useParams();
