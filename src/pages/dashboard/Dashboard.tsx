@@ -67,17 +67,9 @@ const Dashboard = () => {
           transition={{ duration: 0.5 }}
           className="flex flex-col gap-2 mb-8"
         >
-          <div className="flex flex-col gap-1">
-            <h2 className="text-xl text-white/70">
-              Привет, {profile?.display_name || 'Гость'}!
-            </h2>
-            <p className="text-sm text-white/50">
-              ID: {user.id}
-            </p>
-            <p className="text-sm text-white/50">
-              Статус: {isRootUser ? 'Суперпользователь' : isAdmin ? 'Администратор' : 'Пользователь'}
-            </p>
-          </div>
+          <h2 className="text-xl text-white/70">
+            Привет, {profile?.display_name || 'Гость'}!
+          </h2>
           <h1 className="text-4xl font-bold text-white">
             Личный кабинет
           </h1>
