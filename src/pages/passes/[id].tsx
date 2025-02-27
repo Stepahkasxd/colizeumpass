@@ -281,7 +281,8 @@ const PassDetails = () => {
                 </motion.div>
               )}
 
-              {(!user?.id || !profile?.has_pass) && (
+              {/* Only show buy pass button if user is not logged in or doesn't have a pass */}
+              {(!user?.id || (profile && !profile.has_pass)) && (
                 <motion.div 
                   className="mt-6"
                   initial={{ opacity: 0, y: 20 }}
