@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { PassHeader } from "@/components/passes/PassHeader";
 import { PassLevels } from "@/components/passes/PassLevels";
 import { PassProgress } from "@/components/passes/PassProgress";
-import { Pass, PassLevel } from "@/types/user";
+import { Pass, PassLevel, UserProfile, USER_STATUSES } from "@/types/user";
 
 const PassDetails = () => {
   const { id } = useParams();
@@ -37,12 +37,26 @@ const PassDetails = () => {
     }
   });
 
+  // Function to validate user status
+  const validateUserStatus = (status: string): "Standard" | "Premium" | "VIP" => {
+    if (USER_STATUSES.includes(status as any)) {
+      return status as "Standard" | "Premium" | "VIP";
+    }
+    return "Standard"; // Default fallback
+  };
+
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
       if (error) throw error;
-      return data;
+      
+      // Transform profile data to ensure types match
+      return {
+        ...data,
+        status: validateUserStatus(data.status),
+        rewards: Array.isArray(data.rewards) ? data.rewards : []
+      } as UserProfile;
     },
     enabled: !!user?.id
   });
