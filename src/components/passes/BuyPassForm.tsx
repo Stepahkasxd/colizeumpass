@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
 
 type BuyPassFormProps = {
   passId: string;
@@ -16,9 +17,38 @@ type BuyPassFormProps = {
 export const BuyPassForm = ({ passId, passName, amount }: BuyPassFormProps) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [userHasPass, setUserHasPass] = useState(false);
+  const [isCheckingPass, setIsCheckingPass] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkUserPass = async () => {
+      if (!user) {
+        setIsCheckingPass(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('has_pass')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        
+        setUserHasPass(data.has_pass || false);
+      } catch (error) {
+        console.error('Error checking user pass status:', error);
+      } finally {
+        setIsCheckingPass(false);
+      }
+    };
+
+    checkUserPass();
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +117,31 @@ export const BuyPassForm = ({ passId, passName, amount }: BuyPassFormProps) => {
     const formatted = formatPhoneNumber(e.target.value);
     setPhoneNumber(formatted);
   };
+
+  if (isCheckingPass) {
+    return <div className="flex justify-center p-4">Проверка статуса пропуска...</div>;
+  }
+
+  if (userHasPass) {
+    return (
+      <div className="p-4 border border-primary/20 rounded-lg bg-primary/5">
+        <div className="flex items-center gap-2 text-primary mb-3">
+          <AlertCircle className="w-5 h-5" />
+          <h3 className="font-semibold">У вас уже есть активный пропуск</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Вы уже приобрели пропуск. Перейдите в раздел "Личный кабинет" для просмотра информации о вашем пропуске.
+        </p>
+        <Button 
+          variant="outline" 
+          className="mt-4 w-full"
+          onClick={() => navigate("/dashboard")}
+        >
+          Перейти в личный кабинет
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
