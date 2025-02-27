@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -7,32 +8,32 @@
 @layer base {
   :root {
     --background: 0 0% 7%;
-    --foreground: 60 100% 50%;
+    --foreground: 50 100% 50%;
     
     --card: 0 0% 7%;
-    --card-foreground: 60 100% 50%;
+    --card-foreground: 50 100% 50%;
     
     --popover: 0 0% 7%;
-    --popover-foreground: 60 100% 50%;
+    --popover-foreground: 50 100% 50%;
     
-    --primary: 60 100% 50%;
+    --primary: 50 100% 50%;
     --primary-foreground: 0 0% 7%;
     
     --secondary: 0 0% 12%;
-    --secondary-foreground: 60 100% 50%;
+    --secondary-foreground: 50 100% 50%;
     
     --muted: 0 0% 12%;
-    --muted-foreground: 60 30% 50%;
+    --muted-foreground: 50 30% 50%;
     
     --accent: 0 0% 12%;
-    --accent-foreground: 60 100% 50%;
+    --accent-foreground: 50 100% 50%;
     
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 60 100% 50%;
+    --destructive-foreground: 50 100% 50%;
     
     --border: 0 0% 12%;
     --input: 0 0% 12%;
-    --ring: 60 100% 50%;
+    --ring: 50 100% 50%;
 
     --radius: 0.5rem;
   }
