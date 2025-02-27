@@ -97,8 +97,13 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             .eq('id', payload.new.user_id)
             .single();
 
-          const newMessage = {
-            ...payload.new,
+          // Ensure we create a complete Message object
+          const newMessage: Message = {
+            id: payload.new.id,
+            message: payload.new.message,
+            user_id: payload.new.user_id,
+            created_at: payload.new.created_at,
+            ticket_id: payload.new.ticket_id,
             profile: profileData || null
           };
 
