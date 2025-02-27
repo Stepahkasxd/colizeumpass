@@ -16,7 +16,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: passes } = useQuery({
+  const { data: passes, isLoading } = useQuery({
     queryKey: ['passes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,7 +27,9 @@ const Index = () => {
 
       if (error) throw error;
       return data as Pass[];
-    }
+    },
+    // Enable the query regardless of user authentication status
+    enabled: true
   });
 
   const calculateDiscount = (price: number) => {
@@ -156,7 +158,7 @@ const Index = () => {
             Покупайте пропуска, получайте бонусы и наслаждайтесь игрой!
           </motion.p>
 
-          {passes && passes.length > 0 && (
+          {!isLoading && passes && passes.length > 0 && (
             <div className="mb-16">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
