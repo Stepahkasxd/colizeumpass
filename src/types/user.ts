@@ -22,4 +22,21 @@ export type UserProfile = {
   is_blocked: boolean;
 };
 
+export type PassLevel = {
+  level: number;
+  points_required: number;
+  reward: {
+    name: string;
+    description?: string;
+  };
+};
+
+export type Pass = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  levels: PassLevel[];
+};
+
 export const USER_STATUSES = ['Standard', 'Premium', 'VIP'] as const;
