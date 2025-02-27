@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -119,7 +120,7 @@ const Index = () => {
           transition={{ duration: 0.5 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-glow">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-with-shadow">
             Добро пожаловать в Colizeum на Родине
           </h1>
           <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto">

@@ -66,4 +66,8 @@
   .text-glow {
     @apply text-[#e4d079] drop-shadow-[0_0_4px_#e4d079];
   }
+  
+  .text-with-shadow {
+    @apply text-[#e4d079] shadow-[0_1px_2px_rgba(0,0,0,0.5)];
+  }
 }
