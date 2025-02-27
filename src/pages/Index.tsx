@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Clock, Users, Wallet, ChevronRight, Tag } from "lucide-react";
+import { ArrowRight, Clock, Users, Wallet, ChevronRight, Tag, Star, Award, Rocket } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -112,25 +112,65 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
-      <div className="container">
+    <div className="min-h-screen pt-20 pb-12 animated-gradient overflow-hidden">
+      {/* Декоративные элементы */}
+      <div className="fixed top-0 left-0 w-full h-screen bg-dots opacity-5 pointer-events-none"></div>
+      <div className="fixed top-20 right-20 w-72 h-72 rounded-full bg-primary/5 blur-[100px] pointer-events-none"></div>
+      <div className="fixed bottom-20 left-20 w-80 h-80 rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
+
+      <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.7 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-with-shadow">
-            Добро пожаловать в Colizeum на Родине
-          </h1>
-          <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto">
+          <div className="flex justify-center mb-6">
+            <motion.div 
+              className="inline-flex items-center px-4 py-2 rounded-full glass-panel text-sm"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <Star className="w-4 h-4 text-yellow-400 mr-2" />
+              <span>Добро пожаловать в компьютерный клуб нового поколения</span>
+            </motion.div>
+          </div>
+
+          <motion.h1 
+            className="text-4xl md:text-6xl font-bold mb-6 text-with-shadow"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7 }}
+          >
+            Добро пожаловать в <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#e4d079] to-[#ffebb3]">Colizeum</span> на Родине
+          </motion.h1>
+
+          <motion.p 
+            className="text-xl text-foreground/70 mb-10 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.7 }}
+          >
             Современная система контроля доступа для компьютерного клуба. 
             Покупайте пропуска, получайте бонусы и наслаждайтесь игрой!
-          </p>
+          </motion.p>
 
           {passes && passes.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6">Пропуск</h2>
+            <div className="mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.7 }}
+                className="mb-8 flex flex-col items-center"
+              >
+                <div className="flex items-center justify-center mb-2">
+                  <Award className="w-6 h-6 text-primary mr-2" />
+                  <h2 className="text-2xl font-bold">Актуальный пропуск</h2>
+                </div>
+                <div className="w-20 h-1 bg-gradient-to-r from-primary/30 to-primary"></div>
+              </motion.div>
+              
               <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
                 {passes.map((pass) => {
                   const priceInfo = calculateDiscount(pass.price);
@@ -138,15 +178,16 @@ const Index = () => {
                   return (
                     <motion.div
                       key={pass.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="glass-panel p-6 rounded-lg text-left relative group cursor-pointer hover:shadow-lg transition-all duration-300"
+                      transition={{ delay: 0.6, duration: 0.7 }}
+                      className="glass-panel glow-ring p-6 rounded-lg text-left relative group cursor-pointer card-hover"
                       onClick={() => handlePassClick(pass)}
                     >
                       <div className="flex justify-between items-start pb-16">
                         <div className="flex-1">
-                          <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                          <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors flex items-center">
+                            <Rocket className="w-5 h-5 mr-2 text-primary/70" />
                             {pass.name}
                           </h3>
                           <p className="text-foreground/70 mb-4 line-clamp-2">
@@ -157,7 +198,7 @@ const Index = () => {
                               <h4 className="font-medium text-primary/80">Уровни и награды:</h4>
                               <ul className="grid grid-cols-2 gap-2 text-sm text-foreground/70">
                                 {pass.levels.slice(0, 4).map((level: any, index: number) => (
-                                  <li key={index} className="flex items-center gap-2">
+                                  <li key={index} className="flex items-center gap-2 group-hover:text-primary/80 transition-colors">
                                     <span className="inline-block w-2 h-2 bg-primary/40 rounded-full"></span>
                                     Уровень {level.level}: {level.reward.name}
                                   </li>
@@ -198,8 +239,6 @@ const Index = () => {
                           </span>
                         )}
                       </div>
-
-                      <div className="absolute inset-0 border border-primary/10 rounded-lg group-hover:border-primary/30 transition-colors"></div>
                     </motion.div>
                   );
                 })}
@@ -207,33 +246,41 @@ const Index = () => {
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+          >
             <Button 
               onClick={handleBuyPass}
               size="lg"
-              className="gap-2"
+              className="gap-2 relative overflow-hidden group"
             >
-              Купить пропуск
-              <ArrowRight className="w-4 h-4" />
+              <span className="relative z-10">Купить пропуск</span>
+              <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+              <span className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             </Button>
             <Button 
               variant="outline" 
               size="lg"
               onClick={() => navigate("/support")}
+              className="border-primary/20 hover:border-primary/40 transition-colors"
             >
               Техническая поддержка
             </Button>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="glass-panel p-6 rounded-lg text-left"
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="glass-panel p-6 rounded-lg text-left card-hover"
             >
-              <div className="mb-4">
-                <Clock className="w-10 h-10 text-primary mb-2" />
+              <div className="mb-4 relative">
+                <div className="absolute -top-2 -left-2 w-12 h-12 rounded-full bg-primary/10"></div>
+                <Clock className="w-10 h-10 text-primary mb-2 relative" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Быстрая покупка</h2>
               <p className="text-foreground/70">
@@ -244,11 +291,12 @@ const Index = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="glass-panel p-6 rounded-lg text-left"
+              transition={{ duration: 0.5, delay: 0.9 }}
+              className="glass-panel p-6 rounded-lg text-left card-hover"
             >
-              <div className="mb-4">
-                <Wallet className="w-10 h-10 text-primary mb-2" />
+              <div className="mb-4 relative">
+                <div className="absolute -top-2 -left-2 w-12 h-12 rounded-full bg-primary/10"></div>
+                <Wallet className="w-10 h-10 text-primary mb-2 relative" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Система лояльности</h2>
               <p className="text-foreground/70">
@@ -259,11 +307,12 @@ const Index = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="glass-panel p-6 rounded-lg text-left"
+              transition={{ duration: 0.5, delay: 1.0 }}
+              className="glass-panel p-6 rounded-lg text-left card-hover"
             >
-              <div className="mb-4">
-                <Users className="w-10 h-10 text-primary mb-2" />
+              <div className="mb-4 relative">
+                <div className="absolute -top-2 -left-2 w-12 h-12 rounded-full bg-primary/10"></div>
+                <Users className="w-10 h-10 text-primary mb-2 relative" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Поддержка 24/7</h2>
               <p className="text-foreground/70">

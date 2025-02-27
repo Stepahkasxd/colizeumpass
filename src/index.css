@@ -70,4 +70,54 @@
   .text-with-shadow {
     @apply text-[#e4d079] shadow-[0_1px_2px_rgba(0,0,0,0.5)];
   }
+  
+  .hero-gradient {
+    @apply bg-gradient-to-br from-[#111] via-black/90 to-black/95 relative;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:translate-y-[-5px] hover:shadow-[0_15px_35px_rgba(228,208,121,0.1)];
+  }
+  
+  .glow-ring {
+    @apply relative after:absolute after:inset-0 after:rounded-lg after:p-[1px] after:bg-gradient-to-r after:from-[#e4d079]/30 after:to-[#e4d079]/10 after:pointer-events-none;
+  }
+  
+  .bg-dots {
+    @apply bg-[radial-gradient(#e4d079_1px,transparent_1px)] bg-[length:20px_20px];
+  }
+  
+  .animated-gradient {
+    background: linear-gradient(-45deg, #000, #111, #1a1a1a, #222);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+  }
+  
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  .floating {
+    animation: floating 3s ease-in-out infinite;
+  }
+  
+  @keyframes floating {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
 }
