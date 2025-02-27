@@ -57,8 +57,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-black/90 to-black/95 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,204,0,0.05)_0%,transparent_50%)] pointer-events-none" />
+    <div className="min-h-screen animated-gradient relative">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-dots opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(228,208,121,0.07)_0%,transparent_50%)] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#e4d079]/5 to-transparent pointer-events-none" />
       
       <div className="container relative pt-24 pb-8">
         <motion.div 
@@ -67,47 +70,58 @@ const Dashboard = () => {
           transition={{ duration: 0.5 }}
           className="flex flex-col gap-2 mb-8"
         >
-          <h2 className="text-xl text-yellow-400/70">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-xl text-yellow-400/70"
+          >
             Привет, {profile?.display_name || 'Гость'}!
-          </h2>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400/50 bg-clip-text text-transparent">
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400/50 bg-clip-text text-transparent relative"
+          >
             Личный кабинет
-          </h1>
+            <span className="absolute -bottom-2 left-0 w-20 h-[2px] bg-gradient-to-r from-[#e4d079] to-transparent"></span>
+          </motion.h1>
         </motion.div>
         
         <Tabs defaultValue="stats" className="space-y-6">
-          <TabsList className="bg-black/40 backdrop-blur-lg border border-yellow-400/10 h-14 p-1 w-full sm:w-fit">
+          <TabsList className="glass-panel h-14 p-1 w-full sm:w-fit">
             <TabsTrigger 
               value="stats" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-[#e4d079] data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(228,208,121,0.3)] gap-2"
             >
               <Trophy className="h-4 w-4" />
               <span className="hidden sm:inline">Статистика</span>
             </TabsTrigger>
             <TabsTrigger 
               value="passes" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-[#e4d079] data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(228,208,121,0.3)] gap-2"
             >
               <Ticket className="h-4 w-4" />
               <span className="hidden sm:inline">Пропуск</span>
             </TabsTrigger>
             <TabsTrigger 
               value="rewards" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-[#e4d079] data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(228,208,121,0.3)] gap-2"
             >
               <Star className="h-4 w-4" />
               <span className="hidden sm:inline">Награды</span>
             </TabsTrigger>
             <TabsTrigger 
               value="purchases" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-[#e4d079] data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(228,208,121,0.3)] gap-2"
             >
               <ShoppingCart className="h-4 w-4" />
               <span className="hidden sm:inline">Покупки</span>
             </TabsTrigger>
             <TabsTrigger 
               value="profile" 
-              className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black gap-2"
+              className="data-[state=active]:bg-[#e4d079] data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(228,208,121,0.3)] gap-2"
             >
               <User2 className="h-4 w-4" />
               <span className="hidden sm:inline">Профиль</span>
@@ -118,6 +132,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
+            className="relative"
           >
             <TabsContent value="stats" className="space-y-4">
               <StatsTab />
@@ -144,10 +159,10 @@ const Dashboard = () => {
         {(isRootUser || isAdmin) && (
           <Button
             variant="outline"
-            className="fixed bottom-4 right-4 gap-2 bg-black/40 backdrop-blur-lg border-yellow-400/20 hover:bg-yellow-400/10 hover:border-yellow-400/30 transition-all duration-300"
+            className="fixed bottom-4 right-4 gap-2 glass-panel hover:bg-[#e4d079]/10 hover:border-[#e4d079]/30 z-50"
             onClick={() => navigate('/admin')}
           >
-            <Shield className="h-4 w-4" />
+            <Shield className="h-4 w-4 text-[#e4d079]" />
             Админ панель
           </Button>
         )}

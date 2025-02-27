@@ -1,4 +1,5 @@
 
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -120,4 +121,46 @@
       transform: translateY(0px);
     }
   }
+  
+  /* Enhanced dashboard elements */
+  .dashboard-card {
+    @apply bg-black/40 backdrop-blur-md border border-[#e4d079]/10 rounded-lg 
+           transition-all duration-300 hover:border-[#e4d079]/20 
+           hover:shadow-[0_8px_20px_rgba(228,208,121,0.07)];
+  }
+  
+  .dashboard-icon {
+    @apply text-[#e4d079] opacity-80;
+  }
+  
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
+    background: linear-gradient(to right, transparent, rgba(228, 208, 121, 0.1), transparent);
+    transform: rotate(30deg);
+    animation: shimmer 3s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      transform: translate(-100%, -100%) rotate(30deg);
+    }
+    100% {
+      transform: translate(100%, 100%) rotate(30deg);
+    }
+  }
+  
+  .panel-gradient {
+    background: linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+  }
 }
+
