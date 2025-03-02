@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,20 +26,19 @@ const PaymentsTab = () => {
   });
 
   const updatePurchaseStatusMutation = useMutation({
-    mutationFn: async ({ purchaseId, status, product_id }: { purchaseId: string; status: string; product_id: string }) => {
+    mutationFn: async ({ purchaseId, status, productId }: { purchaseId: string; status: string; productId: string }) => {
       const { data, error } = await supabase
         .from('purchases')
         .update({ status })
         .eq('id', purchaseId)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      return data?.[0]; // Return the first element if data exists, otherwise undefined
     },
-    onSuccess: async (response) => {
+    onSuccess: async (updatedPurchase) => {
       // Add proper null/undefined checking for the response
-      if (!response || !response.data) {
+      if (!updatedPurchase) {
         console.error("Error updating purchase status: No data received from update operation");
         toast({
           title: "Ошибка",
@@ -47,8 +47,6 @@ const PaymentsTab = () => {
         });
         return;
       }
-
-      const updatedPurchase = response.data;
       
       queryClient.setQueryData(['purchases'], (oldData: any) => {
         if (!oldData) return oldData;
@@ -63,8 +61,8 @@ const PaymentsTab = () => {
         action: 'update_purchase_status',
         details: {
           purchase_id: updatedPurchase.id,
-          new_status: status,
-          product_id: product_id,
+          new_status: updatedPurchase.status,
+          product_id: updatedPurchase.product_id,
         }
       });
 
@@ -90,8 +88,12 @@ const PaymentsTab = () => {
       <h2 className="text-xl font-semibold">Управление платежами</h2>
       {purchases?.map((purchase) => (
         <div key={purchase.id} className="flex justify-between items-center">
-          <span>{purchase.product.name}</span>
-          <Button onClick={() => updatePurchaseStatusMutation.mutate({ purchaseId: purchase.id, status: 'completed', product_id: purchase.product.id })}>
+          <span>{purchase.product?.name}</span>
+          <Button onClick={() => updatePurchaseStatusMutation.mutate({ 
+            purchaseId: purchase.id, 
+            status: 'completed', 
+            productId: purchase.product_id 
+          })}>
             Завершить
           </Button>
         </div>
