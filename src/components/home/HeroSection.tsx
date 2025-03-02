@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -99,8 +98,7 @@ const HeroSection = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.7 }}
       >
-        Современная система контроля доступа для компьютерного клуба. 
-        Покупайте пропуска, получайте бонусы и наслаждайтесь игрой!
+        Ваш персональный пропуск с наградами, который сделает время проведенное в нашем клубе немного приятнее )
       </motion.p>
 
       <motion.div 

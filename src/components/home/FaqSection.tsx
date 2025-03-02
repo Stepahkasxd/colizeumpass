@@ -31,17 +31,6 @@ const FaqSection = () => {
       <Card className="glass-panel border-primary/20 max-w-3xl mx-auto shadow-lg">
         <CardContent className="pt-6">
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1" className="border-b border-primary/10">
-              <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
-                Что такое пропуск и зачем он нужен?
-              </AccordionTrigger>
-              <AccordionContent className="text-foreground/80 pb-4">
-                Пропуск — это ваш личный билет в мир Colizeum. Он дает вам доступ к компьютерному клубу, 
-                особым предложениям и накопительной системе баллов. Чем больше вы играете, 
-                тем больше привилегий получаете.
-              </AccordionContent>
-            </AccordionItem>
-            
             <AccordionItem value="item-2" className="border-b border-primary/10">
               <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
                 Как купить пропуск?
@@ -73,17 +62,6 @@ const FaqSection = () => {
                 Уровень пропуска повышается автоматически по мере накопления игровых часов 
                 и баллов лояльности. Каждый час, проведенный в клубе, приближает вас к 
                 следующему уровню. Вы можете отслеживать прогресс в своем личном кабинете.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-5" className="border-b border-primary/10">
-              <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
-                Какой срок действия у пропуска?
-              </AccordionTrigger>
-              <AccordionContent className="text-foreground/80 pb-4">
-                Стандартный пропуск действует в течение 30 дней с момента покупки. 
-                Премиум и VIP пропуски могут иметь увеличенный срок действия. 
-                Информацию о конкретном сроке можно найти в описании каждого пропуска.
               </AccordionContent>
             </AccordionItem>
             
