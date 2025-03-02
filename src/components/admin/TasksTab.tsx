@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, MessageSquare, CircleDollarSign, AlertCircle } from "lucide-react";
+import { MessageSquare, CircleDollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,21 +22,6 @@ type PaymentRequest = {
   } | null;
 };
 
-type Purchase = {
-  id: string;
-  created_at: string;
-  status: string;
-  product_id: string;
-  user_id: string;
-  profiles: {
-    display_name: string | null;
-    phone_number: string | null;
-  } | null;
-  products: {
-    name: string;
-  };
-};
-
 type SupportTicket = {
   id: string;
   subject: string;
@@ -45,7 +30,7 @@ type SupportTicket = {
   user_id: string;
 };
 
-type NotificationFilter = 'all' | 'payments' | 'purchases' | 'tickets';
+type NotificationFilter = 'all' | 'payments' | 'tickets';
 
 const TasksTab = () => {
   const navigate = useNavigate();
@@ -63,44 +48,6 @@ const TasksTab = () => {
 
       if (error) throw error;
       return data as PaymentRequest[];
-    }
-  });
-
-  // Fetch pending purchases
-  const { data: purchases = [] } = useQuery({
-    queryKey: ['purchases_pending'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('purchases')
-        .select(`
-          id,
-          created_at,
-          status,
-          product_id,
-          user_id,
-          products:product_id (
-            name
-          )
-        `)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const purchasesWithProfiles = await Promise.all((data || []).map(async (purchase) => {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('display_name, phone_number')
-          .eq('id', purchase.user_id)
-          .single();
-
-        return {
-          ...purchase,
-          profiles: profileData
-        };
-      }));
-
-      return purchasesWithProfiles as Purchase[];
     }
   });
 
@@ -154,11 +101,6 @@ const TasksTab = () => {
           type: 'payment',
           data: payment
         }));
-      case 'purchases':
-        return purchases.map(purchase => ({
-          type: 'purchase',
-          data: purchase
-        }));
       case 'tickets':
         return tickets.map(ticket => ({
           type: 'ticket',
@@ -168,7 +110,6 @@ const TasksTab = () => {
       default:
         return [
           ...payments.map(payment => ({ type: 'payment', data: payment })),
-          ...purchases.map(purchase => ({ type: 'purchase', data: purchase })),
           ...tickets.map(ticket => ({ type: 'ticket', data: ticket }))
         ].sort((a, b) => 
           new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime()
@@ -176,7 +117,7 @@ const TasksTab = () => {
     }
   };
 
-  const totalNotifications = payments.length + purchases.length + tickets.length;
+  const totalNotifications = payments.length + tickets.length;
 
   return (
     <div>
@@ -195,12 +136,6 @@ const TasksTab = () => {
                 Платежи
                 {payments.length > 0 && (
                   <Badge variant="secondary" className="ml-2">{payments.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="purchases">
-                Покупки
-                {purchases.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">{purchases.length}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="tickets">
@@ -248,40 +183,6 @@ const TasksTab = () => {
                         className="w-full"
                       >
                         Обработать заявку
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            } else if (notification.type === 'purchase') {
-              const purchase = notification.data as Purchase;
-              return (
-                <Card key={`purchase-${purchase.id}`}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <ShoppingBag className="h-5 w-5 text-blue-500" />
-                        <CardTitle className="text-base">Покупка из магазина</CardTitle>
-                      </div>
-                      <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
-                        Ожидает получения
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm">
-                      <p className="font-medium">{purchase.products.name}</p>
-                      <p className="text-muted-foreground">
-                        Покупатель: {purchase.profiles?.display_name || 'Без имени'}
-                      </p>
-                      <p className="text-muted-foreground mb-3">Дата: {formatDate(purchase.created_at)}</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleNavigateToPayments}
-                        className="w-full"
-                      >
-                        Подтвердить получение
                       </Button>
                     </div>
                   </CardContent>

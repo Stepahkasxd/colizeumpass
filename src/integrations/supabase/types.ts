@@ -160,36 +160,6 @@ export type Database = {
           },
         ]
       }
-      products: {
-        Row: {
-          available: boolean | null
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          points_cost: number
-          price: number
-        }
-        Insert: {
-          available?: boolean | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          points_cost: number
-          price: number
-        }
-        Update: {
-          available?: boolean | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          points_cost?: number
-          price?: number
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -231,38 +201,6 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
-      }
-      purchases: {
-        Row: {
-          created_at: string
-          id: string
-          product_id: string
-          status: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          product_id: string
-          status?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          product_id?: string
-          status?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "purchases_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       support_tickets: {
         Row: {

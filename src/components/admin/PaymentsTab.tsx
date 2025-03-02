@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,22 +47,6 @@ type PaymentRequest = {
   } | null;
 };
 
-type Purchase = {
-  id: string;
-  user_id: string;
-  created_at: string;
-  status: string;
-  product_id: string;
-  products: {
-    name: string;
-    points_cost: number;
-  };
-  profiles: {
-    display_name: string | null;
-    phone_number: string | null;
-  } | null;
-};
-
 const STATUS_LABELS = {
   pending: 'Ожидает оплаты',
   approved: 'Оплачено',
@@ -72,7 +56,6 @@ const STATUS_LABELS = {
 const PaymentsTab = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
 
@@ -86,43 +69,6 @@ const PaymentsTab = () => {
 
       if (error) throw error;
       return data as PaymentRequest[];
-    }
-  });
-
-  const { data: purchases, isLoading: isLoadingPurchases } = useQuery({
-    queryKey: ['purchases'],
-    queryFn: async () => {
-      let { data, error } = await supabase
-        .from('purchases')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          status,
-          product_id,
-          products:product_id (
-            name,
-            points_cost
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const purchasesWithProfiles = await Promise.all((data || []).map(async (purchase) => {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('display_name, phone_number')
-          .eq('id', purchase.user_id)
-          .single();
-
-        return {
-          ...purchase,
-          profiles: profileData
-        };
-      }));
-
-      return purchasesWithProfiles as Purchase[];
     }
   });
 
@@ -203,64 +149,8 @@ const PaymentsTab = () => {
     }
   });
 
-  // Mutation for completing a purchase
-  const completePurchaseMutation = useMutation({
-    mutationFn: async (purchaseId: string) => {
-      const { data, error } = await supabase
-        .from('purchases')
-        .update({ status: 'completed' })
-        .eq('id', purchaseId)
-        .select();
-
-      if (error) throw error;
-      return data[0];
-    },
-    onSuccess: async (updatedPurchase) => {
-      if (!user) return;
-      
-      // Optimistically update the UI
-      queryClient.setQueryData(['purchases'], (oldData: Purchase[] | undefined) => {
-        if (!oldData) return [];
-        return oldData.map(purchase => 
-          purchase.id === updatedPurchase.id 
-            ? { ...purchase, status: 'completed' } 
-            : purchase
-        );
-      });
-
-      await logActivity({
-        user_id: updatedPurchase.user_id,
-        category: 'shop',
-        action: 'purchase_completed',
-        details: {
-          purchase_id: updatedPurchase.id,
-          product_id: updatedPurchase.product_id,
-          product_name: purchases?.find(p => p.id === updatedPurchase.id)?.products.name || '',
-          admin_id: user.id
-        }
-      });
-
-      toast({
-        title: "Статус обновлен",
-        description: "Товар помечен как полученный",
-      });
-    },
-    onError: (error) => {
-      console.error('Error updating purchase status:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить статус покупки",
-        variant: "destructive",
-      });
-    }
-  });
-
   const handleStatusChange = (requestId: string, newStatus: PaymentRequest['status']) => {
     updateRequestStatusMutation.mutate({ requestId, newStatus });
-  };
-
-  const handlePurchaseComplete = (purchaseId: string) => {
-    completePurchaseMutation.mutate(purchaseId);
   };
 
   const formatDate = (dateString: string) => {
@@ -335,158 +225,47 @@ const PaymentsTab = () => {
     </div>
   );
 
-  const PurchasesList = ({ purchases }: { purchases: Purchase[] }) => (
-    <div className="grid gap-4">
-      {purchases.map((purchase) => (
-        <div
-          key={purchase.id}
-          className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-        >
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold">
-                {purchase.products.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Покупатель: {purchase.profiles?.display_name || 'Без имени'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Телефон: {purchase.profiles?.phone_number || 'Не указан'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Стоимость: {purchase.products.points_cost} очков
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Дата покупки: {formatDate(purchase.created_at)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {purchase.status === 'pending' && (
-                <Button
-                  onClick={() => handlePurchaseComplete(purchase.id)}
-                  variant="outline"
-                  disabled={completePurchaseMutation.isPending}
-                >
-                  {completePurchaseMutation.isPending ? "Обновление..." : "Подтвердить получение"}
-                </Button>
-              )}
-              <p className={`text-sm font-medium ${
-                purchase.status === 'completed' ? 'text-green-500' : 'text-yellow-500'
-              }`}>
-                {purchase.status === 'completed' ? 'Получено' : 'Ожидает получения'}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   const activeRequests = requests?.filter(r => r.status === 'pending') || [];
   const archivedRequests = requests?.filter(r => r.status === 'approved' || r.status === 'rejected') || [];
-  const pendingPurchases = purchases?.filter(p => p.status === 'pending') || [];
-  const completedPurchases = purchases?.filter(p => p.status === 'completed') || [];
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-6">Управление платежами</h2>
 
-      <Tabs defaultValue="payment_requests" className="space-y-4">
+      <Tabs defaultValue="active" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="payment_requests">
-            Заявки на оплату
+          <TabsTrigger value="active">
+            Активные
             {activeRequests.length > 0 && (
               <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-500/10 text-yellow-500 rounded-full">
                 {activeRequests.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="purchases">
-            Покупки из магазина
-            {pendingPurchases.length > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-500/10 text-yellow-500 rounded-full">
-                {pendingPurchases.length}
+          <TabsTrigger value="archive">
+            Архив
+            {archivedRequests.length > 0 && (
+              <span className="ml-2 px-2 py-0.5 text-xs bg-green-500/10 text-green-500 rounded-full">
+                {archivedRequests.length}
               </span>
             )}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="payment_requests">
-          <Tabs defaultValue="active" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="active">
-                Активные
-                {activeRequests.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-500/10 text-yellow-500 rounded-full">
-                    {activeRequests.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="archive">
-                Архив
-                {archivedRequests.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-green-500/10 text-green-500 rounded-full">
-                    {archivedRequests.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="active">
-              {isLoadingRequests ? (
-                <div>Загрузка заявок...</div>
-              ) : (
-                <PaymentRequestsList requests={activeRequests} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="archive">
-              {isLoadingRequests ? (
-                <div>Загрузка заявок...</div>
-              ) : (
-                <PaymentRequestsList requests={archivedRequests} />
-              )}
-            </TabsContent>
-          </Tabs>
+        <TabsContent value="active">
+          {isLoadingRequests ? (
+            <div>Загрузка заявок...</div>
+          ) : (
+            <PaymentRequestsList requests={activeRequests} />
+          )}
         </TabsContent>
 
-        <TabsContent value="purchases">
-          <Tabs defaultValue="pending" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="pending">
-                Ожидают получения
-                {pendingPurchases.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-500/10 text-yellow-500 rounded-full">
-                    {pendingPurchases.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="completed">
-                Полученные
-                {completedPurchases.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-green-500/10 text-green-500 rounded-full">
-                    {completedPurchases.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="pending">
-              {isLoadingPurchases ? (
-                <div>Загрузка покупок...</div>
-              ) : (
-                <PurchasesList purchases={pendingPurchases} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="completed">
-              {isLoadingPurchases ? (
-                <div>Загрузка покупок...</div>
-              ) : (
-                <PurchasesList purchases={completedPurchases} />
-              )}
-            </TabsContent>
-          </Tabs>
+        <TabsContent value="archive">
+          {isLoadingRequests ? (
+            <div>Загрузка заявок...</div>
+          ) : (
+            <PaymentRequestsList requests={archivedRequests} />
+          )}
         </TabsContent>
       </Tabs>
 
