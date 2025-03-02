@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,11 +22,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { logActivity } from "@/utils/logger";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { TicketChat } from "@/components/support/TicketChat";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { SupportTicket, STATUS_LABELS } from "@/types/support";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   subject: z.string().min(5, "Тема должна содержать минимум 5 символов"),
@@ -39,6 +45,7 @@ const Support = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userTickets, setUserTickets] = useState<SupportTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [showNewTicketForm, setShowNewTicketForm] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -200,6 +207,7 @@ const Support = () => {
       });
 
       form.reset();
+      setShowNewTicketForm(false);
     } catch (error) {
       toast({
         title: "Ошибка",
@@ -225,109 +233,201 @@ const Support = () => {
     window.history.pushState(null, '', window.location.pathname);
   };
 
+  const getStatusColor = (status: SupportTicket['status']) => {
+    switch (status) {
+      case 'open':
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'in_progress':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      case 'closed':
+        return 'bg-green-500/10 text-green-500 border-green-500/20';
+      default:
+        return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    }
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-12">
-      <div className="container max-w-2xl">
+      <div className="container max-w-6xl px-4 md:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="glass-panel p-6 rounded-lg"
         >
-          <h1 className="text-2xl font-bold mb-6 text-center text-glow">
+          <h1 className="text-3xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#e4d079] to-[#ffebb3]">
             Техническая поддержка
           </h1>
           
-          {userTickets.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Ваши обращения</h2>
-              <div className="space-y-4">
-                {userTickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className="p-4 rounded-lg border bg-card"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{ticket.subject}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Создан: {format(new Date(ticket.created_at), "dd MMMM yyyy HH:mm", { locale: ru })}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={ticket.status === 'open' ? 'secondary' : 'default'}>
-                          {STATUS_LABELS[ticket.status]}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-8">
+              {userTickets.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">Ваши обращения</h2>
+                    <Button 
+                      onClick={() => setShowNewTicketForm(true)} 
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Новое обращение
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-primary/20 overflow-hidden">
+                    <div className="space-y-0 divide-y divide-primary/10">
+                      {userTickets.map((ticket) => (
+                        <div
+                          key={ticket.id}
+                          className={cn(
+                            "p-4 transition-colors hover:bg-primary/5 cursor-pointer",
+                            selectedTicket?.id === ticket.id && "bg-primary/10"
+                          )}
                           onClick={() => handleTicketSelect(ticket)}
                         >
-                          Открыть чат
-                        </Button>
-                      </div>
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-1">
+                                <MessageSquare className="h-4 w-4 text-primary/70" />
+                                <h3 className="font-medium truncate">{ticket.subject}</h3>
+                              </div>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {ticket.message}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <div className={cn(
+                                "text-xs px-2 py-1 rounded-full border",
+                                getStatusColor(ticket.status)
+                              )}>
+                                {STATUS_LABELS[ticket.status]}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(ticket.created_at), "dd MMMM", { locale: ru })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="relative">
-            {userTickets.length > 0 && (
-              <div className="absolute inset-x-0 -top-4 h-4 bg-gradient-to-b from-background to-transparent" />
-            )}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Новое обращение</h2>
-              <p className="text-foreground/70 mb-6">
-                Если у вас возникли вопросы или предложения, напишите нам. Мы ответим в ближайшее время.
-              </p>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="subject"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Тема обращения</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Например: Вопрос по пропуску"
-                            {...field}
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Сообщение</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Опишите ваш вопрос подробнее..."
-                            className="min-h-[150px] resize-none"
-                            {...field}
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Отправить
+                </div>
+              ) : !showNewTicketForm ? (
+                <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-primary/20 p-8 text-center">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-primary/50" />
+                  <h2 className="text-xl font-semibold mb-2">У вас пока нет обращений</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Создайте новое обращение, если у вас есть вопросы или предложения
+                  </p>
+                  <Button onClick={() => setShowNewTicketForm(true)}>
+                    Создать обращение
                   </Button>
-                </form>
-              </Form>
+                </div>
+              ) : null}
+
+              {showNewTicketForm && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-black/40 backdrop-blur-sm rounded-lg border border-primary/20 p-6"
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold">Новое обращение</h2>
+                    {userTickets.length > 0 && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowNewTicketForm(false)}
+                      >
+                        Отмена
+                      </Button>
+                    )}
+                  </div>
+
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="subject"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Тема обращения</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Например: Вопрос по пропуску"
+                                {...field}
+                                disabled={isLoading}
+                                className="bg-black/30"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Сообщение</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Опишите ваш вопрос подробнее..."
+                                className="min-h-[150px] resize-none bg-black/30"
+                                {...field}
+                                disabled={isLoading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Отправить
+                      </Button>
+                    </form>
+                  </Form>
+                </motion.div>
+              )}
+            </div>
+
+            <div className="md:col-span-4">
+              <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-primary/20 p-6">
+                <h3 className="text-lg font-semibold mb-4">Контактная информация</h3>
+                <div className="space-y-3 text-sm">
+                  <p>Если у вас возникли срочные вопросы, вы можете связаться с нами напрямую:</p>
+                  <div className="pt-2">
+                    <p className="font-medium">Телефон:</p>
+                    <p className="text-muted-foreground">+7 (XXX) XXX-XX-XX</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Email:</p>
+                    <p className="text-muted-foreground">support@colizeum.ru</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Адрес:</p>
+                    <p className="text-muted-foreground">г. Москва, ул. Примерная, д. 123</p>
+                  </div>
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-primary/10">
+                  <h3 className="text-lg font-semibold mb-4">Часто задаваемые вопросы</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li>
+                      <a href="#" className="text-primary hover:underline">Как купить пропуск?</a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-primary hover:underline">Как использовать бонусные баллы?</a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-primary hover:underline">Правила клуба</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -343,16 +443,19 @@ const Support = () => {
           {selectedTicket && (
             <>
               <div className="flex items-center justify-between">
-                <Badge variant={selectedTicket.status === 'open' ? 'secondary' : 'default'}>
+                <div className={cn(
+                  "text-xs px-2 py-1 rounded-full border",
+                  getStatusColor(selectedTicket.status)
+                )}>
                   {STATUS_LABELS[selectedTicket.status]}
-                </Badge>
+                </div>
                 <span className="text-sm text-muted-foreground">
                   {format(new Date(selectedTicket.created_at), "dd MMMM yyyy HH:mm", { locale: ru })}
                 </span>
               </div>
               <div className="mt-4">
                 <h4 className="font-medium mb-2">Ваше сообщение:</h4>
-                <p className="text-sm whitespace-pre-wrap">{selectedTicket.message}</p>
+                <p className="text-sm whitespace-pre-wrap bg-black/20 p-3 rounded-md">{selectedTicket.message}</p>
               </div>
               {selectedTicket.status !== 'open' && (
                 <div className="mt-6">
@@ -361,7 +464,7 @@ const Support = () => {
                 </div>
               )}
               {selectedTicket.status === 'open' && (
-                <div className="mt-6 text-center text-muted-foreground">
+                <div className="mt-6 text-center p-4 bg-black/20 rounded-md text-muted-foreground">
                   Ожидайте, пока администратор возьмет ваш тикет в работу
                 </div>
               )}
