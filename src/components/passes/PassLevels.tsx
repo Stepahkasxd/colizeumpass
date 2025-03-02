@@ -8,46 +8,55 @@ import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Pass, Reward, UserProfile } from "@/types/user";
+import { useState } from "react";
+
 interface PassLevelsProps {
   pass: Pass;
   profile: UserProfile | null;
 }
+
 export const PassLevels = ({
   pass,
   profile
 }: PassLevelsProps) => {
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const icons = [Trophy, Star, Award, Rocket];
+  const [claimedRewards, setClaimedRewards] = useState<string[]>([]);
+  
   const isRewardClaimed = (level: number, rewardName: string) => {
+    if (claimedRewards.includes(`${level}-${rewardName}`)) {
+      return true;
+    }
+    
     if (!profile?.rewards || !Array.isArray(profile.rewards)) {
       return false;
     }
     return profile.rewards.some((r: Reward) => r.passLevel === level && r.name === rewardName && r.status === "claimed");
   };
+
   const getCurrentLevel = () => {
     if (!pass?.levels || !profile?.points) return 1;
     const currentLevel = pass.levels.findIndex(level => profile.points < level.points_required);
     return currentLevel === -1 ? pass.levels.length : currentLevel;
   };
+
   const shouldShowProgressBar = (levelIndex: number) => {
     if (!profile?.points) return false;
     const currentLevel = getCurrentLevel();
-    // Показываем прогресс-бар только для текущего уровня
     return levelIndex === currentLevel;
   };
+
   const calculateProgress = (requiredPoints: number) => {
     const currentPoints = profile?.points || 0;
     return Math.min(Math.round(currentPoints / requiredPoints * 100), 100);
   };
+
   const getPointsText = (requiredPoints: number) => {
     const currentPoints = profile?.points || 0;
     return `${currentPoints}/${requiredPoints}`;
   };
+
   const handleClaimReward = async (level: number, reward: any) => {
     try {
       const {
@@ -81,7 +90,6 @@ export const PassLevels = ({
         name: reward.name,
         description: reward.description,
         status: "available",
-        // Изменено с "claimed" на "available"
         earnedAt: new Date().toISOString(),
         passLevel: level
       };
@@ -92,6 +100,9 @@ export const PassLevels = ({
         rewards: updatedRewards
       }).eq('id', user?.id);
       if (error) throw error;
+      
+      setClaimedRewards(prev => [...prev, `${level}-${reward.name}`]);
+      
       toast({
         title: "Награда добавлена!",
         description: "Перейдите в раздел Награды, чтобы увидеть её"
@@ -105,6 +116,7 @@ export const PassLevels = ({
       });
     }
   };
+
   return <motion.div className="space-y-6" initial={{
     opacity: 0
   }} animate={{
