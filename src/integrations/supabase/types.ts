@@ -50,6 +50,42 @@ export type Database = {
           },
         ]
       }
+      news_articles: {
+        Row: {
+          author_id: string | null
+          category: Database["public"]["Enums"]["news_category"]
+          content: string | null
+          created_at: string
+          id: string
+          published: boolean
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["news_category"]
+          content?: string | null
+          created_at?: string
+          id?: string
+          published?: boolean
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["news_category"]
+          content?: string | null
+          created_at?: string
+          id?: string
+          published?: boolean
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       passes: {
         Row: {
           created_at: string
@@ -354,6 +390,7 @@ export type Database = {
         | "passes"
         | "user"
         | "system"
+      news_category: "update" | "event" | "promo"
       payment_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "user"
     }

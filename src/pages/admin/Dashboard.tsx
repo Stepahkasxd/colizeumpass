@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare } from "lucide-react";
+import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare, Newspaper } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import UsersTab from "@/components/admin/UsersTab";
@@ -12,6 +12,7 @@ import SupportTab from "@/components/admin/SupportTab";
 import PaymentsTab from "@/components/admin/PaymentsTab";
 import StatsTab from "@/components/admin/StatsTab";
 import LogsTab from "@/components/admin/LogsTab";
+import NewsTab from "@/components/admin/NewsTab";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -68,7 +69,7 @@ const AdminDashboard = () => {
       <h1 className="text-2xl font-bold mb-6 text-glow">Панель администратора</h1>
       
       <Tabs defaultValue="stats" className="w-full">
-        <TabsList className="grid grid-cols-7 gap-4 mb-8">
+        <TabsList className="grid grid-cols-8 gap-4 mb-8">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Статистика</span>
@@ -84,6 +85,10 @@ const AdminDashboard = () => {
           <TabsTrigger value="products" className="flex items-center gap-2">
             <ShoppingBag className="h-4 w-4" />
             <span className="hidden sm:inline">Магазин</span>
+          </TabsTrigger>
+          <TabsTrigger value="news" className="flex items-center gap-2">
+            <Newspaper className="h-4 w-4" />
+            <span className="hidden sm:inline">Новости</span>
           </TabsTrigger>
           <TabsTrigger value="support" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
@@ -111,6 +116,9 @@ const AdminDashboard = () => {
           </TabsContent>
           <TabsContent value="products">
             <ProductsTab />
+          </TabsContent>
+          <TabsContent value="news">
+            <NewsTab />
           </TabsContent>
           <TabsContent value="support">
             <SupportTab />
