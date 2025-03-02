@@ -1,202 +1,84 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare, Newspaper, CheckSquare } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 import UsersTab from "@/components/admin/UsersTab";
 import PassesTab from "@/components/admin/PassesTab";
-import ProductsTab from "@/components/admin/ProductsTab";
 import SupportTab from "@/components/admin/SupportTab";
-import PaymentsTab from "@/components/admin/PaymentsTab";
 import StatsTab from "@/components/admin/StatsTab";
 import LogsTab from "@/components/admin/LogsTab";
 import NewsTab from "@/components/admin/NewsTab";
 import TasksTab from "@/components/admin/TasksTab";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
 
 const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState("users");
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, isLoading: authLoading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
-  
-  // Get tab from URL query parameter
-  const searchParams = new URLSearchParams(location.search);
-  const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'stats');
 
-  // Fetch pending notifications counts
-  const { data: notificationCounts } = useQuery({
-    queryKey: ['admin_notification_counts'],
-    queryFn: async () => {
-      const [paymentsResult, purchasesResult, ticketsResult] = await Promise.all([
-        supabase.from('payment_requests').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('purchases').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('support_tickets').select('id', { count: 'exact' }).eq('status', 'open').eq('is_archived', false)
-      ]);
-      
-      return {
-        payments: paymentsResult.count || 0,
-        purchases: purchasesResult.count || 0, 
-        tickets: ticketsResult.count || 0
-      };
-    },
-    refetchInterval: 60000 // Refresh every minute
-  });
-  
-  const totalNotifications = 
-    (notificationCounts?.payments || 0) + 
-    (notificationCounts?.purchases || 0) + 
-    (notificationCounts?.tickets || 0);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (authLoading) return;
-
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase.rpc('is_admin', {
-          user_id: user.id
-        });
-
-        if (error) {
-          console.error('Not authorized as admin:', error);
-          setIsAdmin(false);
-          navigate("/dashboard");
-          return;
-        }
-
-        setIsAdmin(!!data);
-        if (!data) {
-          navigate("/dashboard");
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        navigate("/dashboard");
-      } finally {
-        setIsCheckingAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user, authLoading, navigate]);
-
-  // Update URL when tab changes
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    navigate(`/admin?tab=${value}`, { replace: true });
-  };
-
-  // Set initial tab from URL or update URL if tab is set differently
-  useEffect(() => {
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
-    } else if (!tabFromUrl && activeTab !== 'stats') {
-      navigate(`/admin?tab=${activeTab}`, { replace: true });
-    }
-  }, [tabFromUrl, activeTab, navigate]);
-
-  if (authLoading || isCheckingAdmin) {
-    return null;
-  }
-
-  if (!isAdmin || !user) {
-    return null;
+  // This function would typically check if the user has admin access
+  // For now, we'll just check if the user is logged in
+  if (!user) {
+    return (
+      <div className="container pt-24 pb-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-8">
+            <h1 className="text-2xl font-bold mb-2">Требуется вход в систему</h1>
+            <p className="text-muted-foreground">
+              Для доступа к панели администратора необходимо войти в систему
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-6 text-glow">Панель администратора</h1>
-      
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-9 gap-4 mb-8">
-          <TabsTrigger value="stats" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Статистика</span>
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center gap-2">
-            <CheckSquare className="h-4 w-4" />
-            <span className="hidden sm:inline">Дела</span>
-            {totalNotifications > 0 && (
-              <Badge variant="secondary" className="ml-0.5">{totalNotifications}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Пользователи</span>
-          </TabsTrigger>
-          <TabsTrigger value="passes" className="flex items-center gap-2">
-            <Ticket className="h-4 w-4" />
-            <span className="hidden sm:inline">Пропуска</span>
-          </TabsTrigger>
-          <TabsTrigger value="products" className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            <span className="hidden sm:inline">Магазин</span>
-          </TabsTrigger>
-          <TabsTrigger value="news" className="flex items-center gap-2">
-            <Newspaper className="h-4 w-4" />
-            <span className="hidden sm:inline">Новости</span>
-          </TabsTrigger>
-          <TabsTrigger value="support" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            <span className="hidden sm:inline">Поддержка</span>
-            {notificationCounts?.tickets ? (
-              <Badge variant="secondary" className="ml-0.5">{notificationCounts.tickets}</Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="flex items-center gap-2">
-            <CircleDollarSign className="h-4 w-4" />
-            <span className="hidden sm:inline">Платежи</span>
-            {(notificationCounts?.payments || 0) + (notificationCounts?.purchases || 0) > 0 && (
-              <Badge variant="secondary" className="ml-0.5">
-                {(notificationCounts?.payments || 0) + (notificationCounts?.purchases || 0)}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="flex items-center gap-2">
-            <ActivitySquare className="h-4 w-4" />
-            <span className="hidden sm:inline">Логи</span>
-          </TabsTrigger>
-        </TabsList>
+    <div className="container pt-24 pb-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Панель администратора</h1>
 
-        <div className="glass-panel p-6 rounded-lg">
-          <TabsContent value="stats">
-            <StatsTab />
-          </TabsContent>
-          <TabsContent value="tasks">
-            <TasksTab />
-          </TabsContent>
-          <TabsContent value="users">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="mb-6 overflow-x-auto">
+            <TabsList className="inline-flex w-auto min-w-full">
+              <TabsTrigger value="users">Пользователи</TabsTrigger>
+              <TabsTrigger value="passes">Пропуска</TabsTrigger>
+              <TabsTrigger value="support">Поддержка</TabsTrigger>
+              <TabsTrigger value="stats">Статистика</TabsTrigger>
+              <TabsTrigger value="logs">Логи</TabsTrigger>
+              <TabsTrigger value="news">Новости</TabsTrigger>
+              <TabsTrigger value="tasks">Задачи</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="users" className="space-y-4">
             <UsersTab />
           </TabsContent>
-          <TabsContent value="passes">
+
+          <TabsContent value="passes" className="space-y-4">
             <PassesTab />
           </TabsContent>
-          <TabsContent value="products">
-            <ProductsTab />
-          </TabsContent>
-          <TabsContent value="news">
-            <NewsTab />
-          </TabsContent>
-          <TabsContent value="support">
+
+          <TabsContent value="support" className="space-y-4">
             <SupportTab />
           </TabsContent>
-          <TabsContent value="payments">
-            <PaymentsTab />
+
+          <TabsContent value="stats" className="space-y-4">
+            <StatsTab />
           </TabsContent>
-          <TabsContent value="logs">
+
+          <TabsContent value="logs" className="space-y-4">
             <LogsTab />
           </TabsContent>
-        </div>
-      </Tabs>
+
+          <TabsContent value="news" className="space-y-4">
+            <NewsTab />
+          </TabsContent>
+
+          <TabsContent value="tasks" className="space-y-4">
+            <TasksTab />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
