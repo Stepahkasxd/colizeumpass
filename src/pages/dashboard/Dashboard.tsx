@@ -1,11 +1,12 @@
+
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
-import ProfileTab from "@/components/dashboard/ProfileTab";
-import StatsTab from "@/components/dashboard/StatsTab";
-import RewardsTab from "@/components/dashboard/RewardsTab";
-import PassesTab from "@/components/dashboard/PassesTab";
+import { ProfileTab } from "@/components/dashboard/ProfileTab";
+import { StatsTab } from "@/components/dashboard/StatsTab";
+import { RewardsTab } from "@/components/dashboard/RewardsTab";
+import { PassesTab } from "@/components/dashboard/PassesTab";
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
