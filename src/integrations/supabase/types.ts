@@ -162,6 +162,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          bio: string | null
           created_at: string
           display_name: string | null
           free_points: number | null
@@ -175,6 +176,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           free_points?: number | null
@@ -188,6 +190,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           free_points?: number | null
