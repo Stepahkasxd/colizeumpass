@@ -137,7 +137,10 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               (msg.id.startsWith('temp-') && 
                msg.message === payload.new.message && 
                msg.user_id === payload.new.user_id) 
-                ? { ...payload.new, profile: msg.profile } 
+                ? { 
+                    ...payload.new, 
+                    profile: msg.profile 
+                  } as Message 
                 : msg
             ));
           } else {
@@ -149,7 +152,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
                 .eq('id', payload.new.user_id)
                 .single();
 
-              // Add the new message to the state
+              // Add the new message to the state with proper typing
               const newMsg: Message = {
                 id: payload.new.id,
                 message: payload.new.message,
