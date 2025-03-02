@@ -44,6 +44,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
     }
   };
 
+  // Fetch initial messages and set up real-time listener
   useEffect(() => {
     if (!ticketId) return;
 
@@ -96,9 +97,10 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
 
     fetchMessages();
 
-    // Subscribe to new messages using a more specific channel name
+    // Subscribe to real-time updates - fixed implementation
+    const channelName = `ticket_${ticketId}`;
     const channel = supabase
-      .channel(`ticket_messages_${ticketId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -108,18 +110,18 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
           filter: `ticket_id=eq.${ticketId}`,
         },
         async (payload) => {
+          console.log('New message received via real-time:', payload);
+          
           try {
-            console.log('New message received:', payload);
-            
-            // Get profile for new message
+            // Get profile for the user who sent the message
             const { data: profileData } = await supabase
               .from('profiles')
               .select('id, display_name')
               .eq('id', payload.new.user_id)
               .single();
 
-            // Create complete Message object
-            const newMessage: Message = {
+            // Add the new message to the state
+            const newMsg: Message = {
               id: payload.new.id,
               message: payload.new.message,
               user_id: payload.new.user_id,
@@ -128,18 +130,21 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
               profile: profileData || null
             };
 
-            setMessages(current => [...current, newMessage]);
+            setMessages(current => [...current, newMsg]);
             
             // Scroll to bottom when new message arrives
             setTimeout(scrollToBottom, 100);
           } catch (error) {
-            console.error('Error handling new message:', error);
+            console.error('Error handling real-time message:', error);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Real-time subscription status for ticket ${ticketId}:`, status);
+      });
 
     return () => {
+      console.log(`Removing channel ${channelName}`);
       supabase.removeChannel(channel);
     };
   }, [ticketId]);
@@ -154,19 +159,49 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
 
     setIsLoading(true);
     try {
+      // Add optimistic update for instant feedback
+      const optimisticMessage: Message = {
+        id: `temp-${Date.now()}`,
+        message: newMessage.trim(),
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        ticket_id: ticketId,
+        profile: null // We'll get this from the server
+      };
+      
+      // Get user profile for local optimistic update
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileData) {
+        optimisticMessage.profile = profileData;
+      }
+      
+      // Apply optimistic update
+      setMessages(current => [...current, optimisticMessage]);
+      
+      // Clear input immediately for better UX
+      setNewMessage("");
+      
+      // Actually send the message
       const { error } = await supabase
         .from('ticket_messages')
         .insert({
           ticket_id: ticketId,
-          message: newMessage.trim(),
+          message: optimisticMessage.message,
           user_id: user.id,
         });
 
       if (error) throw error;
-
-      setNewMessage("");
+      
+      // Note: We don't need to add the message here as it will come through the real-time channel
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove the optimistic message if there was an error
+      setMessages(current => current.filter(msg => msg.id !== `temp-${Date.now()}`));
     } finally {
       setIsLoading(false);
     }
