@@ -2,12 +2,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare, Newspaper, CheckSquare } from "lucide-react";
+import { Users, Ticket, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare, Newspaper, CheckSquare } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import UsersTab from "@/components/admin/UsersTab";
 import PassesTab from "@/components/admin/PassesTab";
-import ProductsTab from "@/components/admin/ProductsTab";
 import SupportTab from "@/components/admin/SupportTab";
 import PaymentsTab from "@/components/admin/PaymentsTab";
 import StatsTab from "@/components/admin/StatsTab";
@@ -33,15 +32,13 @@ const AdminDashboard = () => {
   const { data: notificationCounts } = useQuery({
     queryKey: ['admin_notification_counts'],
     queryFn: async () => {
-      const [paymentsResult, purchasesResult, ticketsResult] = await Promise.all([
+      const [paymentsResult, ticketsResult] = await Promise.all([
         supabase.from('payment_requests').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('purchases').select('id', { count: 'exact' }).eq('status', 'pending'),
         supabase.from('support_tickets').select('id', { count: 'exact' }).eq('status', 'open').eq('is_archived', false)
       ]);
       
       return {
         payments: paymentsResult.count || 0,
-        purchases: purchasesResult.count || 0, 
         tickets: ticketsResult.count || 0
       };
     },
@@ -50,7 +47,6 @@ const AdminDashboard = () => {
   
   const totalNotifications = 
     (notificationCounts?.payments || 0) + 
-    (notificationCounts?.purchases || 0) + 
     (notificationCounts?.tickets || 0);
 
   useEffect(() => {
@@ -117,7 +113,7 @@ const AdminDashboard = () => {
       <h1 className="text-2xl font-bold mb-6 text-glow">Панель администратора</h1>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-9 gap-4 mb-8">
+        <TabsList className="grid grid-cols-8 gap-4 mb-8">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Статистика</span>
@@ -137,10 +133,6 @@ const AdminDashboard = () => {
             <Ticket className="h-4 w-4" />
             <span className="hidden sm:inline">Пропуска</span>
           </TabsTrigger>
-          <TabsTrigger value="products" className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            <span className="hidden sm:inline">Магазин</span>
-          </TabsTrigger>
           <TabsTrigger value="news" className="flex items-center gap-2">
             <Newspaper className="h-4 w-4" />
             <span className="hidden sm:inline">Новости</span>
@@ -155,9 +147,9 @@ const AdminDashboard = () => {
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <CircleDollarSign className="h-4 w-4" />
             <span className="hidden sm:inline">Платежи</span>
-            {(notificationCounts?.payments || 0) + (notificationCounts?.purchases || 0) > 0 && (
+            {notificationCounts?.payments > 0 && (
               <Badge variant="secondary" className="ml-0.5">
-                {(notificationCounts?.payments || 0) + (notificationCounts?.purchases || 0)}
+                {notificationCounts?.payments || 0}
               </Badge>
             )}
           </TabsTrigger>
@@ -179,9 +171,6 @@ const AdminDashboard = () => {
           </TabsContent>
           <TabsContent value="passes">
             <PassesTab />
-          </TabsContent>
-          <TabsContent value="products">
-            <ProductsTab />
           </TabsContent>
           <TabsContent value="news">
             <NewsTab />
