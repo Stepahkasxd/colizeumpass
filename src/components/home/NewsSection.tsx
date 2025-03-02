@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 
 type NewsArticle = {
   id: string;
@@ -18,6 +21,8 @@ type NewsArticle = {
 };
 
 const NewsSection = () => {
+  const [selectedNews, setSelectedNews] = useState<NewsArticle | null>(null);
+
   // Fetch published news articles
   const { data: newsArticles, isLoading } = useQuery({
     queryKey: ['public-news'],
@@ -50,21 +55,30 @@ const NewsSection = () => {
       title: "Новое оборудование в клубе",
       created_at: "2023-05-15T00:00:00Z",
       summary: "Мы обновили все компьютеры до новейших RTX 4090. Приходите оценить новые возможности!",
-      category: "update" as const
+      category: "update" as const,
+      content: null,
+      published: true,
+      updated_at: "2023-05-15T00:00:00Z"
     },
     {
       id: "2",
       title: "Турнир по CS2 в эти выходные",
       created_at: "2023-05-12T00:00:00Z",
       summary: "Регистрируйтесь на турнир по CS2. Призовой фонд 50,000 рублей!",
-      category: "event" as const
+      category: "event" as const,
+      content: null,
+      published: true,
+      updated_at: "2023-05-12T00:00:00Z"
     },
     {
       id: "3",
       title: "Скидка 20% на ночные пропуски",
       created_at: "2023-05-10T00:00:00Z",
       summary: "Только до конца месяца: приобретайте ночные пропуски со скидкой 20%.",
-      category: "promo" as const
+      category: "promo" as const,
+      content: null,
+      published: true,
+      updated_at: "2023-05-10T00:00:00Z"
     }
   ];
 
@@ -113,14 +127,17 @@ const NewsSection = () => {
                     </span>
                   </div>
                   <CardDescription className="text-xs text-foreground/60">
-                    {format(new Date(news.created_at), 'dd MMMM yyyy')}
+                    {format(new Date(news.created_at), 'd MMMM', { locale: ru })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-foreground/80">{news.summary}</p>
                 </CardContent>
                 <CardFooter>
-                  <button className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                  <button 
+                    className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                    onClick={() => setSelectedNews(news)}
+                  >
                     Подробнее
                     <ArrowRight className="h-4 w-4" />
                   </button>
@@ -130,6 +147,31 @@ const NewsSection = () => {
           ))}
         </div>
       )}
+
+      {/* News details dialog */}
+      <Dialog open={!!selectedNews} onOpenChange={(open) => !open && setSelectedNews(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedNews?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col space-y-4">
+            <div className="flex justify-between items-center text-sm text-muted-foreground">
+              <span>{format(new Date(selectedNews?.created_at || ''), 'd MMMM yyyy', { locale: ru })}</span>
+              <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
+                {selectedNews && getCategoryDisplay(selectedNews.category)}
+              </span>
+            </div>
+            <p className="text-foreground/80">{selectedNews?.summary}</p>
+            {selectedNews?.content ? (
+              <div className="mt-4">
+                <p className="whitespace-pre-wrap">{selectedNews.content}</p>
+              </div>
+            ) : (
+              <p className="italic text-muted-foreground">Нет дополнительной информации</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

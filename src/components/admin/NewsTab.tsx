@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -114,8 +113,12 @@ const NewsTab = () => {
       const { data, error } = await supabase
         .from('news_articles')
         .insert({
-          ...values,
-          author_id: user?.id
+          title: values.title,
+          summary: values.summary,
+          content: values.content || null,
+          category: values.category,
+          published: values.published,
+          author_id: user?.id || null
         })
         .select()
         .single();
@@ -138,10 +141,16 @@ const NewsTab = () => {
   // Update news article mutation
   const updateNewsMutation = useMutation({
     mutationFn: async (values: NewsFormValues & { id: string }) => {
-      const { id, ...updateData } = values;
+      const { id, ...updateValues } = values;
       const { data, error } = await supabase
         .from('news_articles')
-        .update(updateData)
+        .update({
+          title: updateValues.title,
+          summary: updateValues.summary,
+          content: updateValues.content || null,
+          category: updateValues.category,
+          published: updateValues.published
+        })
         .eq('id', id)
         .select()
         .single();
