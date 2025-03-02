@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare, Newspaper } from "lucide-react";
+import { Users, Ticket, ShoppingBag, MessageSquare, CircleDollarSign, BarChart3, ActivitySquare, Newspaper, CheckSquare } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import UsersTab from "@/components/admin/UsersTab";
@@ -13,12 +13,45 @@ import PaymentsTab from "@/components/admin/PaymentsTab";
 import StatsTab from "@/components/admin/StatsTab";
 import LogsTab from "@/components/admin/LogsTab";
 import NewsTab from "@/components/admin/NewsTab";
+import TasksTab from "@/components/admin/TasksTab";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+  
+  // Get tab from URL query parameter
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'stats');
+
+  // Fetch pending notifications counts
+  const { data: notificationCounts } = useQuery({
+    queryKey: ['admin_notification_counts'],
+    queryFn: async () => {
+      const [paymentsResult, purchasesResult, ticketsResult] = await Promise.all([
+        supabase.from('payment_requests').select('id', { count: 'exact' }).eq('status', 'pending'),
+        supabase.from('purchases').select('id', { count: 'exact' }).eq('status', 'pending'),
+        supabase.from('support_tickets').select('id', { count: 'exact' }).eq('status', 'open').eq('is_archived', false)
+      ]);
+      
+      return {
+        payments: paymentsResult.count || 0,
+        purchases: purchasesResult.count || 0, 
+        tickets: ticketsResult.count || 0
+      };
+    },
+    refetchInterval: 60000 // Refresh every minute
+  });
+  
+  const totalNotifications = 
+    (notificationCounts?.payments || 0) + 
+    (notificationCounts?.purchases || 0) + 
+    (notificationCounts?.tickets || 0);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -56,6 +89,21 @@ const AdminDashboard = () => {
     checkAdminStatus();
   }, [user, authLoading, navigate]);
 
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/admin?tab=${value}`, { replace: true });
+  };
+
+  // Set initial tab from URL or update URL if tab is set differently
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    } else if (!tabFromUrl && activeTab !== 'stats') {
+      navigate(`/admin?tab=${activeTab}`, { replace: true });
+    }
+  }, [tabFromUrl, activeTab, navigate]);
+
   if (authLoading || isCheckingAdmin) {
     return null;
   }
@@ -68,11 +116,18 @@ const AdminDashboard = () => {
     <div className="container py-8">
       <h1 className="text-2xl font-bold mb-6 text-glow">Панель администратора</h1>
       
-      <Tabs defaultValue="stats" className="w-full">
-        <TabsList className="grid grid-cols-8 gap-4 mb-8">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid grid-cols-9 gap-4 mb-8">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Статистика</span>
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Дела</span>
+            {totalNotifications > 0 && (
+              <Badge variant="secondary" className="ml-0.5">{totalNotifications}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -93,10 +148,18 @@ const AdminDashboard = () => {
           <TabsTrigger value="support" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline">Поддержка</span>
+            {notificationCounts?.tickets ? (
+              <Badge variant="secondary" className="ml-0.5">{notificationCounts.tickets}</Badge>
+            ) : null}
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <CircleDollarSign className="h-4 w-4" />
             <span className="hidden sm:inline">Платежи</span>
+            {(notificationCounts?.payments || 0) + (notificationCounts?.purchases || 0) > 0 && (
+              <Badge variant="secondary" className="ml-0.5">
+                {(notificationCounts?.payments || 0) + (notificationCounts?.purchases || 0)}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="logs" className="flex items-center gap-2">
             <ActivitySquare className="h-4 w-4" />
@@ -107,6 +170,9 @@ const AdminDashboard = () => {
         <div className="glass-panel p-6 rounded-lg">
           <TabsContent value="stats">
             <StatsTab />
+          </TabsContent>
+          <TabsContent value="tasks">
+            <TasksTab />
           </TabsContent>
           <TabsContent value="users">
             <UsersTab />
