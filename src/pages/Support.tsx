@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -396,37 +395,18 @@ const Support = () => {
 
             <div className="md:col-span-4">
               <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-primary/20 p-6">
-                <h3 className="text-lg font-semibold mb-4">Контактная информация</h3>
-                <div className="space-y-3 text-sm">
-                  <p>Если у вас возникли срочные вопросы, вы можете связаться с нами напрямую:</p>
-                  <div className="pt-2">
-                    <p className="font-medium">Телефон:</p>
-                    <p className="text-muted-foreground">+7 (XXX) XXX-XX-XX</p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Email:</p>
-                    <p className="text-muted-foreground">support@colizeum.ru</p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Адрес:</p>
-                    <p className="text-muted-foreground">г. Москва, ул. Примерная, д. 123</p>
-                  </div>
-                </div>
-                
-                <div className="mt-6 pt-6 border-t border-primary/10">
-                  <h3 className="text-lg font-semibold mb-4">Часто задаваемые вопросы</h3>
-                  <ul className="space-y-2 text-sm">
-                    <li>
-                      <a href="#" className="text-primary hover:underline">Как купить пропуск?</a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-primary hover:underline">Как использовать бонусные баллы?</a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-primary hover:underline">Правила клуба</a>
-                    </li>
-                  </ul>
-                </div>
+                <h3 className="text-lg font-semibold mb-4">Часто задаваемые вопросы</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>
+                    <a href="#" className="text-primary hover:underline">Как купить пропуск?</a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-primary hover:underline">Как использовать бонусные баллы?</a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-primary hover:underline">Правила клуба</a>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
