@@ -102,14 +102,14 @@ export const ProfileTab = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="dashboard-card overflow-hidden relative">
-          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-[#e4d079]/10 to-transparent"></div>
+        <Card className="overflow-hidden relative bg-black/40 backdrop-blur-md border border-purple-500/20 rounded-lg transition-all duration-300 hover:shadow-[0_8px_20px_rgba(155,135,245,0.07)]">
+          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-purple-500/10 to-transparent"></div>
           
           <CardHeader className="flex flex-row items-center justify-between z-10 relative">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <span className="bg-[#e4d079]/10 p-2 rounded-full">
-                  <User className="h-4 w-4 text-[#e4d079]" />
+                <span className="bg-purple-500/10 p-2 rounded-full">
+                  <User className="h-4 w-4 text-purple-400" />
                 </span>
                 Личные данные
               </CardTitle>
@@ -121,59 +121,59 @@ export const ProfileTab = () => {
               variant="ghost"
               size="icon"
               onClick={() => setIsEditing(!isEditing)}
-              className="rounded-full hover:bg-[#e4d079]/10"
+              className="rounded-full hover:bg-purple-500/10"
               disabled={isLoading}
             >
-              <Pencil className="h-4 w-4 text-[#e4d079]" />
+              <Pencil className="h-4 w-4 text-purple-400" />
             </Button>
           </CardHeader>
           
           <CardContent className="space-y-6 relative z-10">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="text-yellow-400/70">Имя</Label>
+                <Label htmlFor="displayName" className="text-purple-300/70">Имя</Label>
                 <div className="relative">
                   <Input
                     id="displayName"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     disabled={!isEditing || isLoading}
-                    className={`bg-black/40 border-[#e4d079]/10 focus:border-[#e4d079]/30 ${isEditing ? 'pl-10' : ''}`}
+                    className={`bg-black/40 border-purple-500/20 focus:border-purple-500/40 ${isEditing ? 'pl-10' : ''}`}
                     placeholder="Введите ваше имя"
                   />
                   {isEditing && (
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#e4d079]/50" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400/50" />
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phoneNumber" className="text-yellow-400/70">Номер телефона</Label>
+                <Label htmlFor="phoneNumber" className="text-purple-300/70">Номер телефона</Label>
                 <div className="relative">
                   <Input
                     id="phoneNumber"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     disabled={!isEditing || isLoading}
-                    className={`bg-black/40 border-[#e4d079]/10 focus:border-[#e4d079]/30 ${isEditing ? 'pl-10' : ''}`}
+                    className={`bg-black/40 border-purple-500/20 focus:border-purple-500/40 ${isEditing ? 'pl-10' : ''}`}
                     placeholder="+7 (___) ___-____"
                   />
                   {isEditing && (
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#e4d079]/50" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400/50" />
                   )}
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio" className="text-yellow-400/70">О себе</Label>
+              <Label htmlFor="bio" className="text-purple-300/70">О себе</Label>
               <div className="relative">
                 <Textarea
                   id="bio"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   disabled={!isEditing || isLoading}
-                  className="min-h-[100px] bg-black/40 border-[#e4d079]/10 focus:border-[#e4d079]/30"
+                  className="min-h-[100px] bg-black/40 border-purple-500/20 focus:border-purple-500/40"
                   placeholder="Расскажите немного о себе..."
                 />
               </div>
@@ -213,15 +213,15 @@ export const ProfileTab = () => {
               )}
             </AnimatePresence>
 
-            <div className="pt-6 mt-4 border-t border-[#e4d079]/10">
+            <div className="pt-6 mt-4 border-t border-purple-500/20">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-yellow-400/50">Email</Label>
-                  <p className="text-sm font-medium text-[#e4d079] truncate">{user?.email || "Не указан"}</p>
+                  <Label className="text-purple-300/50">Email</Label>
+                  <p className="text-sm font-medium text-purple-300 truncate">{user?.email || "Не указан"}</p>
                 </div>
                 <div>
-                  <Label className="text-yellow-400/50">Аккаунт с</Label>
-                  <p className="text-sm font-medium text-[#e4d079]">{accountCreatedDate}</p>
+                  <Label className="text-purple-300/50">Аккаунт с</Label>
+                  <p className="text-sm font-medium text-purple-300">{accountCreatedDate}</p>
                 </div>
               </div>
             </div>
