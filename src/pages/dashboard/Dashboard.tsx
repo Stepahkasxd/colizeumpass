@@ -55,6 +55,9 @@ const Dashboard = () => {
     return null;
   }
 
+  // Get user's name from email or use "пользователь" as fallback
+  const userName = user.email ? user.email.split('@')[0] : "пользователь";
+
   return (
     <div className="min-h-screen pt-20 pb-12 animated-gradient overflow-hidden">
       {/* Decorative elements */}
@@ -70,13 +73,15 @@ const Dashboard = () => {
           className="pt-4 pb-8"
         >
           <div className="flex flex-col md:flex-row gap-4 md:gap-8 md:items-center mb-8 glass-panel p-6 rounded-lg shimmer">
-            <div>
-              <h1 className="text-3xl font-bold text-with-shadow">Личный кабинет</h1>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-with-shadow">Привет! {userName}</h1>
               <p className="text-muted-foreground mt-1">
-                Управление пропусками, статистика и персональные данные
+                Это твой личный кабинет, тут ты можешь ознакомиться со статистикой, посмотреть твой прогресс в пропуске, забрать награды.
+              </p>
+              <p className="text-muted-foreground mt-1">
+                Твой ID: {user.id}
               </p>
             </div>
-            <div className="flex-1" />
             {isAdmin && (
               <motion.div
                 whileHover={{ scale: 1.03 }}
