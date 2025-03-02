@@ -6,6 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import HeroSection from "@/components/home/HeroSection";
 import CurrentPassCard from "@/components/home/CurrentPassCard";
 import FeatureCards from "@/components/home/FeatureCards";
+import NewsSection from "@/components/home/NewsSection";
 import FaqSection from "@/components/home/FaqSection";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
@@ -48,6 +49,8 @@ const Index = () => {
           )}
 
           <FeatureCards />
+          
+          <NewsSection />
           
           <FaqSection />
         </motion.div>
