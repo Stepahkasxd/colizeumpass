@@ -88,7 +88,7 @@ export const PassLevels = ({ pass, profile }: PassLevelsProps) => {
         id: crypto.randomUUID(),
         name: reward.name,
         description: reward.description,
-        status: "claimed",
+        status: "available",  // Изменено с "claimed" на "available"
         earnedAt: new Date().toISOString(),
         passLevel: level
       };
@@ -247,3 +247,4 @@ export const PassLevels = ({ pass, profile }: PassLevelsProps) => {
     </motion.div>
   );
 };
+

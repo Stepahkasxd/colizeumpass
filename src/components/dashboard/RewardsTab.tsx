@@ -30,12 +30,23 @@ export const RewardsTab = () => {
 
   const claimRewardMutation = useMutation({
     mutationFn: async (rewardId: string) => {
-      const updatedRewards = rewards.map(reward => 
+      // Получаем текущие награды
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('rewards')
+        .eq('id', user?.id)
+        .single();
+      
+      if (!profile?.rewards) throw new Error("Награды не найдены");
+      
+      // Обновляем статус конкретной награды
+      const updatedRewards = (profile.rewards as Reward[]).map(reward => 
         reward.id === rewardId 
           ? { ...reward, status: 'claimed' as const } 
           : reward
       );
 
+      // Сохраняем обновленные награды
       const { error } = await supabase
         .from('profiles')
         .update({ rewards: updatedRewards })
