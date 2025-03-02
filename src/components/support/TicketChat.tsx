@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   display_name: string | null;
@@ -29,6 +31,7 @@ interface TicketChatProps {
 
 export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,8 +100,10 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
 
     fetchMessages();
 
-    // Subscribe to real-time updates - fixed implementation
+    // Set up a single global channel for all messages related to this ticket
     const channelName = `ticket_${ticketId}`;
+    console.log(`Setting up real-time subscription for ticket ${ticketId}`);
+    
     const channel = supabase
       .channel(channelName)
       .on(
@@ -112,31 +117,64 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
         async (payload) => {
           console.log('New message received via real-time:', payload);
           
-          try {
-            // Get profile for the user who sent the message
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('id, display_name')
-              .eq('id', payload.new.user_id)
-              .single();
-
-            // Add the new message to the state
-            const newMsg: Message = {
-              id: payload.new.id,
-              message: payload.new.message,
-              user_id: payload.new.user_id,
-              created_at: payload.new.created_at,
-              ticket_id: payload.new.ticket_id,
-              profile: profileData || null
-            };
-
-            setMessages(current => [...current, newMsg]);
-            
-            // Scroll to bottom when new message arrives
-            setTimeout(scrollToBottom, 100);
-          } catch (error) {
-            console.error('Error handling real-time message:', error);
+          // Don't process messages that we've already included via optimistic updates
+          if (messages.some(m => m.id === payload.new.id || 
+              (m.id.startsWith('temp-') && m.message === payload.new.message && m.user_id === payload.new.user_id))) {
+            console.log('Message already exists in state, skipping');
+            return;
           }
+          
+          // Check if this is a temporary message we added optimistically
+          const isOptimisticUpdate = messages.some(m => 
+            m.id.startsWith('temp-') && 
+            m.message === payload.new.message && 
+            m.user_id === payload.new.user_id
+          );
+          
+          if (isOptimisticUpdate) {
+            // Replace the optimistic message with the real one
+            setMessages(current => current.map(msg => 
+              (msg.id.startsWith('temp-') && 
+               msg.message === payload.new.message && 
+               msg.user_id === payload.new.user_id) 
+                ? { ...payload.new, profile: msg.profile } 
+                : msg
+            ));
+          } else {
+            try {
+              // Get profile for the user who sent the message
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id, display_name')
+                .eq('id', payload.new.user_id)
+                .single();
+
+              // Add the new message to the state
+              const newMsg: Message = {
+                id: payload.new.id,
+                message: payload.new.message,
+                user_id: payload.new.user_id,
+                created_at: payload.new.created_at,
+                ticket_id: payload.new.ticket_id,
+                profile: profileData || null
+              };
+
+              setMessages(current => [...current, newMsg]);
+              
+              // When receiving a message from another user, show a toast notification
+              if (payload.new.user_id !== user?.id) {
+                toast({
+                  title: "Новое сообщение",
+                  description: `${profileData?.display_name || "Пользователь"}: ${payload.new.message.substring(0, 30)}${payload.new.message.length > 30 ? '...' : ''}`,
+                });
+              }
+            } catch (error) {
+              console.error('Error handling real-time message:', error);
+            }
+          }
+          
+          // Scroll to bottom when new message arrives
+          setTimeout(scrollToBottom, 100);
         }
       )
       .subscribe((status) => {
@@ -147,7 +185,7 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
       console.log(`Removing channel ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [ticketId]);
+  }, [ticketId, user?.id, toast]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -202,6 +240,12 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
       console.error('Error sending message:', error);
       // Remove the optimistic message if there was an error
       setMessages(current => current.filter(msg => msg.id !== `temp-${Date.now()}`));
+      
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить сообщение. Попробуйте еще раз.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -256,11 +300,13 @@ export const TicketChat = ({ ticketId, isAdmin }: TicketChatProps) => {
             placeholder="Введите сообщение..."
             className="resize-none"
             rows={1}
+            disabled={isLoading}
           />
           <Button 
             onClick={handleSendMessage} 
             disabled={isLoading || !newMessage.trim()}
           >
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Отправить
           </Button>
         </div>
