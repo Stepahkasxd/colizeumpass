@@ -17,33 +17,11 @@ export const PassProgress = ({ pass, profile }: PassProgressProps) => {
     return currentLevel === -1 ? pass.levels.length : currentLevel;
   };
 
-  const calculateLevelProgress = () => {
-    if (!pass?.levels || !profile?.points) return 0;
-    
-    const currentLevelIndex = getCurrentLevel();
-    
-    // If user completed all levels
-    if (currentLevelIndex >= pass.levels.length) {
-      return 100;
-    }
-    
-    // Get points required for current level
-    const currentLevelPoints = pass.levels[currentLevelIndex]?.points_required || 0;
-    
-    // Get points required for previous level (0 if it's the first level)
-    const previousLevelPoints = currentLevelIndex > 0 
-      ? pass.levels[currentLevelIndex - 1]?.points_required || 0
-      : 0;
-    
-    // Calculate points needed for this level
-    const pointsNeededForLevel = currentLevelPoints - previousLevelPoints;
-    
-    // Calculate how many points the user has earned in this level
-    const pointsEarnedInLevel = profile.points - previousLevelPoints;
-    
-    // Calculate percentage progress in this level
-    if (pointsNeededForLevel <= 0) return 0;
-    return Math.min(Math.round((pointsEarnedInLevel / pointsNeededForLevel) * 100), 100);
+  const calculateTotalProgress = () => {
+    if (!pass?.levels || !profile?.points || pass.levels.length === 0) return 0;
+    // Calculate progress as percentage of completed levels out of total levels
+    const currentLevel = getCurrentLevel();
+    return Math.round((currentLevel / pass.levels.length) * 100);
   };
 
   const getPointsDisplay = () => {
@@ -89,10 +67,10 @@ export const PassProgress = ({ pass, profile }: PassProgressProps) => {
         <span>{getPointsDisplay()}</span>
       </div>
       <div className="relative">
-        <Progress value={calculateLevelProgress()} className="h-4" />
+        <Progress value={calculateTotalProgress()} className="h-4" />
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-xs font-medium text-white drop-shadow">
-            {calculateLevelProgress()}%
+            {calculateTotalProgress()}%
           </span>
         </div>
       </div>
