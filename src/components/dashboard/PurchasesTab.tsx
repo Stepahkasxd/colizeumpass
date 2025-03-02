@@ -1,10 +1,12 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { logActivity } from "@/utils/logger";
+import { useToast } from "@/hooks/use-toast";
 
 type Purchase = {
   id: string;
@@ -20,6 +22,51 @@ type Purchase = {
 
 export const PurchasesTab = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation for completing a purchase
+  const completePurchaseMutation = useMutation({
+    mutationFn: async (purchaseId: string) => {
+      const { error } = await supabase
+        .from('purchases')
+        .update({ status: 'completed' })
+        .eq('id', purchaseId);
+
+      if (error) throw error;
+
+      return purchaseId;
+    },
+    onSuccess: async (purchaseId) => {
+      // Invalidate purchases query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['purchases', user?.id] });
+
+      // Log the activity
+      if (user) {
+        await logActivity({
+          user_id: user.id,
+          category: 'shop',
+          action: 'purchase_completed_by_user',
+          details: {
+            purchase_id: purchaseId
+          }
+        });
+      }
+
+      toast({
+        title: "Получено",
+        description: "Статус покупки успешно обновлен",
+      });
+    },
+    onError: (error) => {
+      console.error('Error completing purchase:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить статус покупки",
+        variant: "destructive",
+      });
+    }
+  });
 
   const { data: purchases, isLoading } = useQuery({
     queryKey: ['purchases', user?.id],
@@ -58,6 +105,10 @@ export const PurchasesTab = () => {
     },
     enabled: !!user?.id
   });
+
+  const handleMarkAsReceived = async (purchaseId: string) => {
+    completePurchaseMutation.mutate(purchaseId);
+  };
 
   if (isLoading) {
     return <div className="text-center text-muted-foreground">Загрузка покупок...</div>;
@@ -102,6 +153,19 @@ export const PurchasesTab = () => {
                 </p>
               </div>
             </div>
+            
+            {purchase.status === 'pending' && (
+              <div className="mt-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleMarkAsReceived(purchase.id)}
+                  disabled={completePurchaseMutation.isPending}
+                >
+                  {completePurchaseMutation.isPending ? "Обновление..." : "Отметить как полученный"}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

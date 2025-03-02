@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +72,7 @@ const STATUS_LABELS = {
 const PaymentsTab = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
 
@@ -87,7 +89,7 @@ const PaymentsTab = () => {
     }
   });
 
-  const { data: purchases, isLoading: isLoadingPurchases, refetch: refetchPurchases } = useQuery({
+  const { data: purchases, isLoading: isLoadingPurchases } = useQuery({
     queryKey: ['purchases'],
     queryFn: async () => {
       let { data, error } = await supabase
@@ -124,10 +126,9 @@ const PaymentsTab = () => {
     }
   });
 
-  const handleStatusChange = async (requestId: string, newStatus: PaymentRequest['status']) => {
-    if (!user) return;
-    
-    try {
+  // Mutation for updating payment request status
+  const updateRequestStatusMutation = useMutation({
+    mutationFn: async ({ requestId, newStatus }: { requestId: string; newStatus: PaymentRequest['status'] }) => {
       const { error } = await supabase
         .from('payment_requests')
         .update({ 
@@ -138,49 +139,50 @@ const PaymentsTab = () => {
         .eq('id', requestId);
 
       if (error) throw error;
+      return { requestId, newStatus };
+    },
+    onSuccess: async ({ requestId, newStatus }) => {
+      if (!user) return;
+      
+      const request = requests?.find(r => r.id === requestId);
+      if (!request) return;
 
       if (newStatus === 'approved') {
-        const request = requests?.find(r => r.id === requestId);
-        if (request) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ 
-              has_pass: true
-            })
-            .eq('id', request.user_id);
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            has_pass: true
+          })
+          .eq('id', request.user_id);
 
-          if (profileError) throw profileError;
+        if (profileError) throw profileError;
 
-          await logActivity({
-            user_id: request.user_id,
-            category: 'passes',
-            action: 'pass_approved',
-            details: {
-              pass_id: request.pass_id,
-              pass_name: request.passes?.name,
-              amount: request.amount,
-              admin_id: user.id,
-              admin_notes: adminNotes
-            }
-          });
-        }
+        await logActivity({
+          user_id: request.user_id,
+          category: 'passes',
+          action: 'pass_approved',
+          details: {
+            pass_id: request.pass_id,
+            pass_name: request.passes?.name,
+            amount: request.amount,
+            admin_id: user.id,
+            admin_notes: adminNotes
+          }
+        });
       } else if (newStatus === 'rejected') {
-        const request = requests?.find(r => r.id === requestId);
-        if (request) {
-          await logActivity({
-            user_id: request.user_id,
-            category: 'passes',
-            action: 'pass_rejected',
-            details: {
-              pass_id: request.pass_id,
-              pass_name: request.passes?.name,
-              amount: request.amount,
-              admin_id: user.id,
-              admin_notes: adminNotes,
-              reason: adminNotes || 'No reason provided'
-            }
-          });
-        }
+        await logActivity({
+          user_id: request.user_id,
+          category: 'passes',
+          action: 'pass_rejected',
+          details: {
+            pass_id: request.pass_id,
+            pass_name: request.passes?.name,
+            amount: request.amount,
+            admin_id: user.id,
+            admin_notes: adminNotes,
+            reason: adminNotes || 'No reason provided'
+          }
+        });
       }
 
       toast({
@@ -190,7 +192,8 @@ const PaymentsTab = () => {
 
       setSelectedRequest(null);
       refetchRequests();
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error updating payment request status:', error);
       toast({
         title: "Ошибка",
@@ -198,41 +201,46 @@ const PaymentsTab = () => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const handlePurchaseComplete = async (purchaseId: string) => {
-    if (!user) return;
-    
-    try {
-      const purchase = purchases?.find(p => p.id === purchaseId);
+  // Mutation for completing a purchase
+  const completePurchaseMutation = useMutation({
+    mutationFn: async (purchaseId: string) => {
       const { error } = await supabase
         .from('purchases')
         .update({ status: 'completed' })
         .eq('id', purchaseId);
 
       if (error) throw error;
+      return purchaseId;
+    },
+    onSuccess: async (purchaseId) => {
+      if (!user) return;
+      
+      const purchase = purchases?.find(p => p.id === purchaseId);
+      if (!purchase) return;
 
-      if (purchase) {
-        await logActivity({
-          user_id: purchase.user_id,
-          category: 'shop',
-          action: 'purchase_completed',
-          details: {
-            purchase_id: purchaseId,
-            product_id: purchase.product_id,
-            product_name: purchase.products.name,
-            admin_id: user.id
-          }
-        });
-      }
+      await logActivity({
+        user_id: purchase.user_id,
+        category: 'shop',
+        action: 'purchase_completed',
+        details: {
+          purchase_id: purchaseId,
+          product_id: purchase.product_id,
+          product_name: purchase.products.name,
+          admin_id: user.id
+        }
+      });
 
       toast({
         title: "Статус обновлен",
         description: "Товар помечен как полученный",
       });
 
-      refetchPurchases();
-    } catch (error) {
+      // Invalidate purchases query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['purchases'] });
+    },
+    onError: (error) => {
       console.error('Error updating purchase status:', error);
       toast({
         title: "Ошибка",
@@ -240,6 +248,14 @@ const PaymentsTab = () => {
         variant: "destructive",
       });
     }
+  });
+
+  const handleStatusChange = (requestId: string, newStatus: PaymentRequest['status']) => {
+    updateRequestStatusMutation.mutate({ requestId, newStatus });
+  };
+
+  const handlePurchaseComplete = (purchaseId: string) => {
+    completePurchaseMutation.mutate(purchaseId);
   };
 
   const formatDate = (dateString: string) => {
@@ -327,10 +343,10 @@ const PaymentsTab = () => {
                 {purchase.products.name}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Покупатель: {purchase.profiles.display_name || 'Без имени'}
+                Покупатель: {purchase.profiles?.display_name || 'Без имени'}
               </p>
               <p className="text-sm text-muted-foreground">
-                Телефон: {purchase.profiles.phone_number || 'Не указан'}
+                Телефон: {purchase.profiles?.phone_number || 'Не указан'}
               </p>
               <p className="text-sm text-muted-foreground">
                 Стоимость: {purchase.products.points_cost} очков
@@ -344,8 +360,9 @@ const PaymentsTab = () => {
                 <Button
                   onClick={() => handlePurchaseComplete(purchase.id)}
                   variant="outline"
+                  disabled={completePurchaseMutation.isPending}
                 >
-                  Подтвердить получение
+                  {completePurchaseMutation.isPending ? "Обновление..." : "Подтвердить получение"}
                 </Button>
               )}
               <p className={`text-sm font-medium ${
@@ -504,6 +521,7 @@ const PaymentsTab = () => {
                     <Select
                       defaultValue={selectedRequest.status}
                       onValueChange={(value) => handleStatusChange(selectedRequest.id, value as PaymentRequest['status'])}
+                      disabled={updateRequestStatusMutation.isPending}
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />
