@@ -89,7 +89,7 @@ export const PassLevels = ({
         id: crypto.randomUUID(),
         name: reward.name,
         description: reward.description,
-        status: "available",
+        status: "claimed",
         earnedAt: new Date().toISOString(),
         passLevel: level
       };

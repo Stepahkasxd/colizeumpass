@@ -19,8 +19,15 @@ export const PassProgress = ({ pass, profile }: PassProgressProps) => {
 
   const calculateTotalProgress = () => {
     if (!pass?.levels || !profile?.points || pass.levels.length === 0) return 0;
-    // Calculate progress as percentage of completed levels out of total levels
+    
+    // Calculate progress as number of completed levels
     const currentLevel = getCurrentLevel();
+    
+    // If all levels are completed, return 100%
+    if (currentLevel === pass.levels.length) {
+      return 100;
+    }
+    
     return Math.round((currentLevel / pass.levels.length) * 100);
   };
 
