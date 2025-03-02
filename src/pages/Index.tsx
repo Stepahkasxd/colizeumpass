@@ -1,13 +1,19 @@
-
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Clock, Users, Wallet, ChevronRight, Tag, Star, Award, Rocket } from "lucide-react";
+import { ArrowRight, Clock, Users, Wallet, ChevronRight, Tag, Star, Award, Rocket, HelpCircle, Plus, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
 
 type Pass = Database["public"]["Tables"]["passes"]["Row"];
 
@@ -273,7 +279,7 @@ const Index = () => {
             </Button>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -322,6 +328,108 @@ const Index = () => {
               </p>
             </motion.div>
           </div>
+          
+          {/* FAQ Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.7 }}
+            className="mt-20 mb-16"
+          >
+            <div className="flex items-center justify-center mb-8 flex-col">
+              <div className="flex items-center gap-2 mb-2">
+                <HelpCircle className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl sm:text-3xl font-bold">Часто задаваемые вопросы</h2>
+              </div>
+              <div className="w-20 h-1 bg-gradient-to-r from-primary/30 to-primary"></div>
+              <p className="text-foreground/70 max-w-2xl mx-auto text-center mt-4">
+                Ответы на популярные вопросы о нашем компьютерном клубе и системе пропусков
+              </p>
+            </div>
+            
+            <Card className="glass-panel border-primary/20 max-w-3xl mx-auto shadow-lg">
+              <CardContent className="pt-6">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1" className="border-b border-primary/10">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Что такое пропуск и зачем он нужен?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      Пропуск — это ваш личный билет в мир Colizeum. Он дает вам доступ к компьютерному клубу, 
+                      особым предложениям и накопительной системе баллов. Чем больше вы играете, 
+                      тем больше привилегий получаете.
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="item-2" className="border-b border-primary/10">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Как купить пропуск?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      Для покупки пропуска нажмите кнопку "Купить пропуск" на главной странице, 
+                      затем подойдите к администратору клуба для оплаты. После подтверждения оплаты 
+                      пропуск будет автоматически добавлен в ваш личный кабинет.
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="item-3" className="border-b border-primary/10">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Каковы преимущества разных уровней пропуска?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      Каждый уровень пропуска предоставляет уникальные бонусы и привилегии. 
+                      Начальные уровни дают базовые преимущества, такие как скидки на время игры. 
+                      Более высокие уровни могут включать приоритетную бронь, бесплатные часы игры, 
+                      и эксклюзивный доступ к мероприятиям и турнирам.
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="item-4" className="border-b border-primary/10">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Как повысить уровень пропуска?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      Уровень пропуска повышается автоматически по мере накопления игровых часов 
+                      и баллов лояльности. Каждый час, проведенный в клубе, приближает вас к 
+                      следующему уровню. Вы можете отслеживать прогресс в своем личном кабинете.
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="item-5" className="border-b border-primary/10">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Какой срок действия у пропуска?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      Стандартный пропуск действует в течение 30 дней с момента покупки. 
+                      Премиум и VIP пропуски могут иметь увеличенный срок действия. 
+                      Информацию о конкретном сроке можно найти в описании каждого пропуска.
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="item-6" className="border-b border-primary/10">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Можно ли передать пропуск другому человеку?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      Нет, пропуск является персональным и привязан к вашему аккаунту. 
+                      Передача пропуска другим пользователям запрещена правилами клуба.
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="item-7">
+                    <AccordionTrigger className="text-lg hover:text-primary transition-colors py-4">
+                      Что делать, если возникли проблемы с пропуском?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-4">
+                      В случае возникновения любых проблем с пропуском, обратитесь к администратору клуба 
+                      или в раздел "Техническая поддержка" на нашем сайте. Наша команда оперативно 
+                      поможет решить вашу проблему.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
       </div>
     </div>
