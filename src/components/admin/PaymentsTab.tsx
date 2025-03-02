@@ -206,28 +206,36 @@ const PaymentsTab = () => {
   // Mutation for completing a purchase
   const completePurchaseMutation = useMutation({
     mutationFn: async (purchaseId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('purchases')
         .update({ status: 'completed' })
-        .eq('id', purchaseId);
+        .eq('id', purchaseId)
+        .select();
 
       if (error) throw error;
-      return purchaseId;
+      return data[0];
     },
-    onSuccess: async (purchaseId) => {
+    onSuccess: async (updatedPurchase) => {
       if (!user) return;
       
-      const purchase = purchases?.find(p => p.id === purchaseId);
-      if (!purchase) return;
+      // Optimistically update the UI
+      queryClient.setQueryData(['purchases'], (oldData: Purchase[] | undefined) => {
+        if (!oldData) return [];
+        return oldData.map(purchase => 
+          purchase.id === updatedPurchase.id 
+            ? { ...purchase, status: 'completed' } 
+            : purchase
+        );
+      });
 
       await logActivity({
-        user_id: purchase.user_id,
+        user_id: updatedPurchase.user_id,
         category: 'shop',
         action: 'purchase_completed',
         details: {
-          purchase_id: purchaseId,
-          product_id: purchase.product_id,
-          product_name: purchase.products.name,
+          purchase_id: updatedPurchase.id,
+          product_id: updatedPurchase.product_id,
+          product_name: purchases?.find(p => p.id === updatedPurchase.id)?.products.name || '',
           admin_id: user.id
         }
       });
@@ -236,9 +244,6 @@ const PaymentsTab = () => {
         title: "Статус обновлен",
         description: "Товар помечен как полученный",
       });
-
-      // Invalidate purchases query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['purchases'] });
     },
     onError: (error) => {
       console.error('Error updating purchase status:', error);

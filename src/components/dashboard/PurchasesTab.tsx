@@ -28,18 +28,25 @@ export const PurchasesTab = () => {
   // Mutation for completing a purchase
   const completePurchaseMutation = useMutation({
     mutationFn: async (purchaseId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('purchases')
         .update({ status: 'completed' })
-        .eq('id', purchaseId);
+        .eq('id', purchaseId)
+        .select();
 
       if (error) throw error;
-
-      return purchaseId;
+      return data[0];
     },
-    onSuccess: async (purchaseId) => {
-      // Invalidate purchases query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['purchases', user?.id] });
+    onSuccess: async (updatedPurchase) => {
+      // Optimistically update the local cache
+      queryClient.setQueryData(['purchases', user?.id], (oldData: Purchase[] | undefined) => {
+        if (!oldData) return [];
+        return oldData.map(purchase => 
+          purchase.id === updatedPurchase.id 
+            ? { ...purchase, status: 'completed' } 
+            : purchase
+        );
+      });
 
       // Log the activity
       if (user) {
@@ -48,7 +55,7 @@ export const PurchasesTab = () => {
           category: 'shop',
           action: 'purchase_completed_by_user',
           details: {
-            purchase_id: purchaseId
+            purchase_id: updatedPurchase.id
           }
         });
       }
