@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Save, X, User, Phone, Mail, Calendar, Shield, Award, RefreshCw } from "lucide-react";
+import { Pencil, Save, X, User, Phone, Mail, Calendar, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
@@ -214,7 +214,7 @@ export const ProfileTab = () => {
             </AnimatePresence>
 
             <div className="pt-6 mt-4 border-t border-[#e4d079]/10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-yellow-400/50">Email</Label>
                   <p className="text-sm font-medium text-[#e4d079] truncate">{user?.email || "Не указан"}</p>
@@ -222,81 +222,6 @@ export const ProfileTab = () => {
                 <div>
                   <Label className="text-yellow-400/50">Аккаунт с</Label>
                   <p className="text-sm font-medium text-[#e4d079]">{accountCreatedDate}</p>
-                </div>
-                <div>
-                  <Label className="text-yellow-400/50">Статус</Label>
-                  <div className="flex items-center gap-1">
-                    <Shield className="h-3 w-3 text-[#e4d079]" />
-                    <p className="text-sm font-medium text-[#e4d079]">{profile?.status || "Стандарт"}</p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-yellow-400/50">Уровень</Label>
-                  <div className="flex items-center gap-1">
-                    <Award className="h-3 w-3 text-[#e4d079]" />
-                    <p className="text-sm font-medium text-[#e4d079]">{profile?.level || 1}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-      >
-        <Card className="dashboard-card overflow-hidden relative">
-          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-[#e4d079]/10 to-transparent"></div>
-          
-          <CardHeader className="z-10 relative">
-            <CardTitle className="flex items-center gap-2">
-              <span className="bg-[#e4d079]/10 p-2 rounded-full">
-                <Shield className="h-4 w-4 text-[#e4d079]" />
-              </span>
-              Данные аккаунта
-            </CardTitle>
-            <CardDescription>
-              Информация о вашем аккаунте и подписке
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-4 relative z-10">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-yellow-400/50 block mb-1">ID пользователя</Label>
-                  <div className="bg-black/30 p-2 rounded border border-[#e4d079]/10 text-sm font-mono">
-                    {user?.id || "Недоступно"}
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-yellow-400/50 block mb-1">Тип аутентификации</Label>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-[#e4d079]" />
-                    <span className="text-sm font-medium">Email</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-yellow-400/50 block mb-1">Подписка</Label>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex h-2 w-2 rounded-full ${profile?.has_pass ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    <span className="text-sm font-medium">{profile?.has_pass ? 'Активна' : 'Не активна'}</span>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-yellow-400/50 block mb-1">Очки</Label>
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-[#e4d079]" />
-                    <span className="text-sm font-medium">{profile?.points || 0} очков</span>
-                  </div>
                 </div>
               </div>
             </div>
