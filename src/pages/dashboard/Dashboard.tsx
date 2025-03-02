@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(initialTab || "profile");
+  const [activeTab, setActiveTab] = useState(initialTab || "stats");
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -68,9 +68,9 @@ const Dashboard = () => {
           <Button 
             onClick={() => navigate("/admin")}
             variant="outline" 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dashboard-card hover:border-[#e4d079]/20"
           >
-            <Shield className="h-4 w-4" />
+            <Shield className="h-4 w-4 dashboard-icon" />
             Панель администратора
           </Button>
         )}
@@ -81,49 +81,49 @@ const Dashboard = () => {
         onValueChange={handleTabChange}
         className="space-y-6"
       >
-        <div className="border-b">
+        <div className="border-b border-[#e4d079]/10">
           <TabsList className="bg-transparent h-auto p-0 w-full justify-start gap-4">
             <TabsTrigger
-              value="profile"
+              value="stats"
               className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
-              <User className="h-4 w-4" />
-              Профиль
+              <BarChart3 className="h-4 w-4 dashboard-icon" />
+              Статистика
             </TabsTrigger>
             <TabsTrigger
               value="passes"
               className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
-              <Ticket className="h-4 w-4" />
+              <Ticket className="h-4 w-4 dashboard-icon" />
               Пропуска
-            </TabsTrigger>
-            <TabsTrigger
-              value="stats"
-              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Статистика
             </TabsTrigger>
             <TabsTrigger
               value="rewards"
               className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
-              <Award className="h-4 w-4" />
+              <Award className="h-4 w-4 dashboard-icon" />
               Награды
+            </TabsTrigger>
+            <TabsTrigger
+              value="profile"
+              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
+            >
+              <User className="h-4 w-4 dashboard-icon" />
+              Профиль
             </TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="profile" className="h-full flex-1">
-          <ProfileTab />
+        <TabsContent value="stats" className="h-full flex-1">
+          <StatsTab />
         </TabsContent>
         <TabsContent value="passes" className="h-full flex-1">
           <PassesTab />
         </TabsContent>
-        <TabsContent value="stats" className="h-full flex-1">
-          <StatsTab />
-        </TabsContent>
         <TabsContent value="rewards" className="h-full flex-1">
           <RewardsTab />
+        </TabsContent>
+        <TabsContent value="profile" className="h-full flex-1">
+          <ProfileTab />
         </TabsContent>
       </Tabs>
     </div>
