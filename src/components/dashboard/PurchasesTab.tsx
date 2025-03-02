@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,11 +34,13 @@ export const PurchasesTab = () => {
         .select();
 
       if (error) throw error;
-      return data[0];
+      return data && data.length > 0 ? data[0] : null;
     },
     onSuccess: async (updatedPurchase) => {
-      // Optimistically update the local cache
-      queryClient.setQueryData(['purchases', user?.id], (oldData: Purchase[] | undefined) => {
+      if (!updatedPurchase || !user) return;
+
+      // Safely update the local cache
+      queryClient.setQueryData(['purchases', user.id], (oldData: Purchase[] | undefined) => {
         if (!oldData) return [];
         return oldData.map(purchase => 
           purchase.id === updatedPurchase.id 
@@ -49,16 +50,14 @@ export const PurchasesTab = () => {
       });
 
       // Log the activity
-      if (user) {
-        await logActivity({
-          user_id: user.id,
-          category: 'shop',
-          action: 'purchase_completed_by_user',
-          details: {
-            purchase_id: updatedPurchase.id
-          }
-        });
-      }
+      await logActivity({
+        user_id: user.id,
+        category: 'shop',
+        action: 'purchase_completed_by_user',
+        details: {
+          purchase_id: updatedPurchase.id
+        }
+      });
 
       toast({
         title: "Получено",
