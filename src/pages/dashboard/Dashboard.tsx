@@ -7,6 +7,9 @@ import { ProfileTab } from "@/components/dashboard/ProfileTab";
 import { PassesTab } from "@/components/dashboard/PassesTab";
 import { StatsTab } from "@/components/dashboard/StatsTab";
 import { RewardsTab } from "@/components/dashboard/RewardsTab";
+import { Button } from "@/components/ui/button";
+import { Shield, User, Ticket, BarChart3, Award } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -14,11 +17,32 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState(initialTab || "profile");
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate("/login");
+      return;
     }
+
+    const checkAdminStatus = async () => {
+      try {
+        const { data, error } = await supabase.rpc('is_admin', {
+          user_id: user.id
+        });
+
+        if (error) {
+          console.error('Error checking admin status:', error);
+          return;
+        }
+
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+
+    checkAdminStatus();
   }, [user, navigate]);
 
   const handleTabChange = (value: string) => {
@@ -39,6 +63,17 @@ const Dashboard = () => {
             Управление пропусками, статистика и персональные данные
           </p>
         </div>
+        <div className="flex-1" />
+        {isAdmin && (
+          <Button 
+            onClick={() => navigate("/admin")}
+            variant="outline" 
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            Панель администратора
+          </Button>
+        )}
       </div>
 
       <Tabs
@@ -50,26 +85,30 @@ const Dashboard = () => {
           <TabsList className="bg-transparent h-auto p-0 w-full justify-start gap-4">
             <TabsTrigger
               value="profile"
-              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
+              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
+              <User className="h-4 w-4" />
               Профиль
             </TabsTrigger>
             <TabsTrigger
               value="passes"
-              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
+              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
+              <Ticket className="h-4 w-4" />
               Пропуска
             </TabsTrigger>
             <TabsTrigger
               value="stats"
-              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
+              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
+              <BarChart3 className="h-4 w-4" />
               Статистика
             </TabsTrigger>
             <TabsTrigger
               value="rewards"
-              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
+              className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2"
             >
+              <Award className="h-4 w-4" />
               Награды
             </TabsTrigger>
           </TabsList>
