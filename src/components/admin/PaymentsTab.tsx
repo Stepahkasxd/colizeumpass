@@ -6,6 +6,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/logger";
 import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ClipboardCheck, AlertCircle, ShoppingBag } from "lucide-react";
 
 const PaymentsTab = () => {
   const { user } = useAuth();
@@ -17,21 +26,21 @@ const PaymentsTab = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchases')
-        .select('*, product:products(name)')
-        .eq('user_id', user?.id);
+        .select('*, product:products(*)')
+        .eq('status', 'pending');
 
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
   const updatePurchaseStatusMutation = useMutation({
-    mutationFn: async ({ purchaseId, status, productId }: { purchaseId: string; status: string; productId: string }) => {
+    mutationFn: async ({ purchaseId, status }: { purchaseId: string; status: string }) => {
       const { data, error } = await supabase
         .from('purchases')
         .update({ status })
         .eq('id', purchaseId)
-        .select();
+        .select('*, product:products(*)');
 
       if (error) throw error;
       return data?.[0]; // Return the first element if data exists, otherwise undefined
@@ -84,20 +93,51 @@ const PaymentsTab = () => {
   });
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold">Управление платежами</h2>
-      {purchases?.map((purchase) => (
-        <div key={purchase.id} className="flex justify-between items-center">
-          <span>{purchase.product?.name}</span>
-          <Button onClick={() => updatePurchaseStatusMutation.mutate({ 
-            purchaseId: purchase.id, 
-            status: 'completed', 
-            productId: purchase.product_id 
-          })}>
-            Завершить
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-4">
+        <ShoppingBag className="h-5 w-5 text-primary" />
+        <h2 className="text-xl font-semibold">Управление платежами</h2>
+      </div>
+      
+      {!purchases?.length ? (
+        <div className="text-center py-6 text-muted-foreground">
+          Нет ожидающих заказов
         </div>
-      ))}
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {purchases.map((purchase) => (
+            <Card key={purchase.id} className="bg-card/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{purchase.product?.name}</CardTitle>
+                <CardDescription>
+                  <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-400/20">
+                    Ожидает
+                  </Badge>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-1 text-sm mb-3">
+                  <p>ID покупки: {purchase.id.substring(0, 8)}...</p>
+                  <p>Пользователь ID: {purchase.user_id.substring(0, 8)}...</p>
+                  <p>Дата: {new Date(purchase.created_at).toLocaleString()}</p>
+                </div>
+                
+                <Button 
+                  size="sm" 
+                  className="w-full" 
+                  onClick={() => updatePurchaseStatusMutation.mutate({ 
+                    purchaseId: purchase.id, 
+                    status: 'completed'
+                  })}
+                >
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Отметить как выполненный
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

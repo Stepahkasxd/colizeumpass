@@ -4,7 +4,7 @@ import { ProfileTab } from "@/components/dashboard/ProfileTab";
 import { PassesTab } from "@/components/dashboard/PassesTab";
 import { RewardsTab } from "@/components/dashboard/RewardsTab";
 import { StatsTab } from "@/components/dashboard/StatsTab";
-import { PurchasesTab } from "@/components/dashboard/PurchasesTab";
+import PurchasesTab from "@/components/dashboard/PurchasesTab";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
