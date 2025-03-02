@@ -48,6 +48,21 @@ const NewsSection = () => {
     }
   };
 
+  // Format date safely
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Дата не указана";
+      }
+      return format(date, 'd MMMM', { locale: ru });
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Дата не указана";
+    }
+  };
+
   // Fallback to sample news if no published news articles yet
   const sampleNewsItems = [
     {
@@ -127,7 +142,7 @@ const NewsSection = () => {
                     </span>
                   </div>
                   <CardDescription className="text-xs text-foreground/60">
-                    {format(new Date(news.created_at), 'd MMMM', { locale: ru })}
+                    {formatDate(news.created_at)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -156,7 +171,9 @@ const NewsSection = () => {
           </DialogHeader>
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center text-sm text-muted-foreground">
-              <span>{format(new Date(selectedNews?.created_at || ''), 'd MMMM yyyy', { locale: ru })}</span>
+              <span>
+                {selectedNews ? formatDate(selectedNews.created_at) : ''}
+              </span>
               <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
                 {selectedNews && getCategoryDisplay(selectedNews.category)}
               </span>
