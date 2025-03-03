@@ -7,10 +7,12 @@ import { Progress } from "@/components/ui/progress";
 import { ChevronRight, Trophy, Clock, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const PassesTab = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: activePasses, isLoading } = useQuery({
     queryKey: ['active-passes', user?.id],
@@ -25,12 +27,22 @@ export const PassesTab = () => {
         .single();
 
       // Получаем данные о пропуске
-      const { data: passes } = await supabase
+      const { data: passes, error } = await supabase
         .from('passes')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!passes) return [];
+      if (error) {
+        console.error("Error fetching passes:", error);
+        return [];
+      }
+
+      if (!passes || passes.length === 0) {
+        console.log("No passes found");
+        return [];
+      }
+
+      console.log("Fetched passes:", passes);
 
       // Для каждого пропуска вычисляем прогресс
       return passes.map(pass => {
@@ -61,6 +73,20 @@ export const PassesTab = () => {
     enabled: !!user?.id
   });
 
+  const handlePassClick = (passId: string) => {
+    if (!passId) {
+      toast({
+        title: "Ошибка",
+        description: "Идентификатор пропуска отсутствует",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Navigating to pass details with ID:", passId);
+    navigate(`/passes/${passId}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -76,7 +102,7 @@ export const PassesTab = () => {
           <Card 
             key={pass.id} 
             className="relative group cursor-pointer hover:shadow-lg transition-all overflow-hidden"
-            onClick={() => navigate(`/passes/${pass.id}`)}
+            onClick={() => handlePassClick(pass.id)}
           >
             <div className="absolute top-0 right-0 bg-primary/10 p-3 rounded-bl-lg">
               <Trophy className="w-5 h-5 text-primary" />

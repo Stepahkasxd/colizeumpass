@@ -100,11 +100,16 @@ export const PassDetails = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  console.log("PassDetails component rendering with passId:", passId);
+
   // Query pass details
   const { data: pass, isLoading: isPassLoading, error: passError } = useQuery({
     queryKey: ['pass', passId],
     queryFn: async () => {
-      if (!passId) return null;
+      if (!passId) {
+        console.error("No passId provided");
+        return null;
+      }
       
       console.log("Fetching pass with ID:", passId);
       
@@ -137,12 +142,12 @@ export const PassDetails = () => {
       
       return typedPass;
     },
-    retry: 1, // Only retry once
+    retry: 2,
     refetchOnWindowFocus: false
   });
 
   // Query user profile
-  const { data: profile, isLoading: isProfileLoading, error: profileError } = useQuery({
+  const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -170,7 +175,7 @@ export const PassDetails = () => {
       return convertToUserProfile(data);
     },
     enabled: !!user?.id,
-    retry: 1, // Only retry once
+    retry: 1,
     refetchOnWindowFocus: false
   });
 
