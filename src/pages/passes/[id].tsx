@@ -11,6 +11,7 @@ const PassDetailsPage = () => {
     console.log("PassDetailsPage mounted with ID:", id);
   }, [id]);
 
+  // Directly pass the ID from the URL params to the PassDetails component
   return <PassDetails />;
 };
 

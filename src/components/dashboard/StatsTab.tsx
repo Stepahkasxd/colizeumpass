@@ -12,6 +12,7 @@ import { ru } from "date-fns/locale";
 export const StatsTab = () => {
   const { user } = useAuth();
 
+  // Fetch user profile data
   const { data: stats } = useQuery({
     queryKey: ['profile-stats', user?.id],
     queryFn: async () => {
@@ -39,6 +40,39 @@ export const StatsTab = () => {
     enabled: !!user?.id
   });
 
+  // Fetch user's pass data for level requirements
+  const { data: passData } = useQuery({
+    queryKey: ['user-pass-data', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      // First determine if user has a pass
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_pass')
+        .eq('id', user.id)
+        .single();
+        
+      if (!profile?.has_pass) return null;
+      
+      // Get all passes to find levels
+      const { data: passes } = await supabase
+        .from('passes')
+        .select('levels')
+        .order('created_at', { ascending: false });
+        
+      if (!passes || passes.length === 0) return null;
+      
+      // Get the latest pass (assuming that's the one the user has)
+      const latestPass = passes[0];
+      const levels = latestPass.levels as Array<{level: number, points_required: number}> || [];
+      
+      // Sort levels by required points
+      return levels.sort((a, b) => a.points_required - b.points_required);
+    },
+    enabled: !!user?.id
+  });
+  
   // Fetch actual activity data from the database
   const { data: activityData = [] } = useQuery({
     queryKey: ['user-activity-stats', user?.id],
@@ -143,8 +177,27 @@ export const StatsTab = () => {
     }
   ];
 
+  // Calculate next level points based on database data
+  const calculateNextLevelRequirement = () => {
+    if (!passData || !stats) return (stats?.level || 1) * 1000;
+    
+    const currentLevel = stats.level || 1;
+    const currentPoints = stats.points || 0;
+    
+    // Find the next level requirement from pass data
+    const nextLevel = passData.find(level => level.points_required > currentPoints);
+    
+    if (nextLevel) {
+      return nextLevel.points_required;
+    }
+    
+    // If no next level found, use the last level's points + 1000
+    const lastLevel = passData[passData.length - 1];
+    return lastLevel ? lastLevel.points_required + 1000 : currentLevel * 1000;
+  };
+
   // Data for progress pie chart
-  const nextLevelPoints = (stats?.level || 1) * 1000;
+  const nextLevelPoints = calculateNextLevelRequirement();
   const currentPoints = stats?.points || 0;
   const pointsToNextLevel = Math.max(nextLevelPoints - currentPoints, 0);
   const progressData = [
@@ -247,6 +300,11 @@ export const StatsTab = () => {
                 <p className="text-xs text-muted-foreground mt-1">
                   Осталось набрать: <span className="font-bold">{pointsToNextLevel}</span> очков
                 </p>
+                {passData && (
+                  <p className="text-xs text-primary/70 mt-2">
+                    Данные о прогрессе получены из вашего пропуска
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
