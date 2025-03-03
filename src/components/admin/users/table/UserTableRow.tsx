@@ -7,6 +7,7 @@ import { PassBadge } from "./PassBadge";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { AdminBadge } from "./AdminBadge";
 import { UserActionButtons } from "./UserActionButtons";
+import { useNavigate } from "react-router-dom";
 
 interface UserTableRowProps {
   user: UserProfile;
@@ -32,9 +33,15 @@ export const UserTableRow = ({
   onDeleteUser,
   onToggleAdmin
 }: UserTableRowProps) => {
+  const navigate = useNavigate();
+
+  const handleRowClick = () => {
+    navigate(`/admin/users/${user.id}`);
+  };
+
   return (
     <motion.tr 
-      className="border-b border-[#e4d079]/10 hover:bg-[#e4d079]/5 transition-colors"
+      className="border-b border-[#e4d079]/10 hover:bg-[#e4d079]/5 transition-colors cursor-pointer"
       initial={{ opacity: 0, y: 20 }}
       animate={{ 
         opacity: 1, 
@@ -45,6 +52,7 @@ export const UserTableRow = ({
           damping: 15
         }
       }}
+      onClick={handleRowClick}
     >
       <td className="py-3 px-4 font-medium text-[#e4d079]">{formatId(user.id)}</td>
       <td className="py-3 px-4 text-foreground">{user.display_name || "—"}</td>
@@ -71,7 +79,7 @@ export const UserTableRow = ({
       <td className="py-3 px-4 text-gray-400">
         {user.created_at ? format(new Date(user.created_at), 'dd.MM.yyyy') : "—"}
       </td>
-      <td className="py-3 px-4">
+      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
         <UserActionButtons
           user={user}
           isRoot={isRoot}
