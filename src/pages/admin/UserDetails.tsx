@@ -15,15 +15,29 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit2, Ban, Shield, Trash2, BarChart, History, User, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { USER_STATUSES } from "@/types/user";
 
 const UserDetails = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
 
+  // Dialog states
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  
+  // Form states for editing
+  const [editForm, setEditForm] = useState({
+    display_name: "",
+    phone_number: "",
+    status: ""
+  });
 
   // Get admin status for the user
   const [isAdmin, setIsAdmin] = useState(false);
@@ -74,6 +88,17 @@ const UserDetails = () => {
     },
   });
 
+  // Update form when user data is loaded
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        display_name: user.display_name || "",
+        phone_number: user.phone_number || "",
+        status: user.status || "Standard"
+      });
+    }
+  }, [user]);
+
   const handleGoBack = () => {
     navigate("/admin");
   };
@@ -94,6 +119,7 @@ const UserDetails = () => {
       const action = newBlockStatus ? "заблокирован" : "разблокирован";
       toast.success(`Пользователь ${user.display_name || 'Без имени'} ${action}`);
       refetch();
+      setShowBlockDialog(false);
     } catch (error) {
       console.error("Error updating block status:", error);
       toast.error("Ошибка при изменении статуса блокировки");
@@ -130,6 +156,7 @@ const UserDetails = () => {
         toast.success(`${user.display_name || 'Без имени'} назначен администратором`);
         setIsAdmin(true);
       }
+      setShowAdminDialog(false);
     } catch (error) {
       console.error("Error toggling admin status:", error);
       toast.error("Ошибка при изменении прав администратора");
@@ -166,12 +193,39 @@ const UserDetails = () => {
     }
   };
 
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm({
+      ...editForm,
+      [field]: value
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: editForm.display_name,
+          phone_number: editForm.phone_number,
+          status: editForm.status
+        })
+        .eq('id', user.id);
+        
+      if (error) throw error;
+      
+      toast.success(`Пользователь ${editForm.display_name || 'Без имени'} обновлен`);
+      refetch();
+      setShowEditDialog(false);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast.error("Ошибка при обновлении пользователя");
+    }
+  };
+
   const handleEditUser = () => {
     setShowEditDialog(true);
-    // In real implementation, this would open a dialog with a form
-    // For now we'll just show a toast for demonstration
-    toast.info(`Редактирование пользователя ${user?.display_name || 'Без имени'}`);
-    setShowEditDialog(false);
   };
 
   if (isLoading) {
@@ -280,7 +334,7 @@ const UserDetails = () => {
             <Button
               variant="outline" 
               size="sm"
-              onClick={handleBlockUser}
+              onClick={() => setShowBlockDialog(true)}
               className={
                 user.is_blocked 
                   ? "bg-green-500/5 hover:bg-green-500/10 text-green-500 border-green-500/20" 
@@ -303,7 +357,7 @@ const UserDetails = () => {
               variant="outline" 
               size="sm"
               className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20"
-              onClick={handleToggleAdmin}
+              onClick={() => setShowAdminDialog(true)}
             >
               <Shield className="h-4 w-4 mr-2" />
               {isAdmin ? "Удалить права" : "Сделать админом"}
@@ -458,7 +512,65 @@ const UserDetails = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit User Dialog (placeholder for now) */}
+      {/* Block/Unblock User Confirmation Dialog */}
+      <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <AlertDialogContent className="bg-black/90 border-[#e4d079]/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {user.is_blocked ? "Разблокировать пользователя" : "Заблокировать пользователя"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {user.is_blocked 
+                ? `Вы уверены, что хотите разблокировать пользователя ${user.display_name || 'Без имени'}?`
+                : `Вы уверены, что хотите заблокировать пользователя ${user.display_name || 'Без имени'}?`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBlockUser}
+              className={user.is_blocked 
+                ? "bg-green-500 hover:bg-green-600 text-white" 
+                : "bg-red-500 hover:bg-red-600 text-white"}
+            >
+              {user.is_blocked ? "Разблокировать" : "Заблокировать"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Toggle Admin Rights Confirmation Dialog */}
+      <AlertDialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
+        <AlertDialogContent className="bg-black/90 border-[#e4d079]/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isAdmin ? "Удаление прав администратора" : "Назначение администратором"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAdmin 
+                ? `Вы уверены, что хотите удалить права администратора у ${user.display_name || 'Без имени'}?`
+                : `Вы уверены, что хотите назначить ${user.display_name || 'Без имени'} администратором?`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleToggleAdmin}
+              className="bg-[#e4d079]/20 hover:bg-[#e4d079]/30 text-[#e4d079]"
+            >
+              {isAdmin ? "Удалить права" : "Назначить администратором"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit User Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="bg-black/90 border-[#e4d079]/20 sm:max-w-md">
           <DialogHeader>
@@ -467,14 +579,50 @@ const UserDetails = () => {
               Редактирование данных пользователя {user.display_name || 'Без имени'}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-center text-muted-foreground">
-              Функциональность в разработке
-            </p>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">Имя</Label>
+              <Input 
+                id="name" 
+                value={editForm.display_name} 
+                onChange={(e) => handleEditFormChange('display_name', e.target.value)}
+                className="col-span-3 bg-black/30 border-[#e4d079]/20" 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">Телефон</Label>
+              <Input 
+                id="phone" 
+                value={editForm.phone_number} 
+                onChange={(e) => handleEditFormChange('phone_number', e.target.value)}
+                className="col-span-3 bg-black/30 border-[#e4d079]/20" 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="status" className="text-right">Статус</Label>
+              <Select 
+                value={editForm.status} 
+                onValueChange={(value) => handleEditFormChange('status', value)}
+              >
+                <SelectTrigger className="col-span-3 bg-black/30 border-[#e4d079]/20">
+                  <SelectValue placeholder="Выберите статус" />
+                </SelectTrigger>
+                <SelectContent className="bg-black/90 border-[#e4d079]/20">
+                  {USER_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Закрыть
+            <Button variant="outline" onClick={() => setShowEditDialog(false)} className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
+              Отмена
+            </Button>
+            <Button onClick={handleSaveEdit} className="bg-[#e4d079]/20 hover:bg-[#e4d079]/30 text-[#e4d079]">
+              Сохранить
             </Button>
           </DialogFooter>
         </DialogContent>
