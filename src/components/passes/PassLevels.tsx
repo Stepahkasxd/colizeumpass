@@ -62,12 +62,15 @@ export const PassLevels = ({
       const {
         data: profile
       } = await supabase.from('profiles').select('rewards, points').eq('id', user?.id).single();
-      const currentRewards = (profile?.rewards || []) as Reward[];
+      
+      const currentRewards = Array.isArray(profile?.rewards) ? profile.rewards : [];
       const currentPoints = profile?.points || 0;
+      
       const levelData = pass?.levels.find(l => l.level === level);
       if (!levelData) {
         throw new Error('Уровень не найден');
       }
+      
       if (currentPoints < levelData.points_required) {
         toast({
           title: "Недостаточно очков",
@@ -76,7 +79,11 @@ export const PassLevels = ({
         });
         return;
       }
-      const existingReward = currentRewards.find(r => r.passLevel === level && r.name === reward.name);
+      
+      const existingReward = currentRewards.find(
+        (r: any) => r.passLevel === level && r.name === reward.name
+      );
+      
       if (existingReward) {
         toast({
           title: "Награда уже получена",
@@ -85,6 +92,7 @@ export const PassLevels = ({
         });
         return;
       }
+      
       const newReward: Reward = {
         id: crypto.randomUUID(),
         name: reward.name,
@@ -93,12 +101,15 @@ export const PassLevels = ({
         earnedAt: new Date().toISOString(),
         passLevel: level
       };
+      
       const updatedRewards = [...currentRewards, newReward];
+      
       const {
         error
       } = await supabase.from('profiles').update({
         rewards: updatedRewards
       }).eq('id', user?.id);
+      
       if (error) throw error;
       
       setClaimedRewards(prev => [...prev, `${level}-${reward.name}`]);

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,14 +22,23 @@ export const RewardsTab = () => {
         .eq('id', user?.id)
         .single();
 
-      return (profile?.rewards || []) as Reward[];
+      const rawRewards = profile?.rewards || [];
+      if (!Array.isArray(rawRewards)) return [];
+      
+      return rawRewards.map(reward => ({
+        id: reward.id || crypto.randomUUID(),
+        name: reward.name || 'Unknown Reward',
+        status: reward.status === 'claimed' ? 'claimed' : 'available',
+        earnedAt: reward.earnedAt || reward.earned_at || new Date().toISOString(),
+        description: reward.description,
+        passLevel: reward.passLevel || reward.pass_level
+      })) as Reward[];
     },
     enabled: !!user?.id
   });
 
   const claimRewardMutation = useMutation({
     mutationFn: async (rewardId: string) => {
-      // Получаем текущие награды
       const { data: profile } = await supabase
         .from('profiles')
         .select('rewards')
@@ -39,14 +47,12 @@ export const RewardsTab = () => {
       
       if (!profile?.rewards) throw new Error("Награды не найдены");
       
-      // Обновляем статус конкретной награды
-      const updatedRewards = (profile.rewards as Reward[]).map(reward => 
+      const updatedRewards = (profile.rewards as any[]).map(reward => 
         reward.id === rewardId 
-          ? { ...reward, status: 'claimed' as const } 
+          ? { ...reward, status: 'claimed' } 
           : reward
       );
 
-      // Сохраняем обновленные награды
       const { error } = await supabase
         .from('profiles')
         .update({ rewards: updatedRewards })

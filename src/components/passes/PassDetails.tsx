@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { PassHeader } from "@/components/passes/PassHeader";
 import { PassLevels } from "@/components/passes/PassLevels";
 import { PassProgress } from "@/components/passes/PassProgress";
-import { Pass, PassLevel, UserProfile, USER_STATUSES } from "@/types/user";
+import { Pass, PassLevel, UserProfile, USER_STATUSES, Reward } from "@/types/user";
 
 const PassDetails = () => {
   const { id } = useParams();
@@ -45,6 +45,20 @@ const PassDetails = () => {
     return "Standard"; // Default fallback
   };
 
+  // Function to validate and transform rewards data
+  const validateRewards = (rawRewards: any[]): Reward[] => {
+    if (!Array.isArray(rawRewards)) return [];
+    
+    return rawRewards.map(reward => ({
+      id: reward.id || crypto.randomUUID(),
+      name: reward.name || 'Unknown Reward',
+      status: reward.status === 'claimed' ? 'claimed' : 'available',
+      earnedAt: reward.earnedAt || reward.earned_at || new Date().toISOString(),
+      description: reward.description,
+      passLevel: reward.passLevel || reward.pass_level
+    }));
+  };
+
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -53,9 +67,17 @@ const PassDetails = () => {
       
       // Transform profile data to ensure types match
       return {
-        ...data,
+        id: data.id,
+        created_at: data.created_at,
+        display_name: data.display_name,
+        phone_number: data.phone_number,
+        level: data.level || 1,
+        points: data.points || 0,
+        free_points: data.free_points || 0,
         status: validateUserStatus(data.status),
-        rewards: Array.isArray(data.rewards) ? data.rewards : []
+        has_pass: !!data.has_pass,
+        rewards: validateRewards(data.rewards || []),
+        is_blocked: !!data.is_blocked
       } as UserProfile;
     },
     enabled: !!user?.id

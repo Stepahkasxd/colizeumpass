@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { UserProfile, Reward } from "@/types/user";
+import { UserProfile, Reward, USER_STATUSES } from "@/types/user";
 import { UsersTable } from "./users/UsersTable";
 import { EditUserForm } from "./users/EditUserForm";
 
@@ -35,6 +34,26 @@ const UsersTab = () => {
   const [isToggleAdminDialogOpen, setIsToggleAdminDialogOpen] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [adminUsers, setAdminUsers] = useState<string[]>([]);
+
+  const validateUserStatus = (status: string): "Standard" | "Premium" | "VIP" => {
+    if (USER_STATUSES.includes(status as any)) {
+      return status as "Standard" | "Premium" | "VIP";
+    }
+    return "Standard";
+  };
+
+  const validateRewards = (rawRewards: any[]): Reward[] => {
+    if (!Array.isArray(rawRewards)) return [];
+    
+    return rawRewards.map(reward => ({
+      id: reward.id || crypto.randomUUID(),
+      name: reward.name || 'Unknown Reward',
+      status: reward.status === 'claimed' ? 'claimed' : 'available',
+      earnedAt: reward.earnedAt || reward.earned_at || new Date().toISOString(),
+      description: reward.description,
+      passLevel: reward.passLevel || reward.pass_level
+    }));
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -75,10 +94,17 @@ const UsersTab = () => {
       if (error) throw error;
       
       return (data || []).map(profile => ({
-        ...profile,
-        rewards: Array.isArray(profile.rewards) ? profile.rewards as Reward[] : [],
-        free_points: typeof profile.free_points === 'number' ? profile.free_points : 0,
-        status: profile.status || 'Standard'
+        id: profile.id,
+        created_at: profile.created_at,
+        display_name: profile.display_name,
+        phone_number: profile.phone_number,
+        level: profile.level || 1,
+        points: profile.points || 0,
+        free_points: profile.free_points || 0,
+        status: validateUserStatus(profile.status || 'Standard'),
+        has_pass: !!profile.has_pass,
+        rewards: validateRewards(profile.rewards || []),
+        is_blocked: !!profile.is_blocked
       })) as UserProfile[];
     }
   });
@@ -201,7 +227,6 @@ const UsersTab = () => {
       const isCurrentlyAdmin = adminUsers.includes(selectedUser.id);
 
       if (isCurrentlyAdmin) {
-        // Удаляем права администратора
         const { error } = await supabase
           .from('user_roles')
           .delete()
@@ -210,7 +235,6 @@ const UsersTab = () => {
 
         if (error) throw error;
       } else {
-        // Добавляем права администратора
         const { error } = await supabase
           .from('user_roles')
           .insert({
@@ -221,7 +245,6 @@ const UsersTab = () => {
         if (error) throw error;
       }
 
-      // Обновляем список администраторов
       const { data, error } = await supabase
         .from('user_roles')
         .select('user_id')
