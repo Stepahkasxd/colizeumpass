@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, User, Shield, Home, HeadphonesIcon } from "lucide-react";
@@ -16,7 +15,6 @@ const Navbar = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  // Обработка прокрутки для эффекта фона
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
@@ -56,7 +54,6 @@ const Navbar = () => {
     { title: "Поддержка", path: "/support", icon: <HeadphonesIcon className="w-4 h-4" /> },
   ];
 
-  // Определяем, активна ли ссылка
   const isActive = (path) => {
     if (path === "/") {
       return location.pathname === path;
@@ -85,9 +82,8 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-center space-x-8">
+            <div className="flex items-center space-x-6">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
@@ -153,7 +149,6 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -165,7 +160,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {isOpen && (
         <motion.div 
           initial={{ opacity: 0, height: 0 }}
