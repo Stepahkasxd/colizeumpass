@@ -114,7 +114,7 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
       <div className="flex flex-col sm:flex-row justify-between gap-4 w-full">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <Select
-            value={statusFilter || ""}
+            value={statusFilter === null ? "" : statusFilter}
             onValueChange={(value) => setStatusFilter(value === "" ? null : value)}
           >
             <SelectTrigger className="w-[150px] bg-black/30 border-[#e4d079]/20">
@@ -131,7 +131,7 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
           </Select>
 
           <Select
-            value={passFilter || ""}
+            value={passFilter === null ? "" : passFilter}
             onValueChange={(value) => setPassFilter(value === "" ? null : value)}
           >
             <SelectTrigger className="w-[150px] bg-black/30 border-[#e4d079]/20">
