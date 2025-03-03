@@ -15,10 +15,40 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit2, Ban, Shield, Trash2, BarChart, History, User, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const UserDetails = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Get admin status for the user
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Fetch if user is admin
+  useEffect(() => {
+    const fetchAdminStatus = async () => {
+      if (!userId) return;
+      
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+        
+      if (error) {
+        console.error("Error fetching admin status:", error);
+        return;
+      }
+      
+      setIsAdmin(data && data.length > 0);
+    };
+    
+    fetchAdminStatus();
+  }, [userId]);
 
   const { data: user, isLoading, error, refetch } = useQuery({
     queryKey: ["user", userId],
@@ -43,12 +73,6 @@ const UserDetails = () => {
       return userWithFormattedRewards;
     },
   });
-
-  // Function to check admin status
-  const isUserAdmin = (userId: string) => {
-    // In a real app, this would check against the admin data
-    return true;
-  };
 
   const handleGoBack = () => {
     navigate("/admin");
@@ -76,14 +100,78 @@ const UserDetails = () => {
     }
   };
 
-  const handleToggleAdmin = (user: UserProfile) => {
-    console.log("Toggle admin:", user);
-    toast.info(`Изменены права администратора для ${user.display_name || 'Без имени'}`);
+  const handleToggleAdmin = async () => {
+    if (!user) return;
+
+    try {
+      if (isAdmin) {
+        // Remove admin role
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('role', 'admin');
+          
+        if (error) throw error;
+        
+        toast.success(`Права администратора удалены у ${user.display_name || 'Без имени'}`);
+        setIsAdmin(false);
+      } else {
+        // Add admin role
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role: 'admin'
+          });
+          
+        if (error) throw error;
+        
+        toast.success(`${user.display_name || 'Без имени'} назначен администратором`);
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error("Error toggling admin status:", error);
+      toast.error("Ошибка при изменении прав администратора");
+    }
   };
 
-  const handleDeleteUser = (user: UserProfile) => {
-    console.log("Delete user:", user);
-    toast.warning(`Удаление пользователя ${user.display_name || 'Без имени'}`);
+  const handleDeleteUser = async () => {
+    if (!user) return;
+    
+    try {
+      // First, delete from user_roles if they are an admin
+      if (isAdmin) {
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', user.id);
+      }
+      
+      // Then delete the profile
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+        
+      if (error) throw error;
+      
+      toast.success(`Пользователь ${user.display_name || 'Без имени'} удален`);
+      navigate('/admin');
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Ошибка при удалении пользователя");
+    } finally {
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleEditUser = () => {
+    setShowEditDialog(true);
+    // In real implementation, this would open a dialog with a form
+    // For now we'll just show a toast for demonstration
+    toast.info(`Редактирование пользователя ${user?.display_name || 'Без имени'}`);
+    setShowEditDialog(false);
   };
 
   if (isLoading) {
@@ -184,6 +272,7 @@ const UserDetails = () => {
               variant="outline" 
               size="sm"
               className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20"
+              onClick={handleEditUser}
             >
               <Edit2 className="h-4 w-4 mr-2" />
               Редактировать
@@ -205,7 +294,7 @@ const UserDetails = () => {
               variant="outline" 
               size="sm"
               className="bg-red-500/5 hover:bg-red-500/10 text-red-500 border-red-500/20"
-              onClick={() => handleDeleteUser(user)}
+              onClick={() => setShowDeleteDialog(true)}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Удалить
@@ -214,10 +303,10 @@ const UserDetails = () => {
               variant="outline" 
               size="sm"
               className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20"
-              onClick={() => handleToggleAdmin(user)}
+              onClick={handleToggleAdmin}
             >
               <Shield className="h-4 w-4 mr-2" />
-              {isUserAdmin(user.id) ? "Удалить права" : "Сделать админом"}
+              {isAdmin ? "Удалить права" : "Сделать админом"}
             </Button>
           </CardFooter>
         </Card>
@@ -344,6 +433,52 @@ const UserDetails = () => {
           </Tabs>
         </div>
       </div>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-black/90 border-[#e4d079]/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление пользователя</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить пользователя {user.display_name || 'Без имени'}? 
+              Это действие необратимо и удалит все данные пользователя.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit User Dialog (placeholder for now) */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="bg-black/90 border-[#e4d079]/20 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Редактирование пользователя</DialogTitle>
+            <DialogDescription>
+              Редактирование данных пользователя {user.display_name || 'Без имени'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-center text-muted-foreground">
+              Функциональность в разработке
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Закрыть
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
