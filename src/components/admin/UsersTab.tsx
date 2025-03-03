@@ -114,14 +114,14 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
       <div className="flex flex-col sm:flex-row justify-between gap-4 w-full">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <Select
-            value={statusFilter === null ? "" : statusFilter}
-            onValueChange={(value) => setStatusFilter(value === "" ? null : value)}
+            value={statusFilter === null ? "all" : statusFilter}
+            onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
           >
             <SelectTrigger className="w-[150px] bg-black/30 border-[#e4d079]/20">
               <SelectValue placeholder="Все статусы" />
             </SelectTrigger>
             <SelectContent className="bg-black/90 border-[#e4d079]/20">
-              <SelectItem value="">Все статусы</SelectItem>
+              <SelectItem value="all">Все статусы</SelectItem>
               {USER_STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status}
@@ -131,14 +131,14 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
           </Select>
 
           <Select
-            value={passFilter === null ? "" : passFilter}
-            onValueChange={(value) => setPassFilter(value === "" ? null : value)}
+            value={passFilter === null ? "all" : passFilter}
+            onValueChange={(value) => setPassFilter(value === "all" ? null : value)}
           >
             <SelectTrigger className="w-[150px] bg-black/30 border-[#e4d079]/20">
               <SelectValue placeholder="Пропуск" />
             </SelectTrigger>
             <SelectContent className="bg-black/90 border-[#e4d079]/20">
-              <SelectItem value="">Все пользователи</SelectItem>
+              <SelectItem value="all">Все пользователи</SelectItem>
               <SelectItem value="yes">Имеют пропуск</SelectItem>
               <SelectItem value="no">Без пропуска</SelectItem>
             </SelectContent>
