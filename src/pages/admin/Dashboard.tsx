@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -10,7 +9,10 @@ import {
   ActivitySquare, 
   Newspaper, 
   CheckSquare,
-  PanelLeft
+  PanelLeft,
+  Bell,
+  Filter,
+  Search
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +29,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { logActivity } from "@/utils/logger";
+import { Database } from "@/integrations/supabase/types";
+import UserActions from "@/components/admin/users/UserActions";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -35,13 +43,13 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hasNotifications, setHasNotifications] = useState(false);
   
-  // Get tab from URL query parameter
   const searchParams = new URLSearchParams(location.search);
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'stats');
 
-  // Fetch pending notifications counts
   const { data: notificationCounts } = useQuery({
     queryKey: ['admin_notification_counts'],
     queryFn: async () => {
@@ -55,12 +63,16 @@ const AdminDashboard = () => {
         tickets: ticketsResult.count || 0
       };
     },
-    refetchInterval: 60000 // Refresh every minute
+    refetchInterval: 60000
   });
   
   const totalNotifications = 
     (notificationCounts?.payments || 0) + 
     (notificationCounts?.tickets || 0);
+
+  useEffect(() => {
+    setHasNotifications(totalNotifications > 0);
+  }, [totalNotifications]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -86,6 +98,16 @@ const AdminDashboard = () => {
         setIsAdmin(!!data);
         if (!data) {
           navigate("/dashboard");
+        } else {
+          await logActivity({
+            user_id: user.id,
+            category: 'admin',
+            action: 'admin_login',
+            details: { 
+              timestamp: new Date().toISOString(),
+              ip: window.location.hostname
+            }
+          });
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
@@ -98,13 +120,11 @@ const AdminDashboard = () => {
     checkAdminStatus();
   }, [user, authLoading, navigate]);
 
-  // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     navigate(`/admin?tab=${value}`, { replace: true });
   };
 
-  // Set initial tab from URL or update URL if tab is set differently
   useEffect(() => {
     if (tabFromUrl && tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
@@ -121,7 +141,6 @@ const AdminDashboard = () => {
     return null;
   }
 
-  // Define the tabs configuration with icons, labels, and notification counts
   const tabConfig = [
     { id: 'stats', icon: BarChart3, label: 'Статистика', badge: null },
     { id: 'tasks', icon: CheckSquare, label: 'Дела', badge: totalNotifications > 0 ? totalNotifications : null },
@@ -133,7 +152,6 @@ const AdminDashboard = () => {
     { id: 'logs', icon: ActivitySquare, label: 'Логи', badge: null },
   ];
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.3 } }
@@ -149,15 +167,16 @@ const AdminDashboard = () => {
     collapsed: { marginLeft: "60px", transition: { duration: 0.3 } }
   };
 
-  // Render the active tab content based on the current activeTab state
   const renderActiveTabContent = () => {
+    if (activeTab === 'users') {
+      return <UsersTab searchQuery={searchQuery} />;
+    }
+    
     switch (activeTab) {
       case 'stats':
         return <StatsTab />;
       case 'tasks':
         return <TasksTab />;
-      case 'users':
-        return <UsersTab />;
       case 'passes':
         return <PassesTab />;
       case 'news':
@@ -173,9 +192,29 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleClearNotifications = async () => {
+    if (!user) return;
+    
+    try {
+      toast.loading("Обрабатываем...");
+      
+      await logActivity({
+        user_id: user.id,
+        category: 'admin',
+        action: 'clear_notifications',
+        details: { timestamp: new Date().toISOString() }
+      });
+      
+      toast.dismiss();
+      toast.success("Уведомления обработаны");
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+      toast.error("Ошибка при обработке уведомлений");
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar */}
       <motion.div 
         className="fixed h-screen bg-black/60 backdrop-blur-lg border-r border-[#e4d079]/10 z-50 shadow-lg"
         variants={sidebarVariants}
@@ -192,6 +231,7 @@ const AdminDashboard = () => {
               size="icon" 
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               className="ml-auto text-[#e4d079]/70 hover:text-[#e4d079] hover:bg-[#e4d079]/10"
+              title={isSidebarCollapsed ? "Развернуть меню" : "Свернуть меню"}
             >
               <PanelLeft className="h-5 w-5" />
             </Button>
@@ -234,7 +274,6 @@ const AdminDashboard = () => {
         </div>
       </motion.div>
 
-      {/* Main content */}
       <motion.div 
         className="flex-1 min-h-screen"
         variants={contentVariants}
@@ -247,9 +286,101 @@ const AdminDashboard = () => {
           initial="hidden"
           animate="visible"
         >
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-glow mb-2">{tabConfig.find(t => t.id === activeTab)?.label}</h1>
-            <p className="text-[#e4d079]/60">Управление {tabConfig.find(t => t.id === activeTab)?.label.toLowerCase()}</p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-glow mb-2">{tabConfig.find(t => t.id === activeTab)?.label}</h1>
+              <p className="text-[#e4d079]/60">Управление {tabConfig.find(t => t.id === activeTab)?.label.toLowerCase()}</p>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {activeTab === 'users' && (
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#e4d079]/40" />
+                  <Input
+                    type="search"
+                    placeholder="Поиск пользователей..."
+                    className="pl-9 w-64 bg-black/30 border-[#e4d079]/20 focus:border-[#e4d079]/50"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              )}
+              
+              {activeTab === 'users' && (
+                <UserActions />
+              )}
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className={`relative ${hasNotifications ? 'border-[#e4d079]/50' : 'border-[#e4d079]/20'}`}
+                  >
+                    <Bell className="h-5 w-5 text-[#e4d079]/70" />
+                    {hasNotifications && (
+                      <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 bg-black/80 backdrop-blur-lg border border-[#e4d079]/20">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-[#e4d079] text-sm">Уведомления</h4>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-[#e4d079]/60 text-xs hover:text-[#e4d079]"
+                        onClick={handleClearNotifications}
+                      >
+                        Очистить все
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {notificationCounts?.tickets ? (
+                        <div className="flex items-center p-2 bg-[#e4d079]/5 rounded-md">
+                          <MessageSquare className="h-4 w-4 text-[#e4d079]/70 mr-2" />
+                          <div className="flex-1">
+                            <p className="text-sm text-[#e4d079]/90">Новые тикеты в поддержке</p>
+                            <p className="text-xs text-[#e4d079]/60">Количество: {notificationCounts.tickets}</p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[#e4d079]"
+                            onClick={() => handleTabChange('support')}
+                          >
+                            Перейти
+                          </Button>
+                        </div>
+                      ) : null}
+                      
+                      {notificationCounts?.payments ? (
+                        <div className="flex items-center p-2 bg-[#e4d079]/5 rounded-md">
+                          <CircleDollarSign className="h-4 w-4 text-[#e4d079]/70 mr-2" />
+                          <div className="flex-1">
+                            <p className="text-sm text-[#e4d079]/90">Новые запросы на оплату</p>
+                            <p className="text-xs text-[#e4d079]/60">Количество: {notificationCounts.payments}</p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[#e4d079]"
+                            onClick={() => handleTabChange('payments')}
+                          >
+                            Перейти
+                          </Button>
+                        </div>
+                      ) : null}
+                      
+                      {!notificationCounts?.tickets && !notificationCounts?.payments && (
+                        <p className="text-center text-[#e4d079]/50 text-sm py-2">Нет новых уведомлений</p>
+                      )}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           
           <Card className="glass-panel p-6 rounded-lg">
