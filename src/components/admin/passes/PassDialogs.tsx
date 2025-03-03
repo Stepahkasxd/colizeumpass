@@ -28,7 +28,7 @@ export const PassDialogs = ({
   return (
     <>
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
             <DialogTitle>Создать пропуск</DialogTitle>
           </DialogHeader>
@@ -40,7 +40,7 @@ export const PassDialogs = ({
       </Dialog>
 
       <Dialog open={!!editingPass} onOpenChange={() => setEditingPass(null)}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
             <DialogTitle>Редактировать пропуск</DialogTitle>
           </DialogHeader>
