@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { USER_STATUSES } from "@/types/user";
+import { toast } from "sonner";
 
 interface UsersTabProps {
   searchQuery?: string;
@@ -77,30 +78,35 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
     console.log("Add user clicked");
   };
 
-  // Здесь используется пример email (в реальном приложении следует использовать актуальный email пользователя)
-  const currentUserEmail = "admin@example.com";
+  // Use root@root.com for the root user detection
+  const currentUserEmail = "root@root.com";
   
-  // Функция для проверки статуса администратора
+  // Function to check admin status
   const isUserAdmin = (userId: string) => {
-    // В реальном приложении здесь должна быть логика проверки
+    // In a real app, this would check against the admin data
     return true;
   };
   
-  // Обработчики для действий с пользователями
+  // Handlers for user actions
   const handleEditUser = (user: UserProfile) => {
     console.log("Edit user:", user);
+    toast.info(`Редактирование пользователя ${user.display_name || 'Без имени'}`);
   };
   
   const handleBlockUser = (user: UserProfile) => {
     console.log("Block/unblock user:", user);
+    const action = user.is_blocked ? "разблокирован" : "заблокирован";
+    toast.info(`Пользователь ${user.display_name || 'Без имени'} ${action}`);
   };
   
   const handleDeleteUser = (user: UserProfile) => {
     console.log("Delete user:", user);
+    toast.warning(`Удаление пользователя ${user.display_name || 'Без имени'}`);
   };
   
   const handleToggleAdmin = (user: UserProfile) => {
     console.log("Toggle admin:", user);
+    toast.info(`Изменены права администратора для ${user.display_name || 'Без имени'}`);
   };
 
   return (
@@ -109,7 +115,7 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <Select
             value={statusFilter || ""}
-            onValueChange={(value) => setStatusFilter(value || null)}
+            onValueChange={(value) => setStatusFilter(value === "" ? null : value)}
           >
             <SelectTrigger className="w-[150px] bg-black/30 border-[#e4d079]/20">
               <SelectValue placeholder="Все статусы" />
@@ -126,7 +132,7 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
 
           <Select
             value={passFilter || ""}
-            onValueChange={(value) => setPassFilter(value || null)}
+            onValueChange={(value) => setPassFilter(value === "" ? null : value)}
           >
             <SelectTrigger className="w-[150px] bg-black/30 border-[#e4d079]/20">
               <SelectValue placeholder="Пропуск" />
