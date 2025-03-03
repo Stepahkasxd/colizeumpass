@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -185,6 +186,19 @@
   }
   
   .admin-page {
-    @apply pt-16;
+    @apply pt-20 md:pt-20; /* Increased padding to prevent overlap */
+  }
+  
+  /* Z-index hierarchy to ensure proper layering */
+  .z-navbar {
+    @apply z-40;
+  }
+  
+  .z-sidebar {
+    @apply z-30;
+  }
+  
+  .z-content {
+    @apply z-10;
   }
 }
