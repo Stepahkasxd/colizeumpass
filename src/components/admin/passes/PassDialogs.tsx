@@ -1,12 +1,4 @@
-
 import { Pass } from "../PassesTab";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { PassForm } from "./PassForm";
 
 interface PassDialogsProps {
   isCreateDialogOpen: boolean;
@@ -25,34 +17,5 @@ export const PassDialogs = ({
   onCreatePass,
   onEditPass,
 }: PassDialogsProps) => {
-  return (
-    <>
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[900px]">
-          <DialogHeader>
-            <DialogTitle>Создать пропуск</DialogTitle>
-          </DialogHeader>
-          <PassForm
-            onSubmit={onCreatePass}
-            onCancel={() => setIsCreateDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editingPass} onOpenChange={() => setEditingPass(null)}>
-        <DialogContent className="sm:max-w-[900px]">
-          <DialogHeader>
-            <DialogTitle>Редактировать пропуск</DialogTitle>
-          </DialogHeader>
-          {editingPass && (
-            <PassForm
-              initialData={editingPass}
-              onSubmit={onEditPass}
-              onCancel={() => setEditingPass(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return null;
 };

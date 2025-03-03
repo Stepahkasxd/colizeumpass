@@ -8,7 +8,7 @@ interface PassesHeaderProps {
 
 export const PassesHeader = ({ onCreateClick }: PassesHeaderProps) => {
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex justify-between items-center mb-2">
       <h2 className="text-xl font-semibold">Управление пропусками</h2>
       <Button onClick={onCreateClick}>
         <Plus className="h-4 w-4 mr-2" />
