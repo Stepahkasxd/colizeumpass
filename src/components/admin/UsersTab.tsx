@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -126,7 +125,6 @@ const UsersTab = () => {
     }
   });
 
-  // Для отладки
   useEffect(() => {
     console.log("UsersTab rendered, users:", users, "isLoading:", isLoading);
   }, [users, isLoading]);
@@ -407,14 +405,14 @@ const UsersTab = () => {
             </div>
             <div className="w-full md:w-60">
               <Select
-                value={statusFilter || ""}
-                onValueChange={(value) => setStatusFilter(value || null)}
+                value={statusFilter || "all"}
+                onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
               >
                 <SelectTrigger className="border-purple-500/20 focus:border-purple-500/40">
                   <SelectValue placeholder="Фильтр по статусу" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все статусы</SelectItem>
+                  <SelectItem value="all">Все статусы</SelectItem>
                   {USER_STATUSES.map(status => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}

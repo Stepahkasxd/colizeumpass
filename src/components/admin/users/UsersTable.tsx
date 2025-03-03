@@ -1,7 +1,6 @@
-
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
-import { Edit2, Ban, Trash2, Shield, Star, Sparkles, Medal, Users } from "lucide-react";
+import { Edit2, Ban, Trash2, Shield, Star, Sparkles, Medal, Users as UsersIcon } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -57,7 +56,6 @@ export const UsersTable = ({
 }: UsersTableProps) => {
   const isRoot = currentUserEmail === 'root@root.com';
 
-  // Animation variants for the table rows
   const tableVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -81,7 +79,6 @@ export const UsersTable = ({
     }
   };
 
-  // Проверим, что users не undefined перед рендерингом
   console.log("UsersTable rendered with users:", users);
 
   return (
@@ -123,7 +120,7 @@ export const UsersTable = ({
                 <tr>
                   <td colSpan={12} className="py-20 px-4 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <Users className="h-8 w-8 text-purple-500/50" />
+                      <UsersIcon className="h-8 w-8 text-purple-500/50" />
                       <p>Пользователи не найдены</p>
                     </div>
                   </td>
