@@ -19,85 +19,68 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { History, Calendar, Star, Ticket, Clock, Award } from "lucide-react";
-import { format } from "date-fns";
+import {
+  History,
+  Calendar,
+  Star,
+  Ticket,
+  Clock,
+  Award,
+  Filter,
+} from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { useEffect } from "react";
 
 // Define activity types
 type Activity = {
   id: string;
-  type: 'reward' | 'purchase' | 'level_up' | 'login' | 'points';
-  description: string;
+  category: 'auth' | 'points' | 'rewards' | 'passes' | 'user' | 'system';
+  action: string;
   created_at: string;
-  points?: number;
   details?: Record<string, any>;
 };
 
 export const ActivityTab = () => {
   const { user } = useAuth();
 
-  // In a real app, we would fetch this from the backend
-  // For now, we'll create mock data for demonstration
+  // Log the activity viewing event
+  useEffect(() => {
+    if (user?.id) {
+      // Log that user viewed their activity
+      const logActivity = async () => {
+        await supabase.rpc('log_activity', {
+          p_user_id: user.id,
+          p_category: 'user',
+          p_action: 'Просмотр активности',
+          p_details: {}
+        });
+      };
+      
+      logActivity();
+    }
+  }, [user?.id]);
+
+  // Fetch real activity data from Supabase
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ['user-activities', user?.id],
     queryFn: async () => {
-      // Mock data for demo purposes
-      // In production, replace with actual API call
-      const mockActivities: Activity[] = [
-        {
-          id: '1',
-          type: 'login',
-          description: 'Вход в систему',
-          created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(), // 10 minutes ago
-        },
-        {
-          id: '2',
-          type: 'points',
-          description: 'Начисление очков',
-          points: 100,
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-        },
-        {
-          id: '3',
-          type: 'level_up',
-          description: 'Повышение уровня до 2',
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-        },
-        {
-          id: '4',
-          type: 'reward',
-          description: 'Получена награда "Стартовый бонус"',
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-        },
-        {
-          id: '5',
-          type: 'purchase',
-          description: 'Приобретен пропуск "Стандартный"',
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
-          details: {
-            price: 500,
-            pass_name: 'Стандартный'
-          }
-        },
-        {
-          id: '6',
-          type: 'points',
-          description: 'Начисление очков за активность',
-          points: 50,
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days ago
-        },
-        {
-          id: '7',
-          type: 'login',
-          description: 'Первый вход в систему',
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
-        },
-      ];
-
-      // Sort by date, most recent first
-      return mockActivities.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('activity_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('Error fetching activity logs:', error);
+        return [];
+      }
+      
+      return data || [];
     },
     enabled: !!user?.id
   });
@@ -122,39 +105,82 @@ export const ActivityTab = () => {
     }
   };
 
-  // Function to get icon for activity type
-  const getActivityIcon = (type: Activity['type']) => {
-    switch (type) {
-      case 'reward':
+  // Function to get icon for activity category
+  const getActivityIcon = (category: Activity['category']) => {
+    switch (category) {
+      case 'rewards':
         return <Award className="h-4 w-4 text-purple-400" />;
-      case 'purchase':
+      case 'passes':
         return <Ticket className="h-4 w-4 text-blue-400" />;
-      case 'level_up':
-        return <Star className="h-4 w-4 text-orange-400" />;
       case 'points':
         return <Star className="h-4 w-4 text-yellow-400" />;
-      case 'login':
+      case 'auth':
+        return <History className="h-4 w-4 text-green-400" />;
+      case 'user':
+      case 'system':
       default:
         return <History className="h-4 w-4 text-green-400" />;
     }
   };
 
-  // Function to get badge color for activity type
-  const getActivityBadge = (type: Activity['type']) => {
-    switch (type) {
-      case 'reward':
+  // Function to get badge color for activity category
+  const getActivityBadge = (category: Activity['category']) => {
+    switch (category) {
+      case 'rewards':
         return <Badge variant="outline" className="border-purple-500/30 text-purple-300">Награда</Badge>;
-      case 'purchase':
-        return <Badge variant="outline" className="border-blue-500/30 text-blue-300">Покупка</Badge>;
-      case 'level_up':
-        return <Badge variant="outline" className="border-orange-500/30 text-orange-300">Уровень</Badge>;
+      case 'passes':
+        return <Badge variant="outline" className="border-blue-500/30 text-blue-300">Пропуск</Badge>;
       case 'points':
         return <Badge variant="outline" className="border-yellow-500/30 text-yellow-300">Очки</Badge>;
-      case 'login':
-      default:
+      case 'auth':
         return <Badge variant="outline" className="border-green-500/30 text-green-300">Вход</Badge>;
+      case 'user':
+        return <Badge variant="outline" className="border-teal-500/30 text-teal-300">Действие</Badge>;
+      case 'system':
+      default:
+        return <Badge variant="outline" className="border-gray-500/30 text-gray-300">Система</Badge>;
     }
   };
+
+  // If there's no real activity data yet, add some starter activities
+  const hasRealData = activities.length > 0;
+  const displayActivities = hasRealData ? activities : [
+    {
+      id: '1',
+      category: 'auth' as Activity['category'],
+      action: 'Вход в систему',
+      created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(), // 10 minutes ago
+    },
+    {
+      id: '2',
+      category: 'points' as Activity['category'],
+      action: 'Начисление очков',
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+      details: { points: 100 }
+    },
+    {
+      id: '3',
+      category: 'user' as Activity['category'],
+      action: 'Повышение уровня до 2',
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+    },
+    {
+      id: '4',
+      category: 'rewards' as Activity['category'],
+      action: 'Получена награда "Стартовый бонус"',
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+    },
+    {
+      id: '5',
+      category: 'passes' as Activity['category'],
+      action: 'Приобретен пропуск "Стандартный"',
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+      details: {
+        price: 500,
+        pass_name: 'Стандартный'
+      }
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -193,8 +219,15 @@ export const ActivityTab = () => {
             История активности
           </CardTitle>
           <CardDescription>
-            Последние действия и события в вашем аккаунте
+            {hasRealData 
+              ? "Ваши последние действия и события в системе" 
+              : "Здесь будут отображаться ваши действия и события"}
           </CardDescription>
+          {!hasRealData && (
+            <div className="text-xs text-muted-foreground">
+              <p>Пока у вас нет записей активности. Ниже приведены примеры того, как будет выглядеть ваша история активности.</p>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -207,19 +240,19 @@ export const ActivityTab = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {activities.map((activity) => (
+                {displayActivities.map((activity) => (
                   <TableRow key={activity.id} className="hover:bg-black/40">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        {getActivityIcon(activity.type)}
-                        {getActivityBadge(activity.type)}
+                        {getActivityIcon(activity.category)}
+                        {getActivityBadge(activity.category)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span>{activity.description}</span>
-                        {activity.points && (
-                          <span className="text-xs text-yellow-400/70">+{activity.points} очков</span>
+                        <span>{activity.action}</span>
+                        {activity.details?.points && (
+                          <span className="text-xs text-yellow-400/70">+{activity.details.points} очков</span>
                         )}
                         {activity.details?.price && (
                           <span className="text-xs text-blue-400/70">{activity.details.price} руб.</span>

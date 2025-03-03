@@ -12,6 +12,7 @@ import { ActivityTab } from "@/components/dashboard/ActivityTab";
 import { Button } from "@/components/ui/button";
 import { Shield, User, Ticket, BarChart3, Award, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab");
@@ -21,11 +22,27 @@ const Dashboard = () => {
   } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
+
+    // Log dashboard view activity
+    const logDashboardView = async () => {
+      try {
+        await supabase.rpc('log_activity', {
+          p_user_id: user.id,
+          p_category: 'user',
+          p_action: 'Вход в панель управления',
+          p_details: { tab: activeTab }
+        });
+      } catch (error) {
+        console.error('Error logging dashboard view:', error);
+      }
+    };
+
     const checkAdminStatus = async () => {
       try {
         const {
@@ -43,12 +60,28 @@ const Dashboard = () => {
         console.error('Error checking admin status:', error);
       }
     };
+
     checkAdminStatus();
-  }, [user, navigate]);
+    logDashboardView();
+  }, [user, navigate, activeTab]);
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     navigate(`/dashboard?tab=${value}`);
+
+    // Log tab change activity
+    if (user) {
+      supabase.rpc('log_activity', {
+        p_user_id: user.id,
+        p_category: 'user',
+        p_action: `Переход на вкладку ${value}`,
+        p_details: { previous_tab: activeTab, new_tab: value }
+      }).catch(error => {
+        console.error('Error logging tab change:', error);
+      });
+    }
   };
+
   if (!user) {
     return null;
   }

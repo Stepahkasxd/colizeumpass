@@ -6,6 +6,8 @@ import { Trophy, Star, Target, Award, TrendingUp } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line } from "recharts";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { ru } from "date-fns/locale";
 
 export const StatsTab = () => {
   const { user } = useAuth();
@@ -37,6 +39,83 @@ export const StatsTab = () => {
     enabled: !!user?.id
   });
 
+  // Fetch actual activity data from the database
+  const { data: activityData = [] } = useQuery({
+    queryKey: ['user-activity-stats', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+
+      // Get the date 6 months ago
+      const sixMonthsAgo = subMonths(new Date(), 6);
+      
+      // Get activity logs for the current user
+      const { data: logs, error } = await supabase
+        .from('activity_logs')
+        .select('category, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', sixMonthsAgo.toISOString())
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching activity logs:', error);
+        return [];
+      }
+      
+      // Process logs to get monthly activity count
+      return processMonthlyActivityData(logs || []);
+    },
+    enabled: !!user?.id
+  });
+
+  // Process activity logs to get monthly points
+  const processMonthlyActivityData = (logs: any[]) => {
+    // Create an array of the last 6 months
+    const months = Array.from({ length: 6 }, (_, i) => {
+      const date = subMonths(new Date(), i);
+      return {
+        month: format(date, 'MMM', { locale: ru }),
+        date: date,
+        points: 0,
+        count: 0
+      };
+    }).reverse();
+    
+    // Count activities by month and calculate points
+    logs.forEach(log => {
+      const logDate = new Date(log.created_at);
+      
+      const monthIndex = months.findIndex(m => {
+        const monthStart = startOfMonth(m.date);
+        const monthEnd = endOfMonth(m.date);
+        return logDate >= monthStart && logDate <= monthEnd;
+      });
+      
+      if (monthIndex !== -1) {
+        months[monthIndex].count += 1;
+        
+        // Assign points based on activity category
+        let pointsForActivity = 0;
+        switch (log.category) {
+          case 'points':
+            pointsForActivity = 50;
+            break;
+          case 'rewards':
+            pointsForActivity = 100;
+            break;
+          case 'passes':
+            pointsForActivity = 200;
+            break;
+          default:
+            pointsForActivity = 10;
+        }
+        
+        months[monthIndex].points += pointsForActivity;
+      }
+    });
+    
+    return months;
+  };
+
   const statCards = [
     {
       title: "Уровень",
@@ -62,16 +141,6 @@ export const StatsTab = () => {
       icon: Award,
       description: "Всего забранных наград"
     }
-  ];
-
-  // Sample data for activity chart
-  const activityData = [
-    { month: 'Янв', points: 400 },
-    { month: 'Фев', points: 300 },
-    { month: 'Мар', points: 500 },
-    { month: 'Апр', points: 280 },
-    { month: 'Май', points: 590 },
-    { month: 'Июн', points: 800 }
   ];
 
   // Data for progress pie chart
@@ -183,7 +252,7 @@ export const StatsTab = () => {
           </Card>
         </motion.div>
 
-        {/* График активности */}
+        {/* График активности с настоящими данными */}
         <motion.div 
           variants={itemVariants}
           className="h-full"
@@ -208,10 +277,16 @@ export const StatsTab = () => {
                       formatter={(value) => [`${value} очков`, 'Набрано']}
                       contentStyle={{ background: 'rgba(0, 0, 0, 0.8)', borderRadius: '4px', border: 'none' }}
                     />
-                    <Bar dataKey="points" fill="#e4d079" />
+                    <Bar dataKey="points" fill="#e4d079" name="Очки за активность" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              {activityData.length === 0 && (
+                <div className="text-center mt-4 text-muted-foreground">
+                  <p>Недостаточно данных о вашей активности</p>
+                  <p className="text-xs mt-1">Активность начнет отображаться по мере вашего взаимодействия с платформой</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
