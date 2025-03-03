@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PassHeader } from "./PassHeader";
 import { PassProgress } from "./PassProgress";
 import { PassLevels } from "./PassLevels";
-import { motion } from "framer-motion"; // Fixed import: "Motion" to "motion"
+import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -100,10 +100,13 @@ export const PassDetails = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const { data: pass, isLoading: isPassLoading } = useQuery({
+  // Query pass details
+  const { data: pass, isLoading: isPassLoading, error: passError } = useQuery({
     queryKey: ['pass', passId],
     queryFn: async () => {
       if (!passId) return null;
+      
+      console.log("Fetching pass with ID:", passId);
       
       const { data, error } = await supabase
         .from('passes')
@@ -113,14 +116,15 @@ export const PassDetails = () => {
       
       if (error) {
         console.error('Error loading pass:', error);
-        toast({
-          title: "Ошибка загрузки данных",
-          description: "Не удалось загрузить информацию о пропуске",
-          variant: "destructive"
-        });
-        navigate('/passes');
         throw error;
       }
+      
+      if (!data) {
+        console.error('No pass data found');
+        throw new Error('Pass not found');
+      }
+      
+      console.log("Pass data received:", data);
       
       // Convert the database pass to our Pass type
       const typedPass: Pass = {
@@ -133,13 +137,17 @@ export const PassDetails = () => {
       
       return typedPass;
     },
-    enabled: !!passId
+    retry: 1, // Only retry once
+    refetchOnWindowFocus: false
   });
 
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
+  // Query user profile
+  const { data: profile, isLoading: isProfileLoading, error: profileError } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      
+      console.log("Fetching user profile:", user.id);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -152,16 +160,61 @@ export const PassDetails = () => {
         return null;
       }
       
+      if (!data) {
+        console.log('No profile data found');
+        return null;
+      }
+      
+      console.log("Profile data received");
+      
       return convertToUserProfile(data);
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    retry: 1, // Only retry once
+    refetchOnWindowFocus: false
   });
 
-  if (isPassLoading || isProfileLoading || !pass) {
+  // Handle errors
+  if (passError) {
+    console.error("Pass error:", passError);
+    return (
+      <div className="container mx-auto p-4 max-w-4xl space-y-8">
+        <div className="flex items-center justify-center h-64 flex-col gap-4">
+          <p className="text-muted-foreground">Ошибка загрузки информации о пропуске</p>
+          <button 
+            className="px-4 py-2 bg-primary/20 rounded-md text-primary hover:bg-primary/30" 
+            onClick={() => navigate('/dashboard?tab=passes')}
+          >
+            Вернуться к пропускам
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle loading state
+  if (isPassLoading) {
     return (
       <div className="container mx-auto p-4 max-w-4xl space-y-8">
         <div className="flex items-center justify-center h-64">
           <p className="text-muted-foreground">Загрузка информации о пропуске...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle case when no pass is found
+  if (!pass) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl space-y-8">
+        <div className="flex items-center justify-center h-64 flex-col gap-4">
+          <p className="text-muted-foreground">Пропуск не найден</p>
+          <button 
+            className="px-4 py-2 bg-primary/20 rounded-md text-primary hover:bg-primary/30" 
+            onClick={() => navigate('/dashboard?tab=passes')}
+          >
+            Вернуться к пропускам
+          </button>
         </div>
       </div>
     );
