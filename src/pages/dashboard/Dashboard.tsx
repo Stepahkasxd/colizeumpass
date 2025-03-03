@@ -75,16 +75,23 @@ const Dashboard = () => {
 
     // Log tab change activity
     if (user) {
-      const { error } = supabase.rpc('log_activity', {
-        p_user_id: user.id,
-        p_category: 'user',
-        p_action: `Переход на вкладку ${value}`,
-        p_details: { previous_tab: activeTab, new_tab: value }
-      });
-      
-      if (error) {
-        console.error('Error logging tab change:', error);
-      }
+      // Using async IIFE to handle the asynchronous operation properly
+      (async () => {
+        try {
+          const { error } = await supabase.rpc('log_activity', {
+            p_user_id: user.id,
+            p_category: 'user',
+            p_action: `Переход на вкладку ${value}`,
+            p_details: { previous_tab: activeTab, new_tab: value }
+          });
+          
+          if (error) {
+            console.error('Error logging tab change:', error);
+          }
+        } catch (error) {
+          console.error('Error logging tab change:', error);
+        }
+      })();
     }
   };
 
