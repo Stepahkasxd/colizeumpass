@@ -1,181 +1,140 @@
 
-import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { ArrowLeft, Star } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BuyPassForm } from "@/components/passes/BuyPassForm";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { PassHeader } from "./PassHeader";
+import { PassProgress } from "./PassProgress";
+import { PassLevels } from "./PassLevels";
+import { Motion } from "framer-motion";
+import { Separator } from "@/components/ui/separator";
+import { useNavigate, useParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { Pass, UserProfile, Reward } from "@/types/user";
+import { Json } from "@/integrations/supabase/types";
 
-import { PassHeader } from "@/components/passes/PassHeader";
-import { PassLevels } from "@/components/passes/PassLevels";
-import { PassProgress } from "@/components/passes/PassProgress";
-import { Pass, PassLevel, UserProfile, USER_STATUSES, Reward } from "@/types/user";
-
-const PassDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [showBuyDialog, setShowBuyDialog] = useState(false);
-
-  const { data: pass, isLoading: passLoading } = useQuery({
-    queryKey: ['pass', id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('passes').select('*').eq('id', id).single();
-      if (error) throw error;
-      const passData = data as any;
+// Helper function to convert Json rewards to Reward type
+const convertJsonToRewards = (jsonRewards: Json[] | null): Reward[] => {
+  if (!jsonRewards || !Array.isArray(jsonRewards)) {
+    return [];
+  }
+  
+  return jsonRewards.map(reward => {
+    if (typeof reward !== 'object' || reward === null) {
       return {
-        ...passData,
-        levels: Array.isArray(passData.levels) ? passData.levels.map((level: PassLevel) => ({
-          ...level,
-          points_required: level.points_required || level.level * 100
-        })) : []
-      } as Pass;
+        id: crypto.randomUUID(),
+        name: 'Unknown Reward',
+        status: 'available',
+        earnedAt: new Date().toISOString()
+      };
     }
+    
+    const rewardObj = reward as Record<string, Json>;
+    
+    return {
+      id: typeof rewardObj.id === 'string' ? rewardObj.id : crypto.randomUUID(),
+      name: typeof rewardObj.name === 'string' ? rewardObj.name : 'Unknown Reward',
+      status: rewardObj.status === 'claimed' ? 'claimed' : 'available',
+      earnedAt: typeof rewardObj.earnedAt === 'string' ? rewardObj.earnedAt : 
+                typeof rewardObj.earned_at === 'string' ? rewardObj.earned_at :
+                new Date().toISOString(),
+      description: typeof rewardObj.description === 'string' ? rewardObj.description : undefined,
+      passLevel: typeof rewardObj.passLevel === 'number' ? rewardObj.passLevel : 
+                 typeof rewardObj.pass_level === 'number' ? rewardObj.pass_level : 
+                 undefined
+    };
+  });
+};
+
+// Helper function to convert database profile to UserProfile type
+const convertToUserProfile = (dbProfile: any): UserProfile => {
+  return {
+    id: dbProfile.id,
+    created_at: dbProfile.created_at,
+    display_name: dbProfile.display_name,
+    phone_number: dbProfile.phone_number,
+    level: dbProfile.level || 1,
+    points: dbProfile.points || 0,
+    free_points: dbProfile.free_points || 0,
+    status: dbProfile.status || 'Standard',
+    has_pass: dbProfile.has_pass || false,
+    rewards: convertJsonToRewards(dbProfile.rewards),
+    is_blocked: dbProfile.is_blocked || false
+  };
+};
+
+export const PassDetails = () => {
+  const { passId } = useParams<{ passId: string }>();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const { data: pass, isLoading: isPassLoading } = useQuery({
+    queryKey: ['pass', passId],
+    queryFn: async () => {
+      if (!passId) return null;
+      
+      const { data, error } = await supabase
+        .from('passes')
+        .select('*')
+        .eq('id', passId)
+        .single();
+      
+      if (error) {
+        console.error('Error loading pass:', error);
+        toast({
+          title: "Ошибка загрузки данных",
+          description: "Не удалось загрузить информацию о пропуске",
+          variant: "destructive"
+        });
+        navigate('/passes');
+        throw error;
+      }
+      
+      return data as Pass;
+    },
+    enabled: !!passId
   });
 
-  // Function to validate user status
-  const validateUserStatus = (status: string): "Standard" | "Premium" | "VIP" => {
-    if (USER_STATUSES.includes(status as any)) {
-      return status as "Standard" | "Premium" | "VIP";
-    }
-    return "Standard"; // Default fallback
-  };
-
-  // Function to validate and transform rewards data
-  const validateRewards = (rawRewards: any[]): Reward[] => {
-    if (!Array.isArray(rawRewards)) return [];
-    
-    return rawRewards.map(reward => ({
-      id: reward.id || crypto.randomUUID(),
-      name: reward.name || 'Unknown Reward',
-      status: reward.status === 'claimed' ? 'claimed' : 'available',
-      earnedAt: reward.earnedAt || reward.earned_at || new Date().toISOString(),
-      description: reward.description,
-      passLevel: reward.passLevel || reward.pass_level
-    }));
-  };
-
-  const { data: profile, isLoading: profileLoading } = useQuery({
+  const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-      if (error) throw error;
+      if (!user?.id) return null;
       
-      // Transform profile data to ensure types match
-      return {
-        id: data.id,
-        created_at: data.created_at,
-        display_name: data.display_name,
-        phone_number: data.phone_number,
-        level: data.level || 1,
-        points: data.points || 0,
-        free_points: data.free_points || 0,
-        status: validateUserStatus(data.status),
-        has_pass: !!data.has_pass,
-        rewards: validateRewards(data.rewards || []),
-        is_blocked: !!data.is_blocked
-      } as UserProfile;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error loading profile:', error);
+        return null;
+      }
+      
+      return convertToUserProfile(data);
     },
     enabled: !!user?.id
   });
 
-  if (passLoading || profileLoading) {
+  if (isPassLoading || isProfileLoading || !pass) {
     return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-8 w-40 mb-4 bg-muted rounded"></div>
-          <div className="h-4 w-64 bg-muted rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!pass) {
-    return (
-      <div className="min-h-screen pt-24">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl font-bold mb-4">Пропуск не найден</h1>
-            <Button onClick={() => navigate('/')}>Вернуться на главную</Button>
-          </div>
+      <div className="container mx-auto p-4 max-w-4xl space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Загрузка информации о пропуске...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12 bg-gradient-to-b from-background to-background/80">
-      <div className="container">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
-        >
-          <Button 
-            variant="ghost" 
-            className="mb-6 -ml-4 gap-2 hover:bg-primary/10 transition-colors" 
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Назад
-          </Button>
-
-          <motion.div 
-            className="bg-gradient-to-br from-primary/5 to-background border border-primary/10 rounded-xl overflow-hidden shadow-lg mb-8"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-          >
-            <div className="p-8">
-              <PassHeader pass={pass} />
-              
-              {/* Show progress if user has pass */}
-              {profile?.has_pass && (
-                <PassProgress profile={profile} pass={pass} />
-              )}
-
-              {/* Only show buy pass button if user is not logged in or doesn't have a pass */}
-              {(!user?.id || (profile && !profile.has_pass)) && (
-                <motion.div 
-                  className="mt-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.3 }}
-                >
-                  <Button 
-                    size="lg" 
-                    className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 transition-opacity text-white"
-                    onClick={() => setShowBuyDialog(true)}
-                  >
-                    <Star className="w-5 h-5" />
-                    Приобрести пропуск
-                  </Button>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-
-          {pass.levels && Array.isArray(pass.levels) && pass.levels.length > 0 && (
-            <PassLevels pass={pass} profile={profile} />
-          )}
-        </motion.div>
-      </div>
-
-      <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Покупка пропуска</DialogTitle>
-          </DialogHeader>
-          {pass && <BuyPassForm passId={pass.id} passName={pass.name} amount={pass.price} />}
-        </DialogContent>
-      </Dialog>
+    <div className="container mx-auto p-4 max-w-4xl space-y-8">
+      <PassHeader pass={pass} />
+      
+      <Separator />
+      
+      {profile && <PassProgress pass={pass} profile={profile} />}
+      
+      <PassLevels pass={pass} profile={profile} />
     </div>
   );
 };
-
-export default PassDetails;

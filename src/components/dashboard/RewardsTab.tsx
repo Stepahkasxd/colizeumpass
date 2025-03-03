@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Reward } from "@/types/user";
+import { Json } from "@/integrations/supabase/types";
+
+// Helper function to safely convert Json to Reward type
+const convertToReward = (reward: Json): Reward => {
+  // Handle the case when reward is a primitive value (string, number, boolean)
+  if (typeof reward !== 'object' || reward === null) {
+    return {
+      id: crypto.randomUUID(),
+      name: 'Unknown Reward',
+      status: 'available',
+      earnedAt: new Date().toISOString(),
+      description: undefined,
+      passLevel: undefined
+    };
+  }
+  
+  // Now we know reward is an object, extract properties safely
+  const rewardObj = reward as Record<string, Json>;
+  
+  return {
+    id: typeof rewardObj.id === 'string' ? rewardObj.id : crypto.randomUUID(),
+    name: typeof rewardObj.name === 'string' ? rewardObj.name : 'Unknown Reward',
+    status: rewardObj.status === 'claimed' ? 'claimed' : 'available',
+    earnedAt: typeof rewardObj.earnedAt === 'string' ? rewardObj.earnedAt : 
+              typeof rewardObj.earned_at === 'string' ? rewardObj.earned_at :
+              new Date().toISOString(),
+    description: typeof rewardObj.description === 'string' ? rewardObj.description : undefined,
+    passLevel: typeof rewardObj.passLevel === 'number' ? rewardObj.passLevel : 
+               typeof rewardObj.pass_level === 'number' ? rewardObj.pass_level : 
+               undefined
+  };
+};
 
 export const RewardsTab = () => {
   const { user } = useAuth();
@@ -22,17 +55,11 @@ export const RewardsTab = () => {
         .eq('id', user?.id)
         .single();
 
-      const rawRewards = profile?.rewards || [];
-      if (!Array.isArray(rawRewards)) return [];
+      if (!profile?.rewards || !Array.isArray(profile.rewards)) {
+        return [] as Reward[];
+      }
       
-      return rawRewards.map(reward => ({
-        id: reward.id || crypto.randomUUID(),
-        name: reward.name || 'Unknown Reward',
-        status: reward.status === 'claimed' ? 'claimed' : 'available',
-        earnedAt: reward.earnedAt || reward.earned_at || new Date().toISOString(),
-        description: reward.description,
-        passLevel: reward.passLevel || reward.pass_level
-      })) as Reward[];
+      return (profile.rewards as Json[]).map(convertToReward);
     },
     enabled: !!user?.id
   });
@@ -47,11 +74,13 @@ export const RewardsTab = () => {
       
       if (!profile?.rewards) throw new Error("Награды не найдены");
       
-      const updatedRewards = (profile.rewards as any[]).map(reward => 
-        reward.id === rewardId 
-          ? { ...reward, status: 'claimed' } 
-          : reward
-      );
+      const updatedRewards = (profile.rewards as Json[]).map(reward => {
+        const rewardObj = reward as Record<string, Json>;
+        if (typeof rewardObj.id === 'string' && rewardObj.id === rewardId) {
+          return { ...rewardObj, status: 'claimed' };
+        }
+        return reward;
+      });
 
       const { error } = await supabase
         .from('profiles')
