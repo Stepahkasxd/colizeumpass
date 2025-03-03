@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
   Ticket, 
@@ -150,6 +149,30 @@ const AdminDashboard = () => {
     collapsed: { marginLeft: "60px", transition: { duration: 0.3 } }
   };
 
+  // Render the active tab content based on the current activeTab state
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case 'stats':
+        return <StatsTab />;
+      case 'tasks':
+        return <TasksTab />;
+      case 'users':
+        return <UsersTab />;
+      case 'passes':
+        return <PassesTab />;
+      case 'news':
+        return <NewsTab />;
+      case 'support':
+        return <SupportTab />;
+      case 'payments':
+        return <PaymentsTab />;
+      case 'logs':
+        return <LogsTab />;
+      default:
+        return <StatsTab />;
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
@@ -230,30 +253,7 @@ const AdminDashboard = () => {
           </div>
           
           <Card className="glass-panel p-6 rounded-lg">
-            <TabsContent value="stats" className={activeTab === 'stats' ? 'block' : 'hidden'}>
-              <StatsTab />
-            </TabsContent>
-            <TabsContent value="tasks" className={activeTab === 'tasks' ? 'block' : 'hidden'}>
-              <TasksTab />
-            </TabsContent>
-            <TabsContent value="users" className={activeTab === 'users' ? 'block' : 'hidden'}>
-              <UsersTab />
-            </TabsContent>
-            <TabsContent value="passes" className={activeTab === 'passes' ? 'block' : 'hidden'}>
-              <PassesTab />
-            </TabsContent>
-            <TabsContent value="news" className={activeTab === 'news' ? 'block' : 'hidden'}>
-              <NewsTab />
-            </TabsContent>
-            <TabsContent value="support" className={activeTab === 'support' ? 'block' : 'hidden'}>
-              <SupportTab />
-            </TabsContent>
-            <TabsContent value="payments" className={activeTab === 'payments' ? 'block' : 'hidden'}>
-              <PaymentsTab />
-            </TabsContent>
-            <TabsContent value="logs" className={activeTab === 'logs' ? 'block' : 'hidden'}>
-              <LogsTab />
-            </TabsContent>
+            {renderActiveTabContent()}
           </Card>
         </motion.div>
       </motion.div>
