@@ -1,11 +1,11 @@
 
 import { UserProfile } from "@/types/user";
-import { Button } from "@/components/ui/button";
-import { Edit2, Ban, Trash2, Shield, Star, Sparkles, Medal, Users as UsersIcon } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserTableHeader } from "./table/UserTableHeader";
+import { UserTableRow } from "./table/UserTableRow";
+import { TableLoadingState } from "./table/TableLoadingState";
+import { EmptyTableState } from "./table/EmptyTableState";
 
 interface UsersTableProps {
   users: UserProfile[] | null;
@@ -17,33 +17,6 @@ interface UsersTableProps {
   onToggleAdmin: (user: UserProfile) => void;
   isUserAdmin: (userId: string) => boolean;
 }
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Premium':
-      return 'text-amber-500 font-medium bg-amber-500/10 border-amber-500/30 px-2 py-0.5 rounded-full';
-    case 'VIP':
-      return 'text-amber-400 font-medium bg-amber-400/10 border-amber-400/30 px-2 py-0.5 rounded-full';
-    default:
-      return 'text-gray-500 bg-gray-500/10 border-gray-500/30 px-2 py-0.5 rounded-full';
-  }
-};
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'Premium':
-      return <Star className="h-3 w-3 inline mr-1" />;
-    case 'VIP':
-      return <Sparkles className="h-3 w-3 inline mr-1" />;
-    default:
-      return null;
-  }
-};
-
-const formatId = (id: string) => {
-  const numericId = parseInt(id);
-  return isNaN(numericId) ? id : numericId.toString().padStart(6, '0');
-};
 
 export const UsersTable = ({ 
   users, 
@@ -67,208 +40,33 @@ export const UsersTable = ({
     }
   };
 
-  const rowVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15
-      }
-    }
-  };
-
-  console.log("UsersTable rendered with users:", users);
-
   return (
     <div className="rounded-md border admin-border overflow-hidden bg-black/20 backdrop-blur-sm shadow-sm">
       <ScrollArea className="h-[calc(100vh-440px)]">
         <div className="min-w-[1200px]">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-[#e4d079]/5">
-                <th className="w-[120px] py-3 px-4 text-left font-medium admin-text">ID</th>
-                <th className="w-[180px] py-3 px-4 text-left font-medium admin-text">Имя</th>
-                <th className="w-[140px] py-3 px-4 text-left font-medium admin-text">Телефон</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Статус</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Пропуск</th>
-                <th className="w-[80px] py-3 px-4 text-left font-medium admin-text">Уровень</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Очки прогресса</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Свободные очки</th>
-                <th className="w-[120px] py-3 px-4 text-left font-medium admin-text">Состояние</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Роль</th>
-                <th className="w-[160px] py-3 px-4 text-left font-medium admin-text">Дата регистрации</th>
-                <th className="w-[150px] py-3 px-4 text-left font-medium admin-text">Действия</th>
-              </tr>
-            </thead>
+            <UserTableHeader />
             <motion.tbody
               variants={tableVariants}
               initial="hidden"
               animate="visible"
             >
               {isLoading ? (
-                <tr>
-                  <td colSpan={12} className="py-20 px-4 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="animate-spin h-8 w-8 border-4 border-[#e4d079]/30 border-t-[#e4d079] rounded-full"></div>
-                      <p>Загрузка пользователей...</p>
-                    </div>
-                  </td>
-                </tr>
+                <TableLoadingState />
               ) : !users || users.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="py-20 px-4 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <UsersIcon className="h-8 w-8 text-[#e4d079]/50" />
-                      <p>Пользователи не найдены</p>
-                    </div>
-                  </td>
-                </tr>
+                <EmptyTableState />
               ) : (
                 users.map((user) => (
-                  <motion.tr 
-                    key={user.id} 
-                    className="border-b border-[#e4d079]/10 hover:bg-[#e4d079]/5 transition-colors"
-                    variants={rowVariants}
-                  >
-                    <td className="py-3 px-4 font-medium text-[#e4d079]">{formatId(user.id)}</td>
-                    <td className="py-3 px-4 text-foreground">{user.display_name || "—"}</td>
-                    <td className="py-3 px-4 text-foreground">{user.phone_number || "—"}</td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center border ${getStatusColor(user.status)}`}>
-                        {getStatusIcon(user.status)}
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {user.has_pass ? (
-                        <span className="inline-flex items-center text-green-500 bg-green-500/10 border border-green-500/30 px-2 py-0.5 rounded-full font-medium">
-                          <Medal className="h-3 w-3 mr-1" />
-                          Есть
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">Нет</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 font-medium">
-                      <span className="bg-[#e4d079]/10 border border-[#e4d079]/20 text-[#e4d079] px-2 py-0.5 rounded-full">
-                        {user.level}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-amber-400">{user.points}</td>
-                    <td className="py-3 px-4 font-mono text-green-400">{user.free_points}</td>
-                    <td className="py-3 px-4">
-                      {user.is_blocked ? (
-                        <span className="inline-flex items-center text-red-500 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full font-medium">
-                          Заблокирован
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center text-green-500 bg-green-500/10 border border-green-500/30 px-2 py-0.5 rounded-full font-medium">
-                          Активен
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      {isUserAdmin(user.id) ? (
-                        <span className="inline-flex items-center text-[#e4d079] bg-[#e4d079]/10 border border-[#e4d079]/30 px-2 py-0.5 rounded-full font-medium">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Админ
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">Пользователь</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-gray-400">
-                      {user.created_at ? format(new Date(user.created_at), 'dd.MM.yyyy') : "—"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onEditUser(user)}
-                                className="hover:bg-[#e4d079]/10 hover:text-[#e4d079] transition-colors"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Редактировать</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onBlockUser(user)}
-                                className={
-                                  user.is_blocked 
-                                    ? "text-green-500 hover:bg-green-500/10 hover:text-green-400" 
-                                    : "text-red-500 hover:bg-red-500/10 hover:text-red-400"
-                                }
-                              >
-                                <Ban className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{user.is_blocked ? "Разблокировать" : "Заблокировать"}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onDeleteUser(user)}
-                                className="text-red-500 hover:bg-red-500/10 hover:text-red-400"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Удалить</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        {isRoot && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => onToggleAdmin(user)}
-                                  className={
-                                    isUserAdmin(user.id) 
-                                      ? "text-[#e4d079] hover:bg-[#e4d079]/10 hover:text-[#e4d079]" 
-                                      : "text-gray-500 hover:bg-gray-500/10 hover:text-gray-400"
-                                  }
-                                >
-                                  <Shield className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{isUserAdmin(user.id) ? "Удалить права админа" : "Сделать администратором"}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                    </td>
-                  </motion.tr>
+                  <UserTableRow
+                    key={user.id}
+                    user={user}
+                    isRoot={isRoot}
+                    isUserAdmin={isUserAdmin}
+                    onEditUser={onEditUser}
+                    onBlockUser={onBlockUser}
+                    onDeleteUser={onDeleteUser}
+                    onToggleAdmin={onToggleAdmin}
+                  />
                 ))
               )}
             </motion.tbody>
