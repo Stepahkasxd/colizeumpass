@@ -34,7 +34,13 @@ const UserDetails = () => {
         throw error;
       }
 
-      return data as UserProfile;
+      // Ensure rewards is always an array
+      const userWithFormattedRewards = {
+        ...data,
+        rewards: Array.isArray(data.rewards) ? data.rewards : []
+      } as UserProfile;
+
+      return userWithFormattedRewards;
     },
   });
 
@@ -305,7 +311,7 @@ const UserDetails = () => {
                             <h3 className="font-medium text-[#e4d079]">{reward.name}</h3>
                             <p className="text-sm text-muted-foreground">{reward.description}</p>
                             <p className="text-xs text-gray-500 mt-2">
-                              Получено: {reward.received_at ? format(new Date(reward.received_at), 'dd.MM.yyyy') : 'Дата неизвестна'}
+                              Получено: {reward.earnedAt ? format(new Date(reward.earnedAt), 'dd.MM.yyyy') : 'Дата неизвестна'}
                             </p>
                           </div>
                         ))}

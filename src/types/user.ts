@@ -18,8 +18,9 @@ export type UserProfile = {
   free_points: number;
   status: 'Standard' | 'Premium' | 'VIP';
   has_pass: boolean;
-  rewards: Reward[];
+  rewards: Reward[] | any[]; // Make rewards more flexible to handle JSON from Supabase
   is_blocked: boolean;
+  bio?: string | null;
 };
 
 export type PassLevel = {
