@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import UsersTable from "./users/UsersTable";
+import { UsersTable } from "./users/UsersTable";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +25,6 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   
-  // Query users with filters
   const {
     data: users = [],
     isLoading,
@@ -63,7 +61,6 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
     },
   });
 
-  // Filter users by search query
   const filteredUsers = users.filter((user) => {
     if (!searchQuery) return true;
     
@@ -76,11 +73,9 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
   });
 
   const handleAddUser = () => {
-    // This is a stub - would typically open a dialog to add a new user
     console.log("Add user clicked");
   };
 
-  // Log for debugging
   console.log("UsersTable rendered with users:", filteredUsers);
 
   return (
