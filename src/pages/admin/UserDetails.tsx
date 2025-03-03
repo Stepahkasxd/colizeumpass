@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { UserProfile } from "@/types/user";
@@ -21,9 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { USER_STATUSES } from "@/types/user";
-
 const UserDetails = () => {
-  const { userId } = useParams();
+  const {
+    userId
+  } = useParams();
   const navigate = useNavigate();
 
   // Dialog states
@@ -31,7 +31,7 @@ const UserDetails = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showAdminDialog, setShowAdminDialog] = useState(false);
-  
+
   // Form states for editing
   const [editForm, setEditForm] = useState({
     display_name: "",
@@ -46,33 +46,30 @@ const UserDetails = () => {
   useEffect(() => {
     const fetchAdminStatus = async () => {
       if (!userId) return;
-      
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('role', 'admin');
-        
+      const {
+        data,
+        error
+      } = await supabase.from('user_roles').select('*').eq('user_id', userId).eq('role', 'admin');
       if (error) {
         console.error("Error fetching admin status:", error);
         return;
       }
-      
       setIsAdmin(data && data.length > 0);
     };
-    
     fetchAdminStatus();
   }, [userId]);
-
-  const { data: user, isLoading, error, refetch } = useQuery({
+  const {
+    data: user,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
     queryKey: ["user", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from("profiles").select("*").eq("id", userId).single();
       if (error) {
         console.error("Error fetching user:", error);
         throw error;
@@ -83,9 +80,8 @@ const UserDetails = () => {
         ...data,
         rewards: Array.isArray(data.rewards) ? data.rewards : []
       } as UserProfile;
-
       return userWithFormattedRewards;
-    },
+    }
   });
 
   // Update form when user data is loaded
@@ -98,24 +94,19 @@ const UserDetails = () => {
       });
     }
   }, [user]);
-
   const handleGoBack = () => {
     navigate("/admin");
   };
-
   const handleBlockUser = async () => {
     if (!user) return;
-
     try {
       const newBlockStatus = !user.is_blocked;
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_blocked: newBlockStatus })
-        .eq('id', user.id);
-        
+      const {
+        error
+      } = await supabase.from('profiles').update({
+        is_blocked: newBlockStatus
+      }).eq('id', user.id);
       if (error) throw error;
-      
       const action = newBlockStatus ? "заблокирован" : "разблокирован";
       toast.success(`Пользователь ${user.display_name || 'Без имени'} ${action}`);
       refetch();
@@ -125,34 +116,26 @@ const UserDetails = () => {
       toast.error("Ошибка при изменении статуса блокировки");
     }
   };
-
   const handleToggleAdmin = async () => {
     if (!user) return;
-
     try {
       if (isAdmin) {
         // Remove admin role
-        const { error } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('role', 'admin');
-          
+        const {
+          error
+        } = await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', 'admin');
         if (error) throw error;
-        
         toast.success(`Права администратора удалены у ${user.display_name || 'Без имени'}`);
         setIsAdmin(false);
       } else {
         // Add admin role
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role: 'admin'
-          });
-          
+        const {
+          error
+        } = await supabase.from('user_roles').insert({
+          user_id: user.id,
+          role: 'admin'
+        });
         if (error) throw error;
-        
         toast.success(`${user.display_name || 'Без имени'} назначен администратором`);
         setIsAdmin(true);
       }
@@ -162,27 +145,19 @@ const UserDetails = () => {
       toast.error("Ошибка при изменении прав администратора");
     }
   };
-
   const handleDeleteUser = async () => {
     if (!user) return;
-    
     try {
       // First, delete from user_roles if they are an admin
       if (isAdmin) {
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', user.id);
+        await supabase.from('user_roles').delete().eq('user_id', user.id);
       }
-      
+
       // Then delete the profile
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-        
+      const {
+        error
+      } = await supabase.from('profiles').delete().eq('id', user.id);
       if (error) throw error;
-      
       toast.success(`Пользователь ${user.display_name || 'Без имени'} удален`);
       navigate('/admin');
     } catch (error) {
@@ -192,29 +167,23 @@ const UserDetails = () => {
       setShowDeleteDialog(false);
     }
   };
-
   const handleEditFormChange = (field: string, value: string) => {
     setEditForm({
       ...editForm,
       [field]: value
     });
   };
-
   const handleSaveEdit = async () => {
     if (!user) return;
-
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          display_name: editForm.display_name,
-          phone_number: editForm.phone_number,
-          status: editForm.status
-        })
-        .eq('id', user.id);
-        
+      const {
+        error
+      } = await supabase.from('profiles').update({
+        display_name: editForm.display_name,
+        phone_number: editForm.phone_number,
+        status: editForm.status
+      }).eq('id', user.id);
       if (error) throw error;
-      
       toast.success(`Пользователь ${editForm.display_name || 'Без имени'} обновлен`);
       refetch();
       setShowEditDialog(false);
@@ -223,14 +192,11 @@ const UserDetails = () => {
       toast.error("Ошибка при обновлении пользователя");
     }
   };
-
   const handleEditUser = () => {
     setShowEditDialog(true);
   };
-
   if (isLoading) {
-    return (
-      <div className="container py-8">
+    return <div className="container py-8">
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={handleGoBack} className="mr-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -238,13 +204,10 @@ const UserDetails = () => {
           </Button>
           <h1 className="text-2xl font-bold">Загрузка данных пользователя...</h1>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (error || !user) {
-    return (
-      <div className="container py-8">
+    return <div className="container py-8">
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={handleGoBack} className="mr-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -262,12 +225,9 @@ const UserDetails = () => {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="container py-6">
+  return <div className="container py-6">
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={handleGoBack} className="mr-2 hover:bg-[#e4d079]/10">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -322,43 +282,19 @@ const UserDetails = () => {
             </div>
           </CardContent>
           <CardFooter className="flex flex-wrap gap-2">
-            <Button
-              variant="outline" 
-              size="sm"
-              className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20"
-              onClick={handleEditUser}
-            >
+            <Button variant="outline" size="sm" className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20" onClick={handleEditUser}>
               <Edit2 className="h-4 w-4 mr-2" />
               Редактировать
             </Button>
-            <Button
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowBlockDialog(true)}
-              className={
-                user.is_blocked 
-                  ? "bg-green-500/5 hover:bg-green-500/10 text-green-500 border-green-500/20" 
-                  : "bg-red-500/5 hover:bg-red-500/10 text-red-500 border-red-500/20"
-              }
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowBlockDialog(true)} className={user.is_blocked ? "bg-green-500/5 hover:bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/5 hover:bg-red-500/10 text-red-500 border-red-500/20"}>
               <Ban className="h-4 w-4 mr-2" />
               {user.is_blocked ? "Разблокировать" : "Заблокировать"}
             </Button>
-            <Button
-              variant="outline" 
-              size="sm"
-              className="bg-red-500/5 hover:bg-red-500/10 text-red-500 border-red-500/20"
-              onClick={() => setShowDeleteDialog(true)}
-            >
+            <Button variant="outline" size="sm" className="bg-red-500/5 hover:bg-red-500/10 text-red-500 border-red-500/20" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Удалить
             </Button>
-            <Button
-              variant="outline" 
-              size="sm"
-              className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20"
-              onClick={() => setShowAdminDialog(true)}
-            >
+            <Button variant="outline" size="sm" className="bg-[#e4d079]/5 hover:bg-[#e4d079]/10 text-[#e4d079] border-[#e4d079]/20" onClick={() => setShowAdminDialog(true)}>
               <Shield className="h-4 w-4 mr-2" />
               {isAdmin ? "Удалить права" : "Сделать админом"}
             </Button>
@@ -380,10 +316,7 @@ const UserDetails = () => {
                 <User className="h-4 w-4 mr-2" />
                 Награды
               </TabsTrigger>
-              <TabsTrigger value="settings" className="data-[state=active]:bg-[#e4d079]/10 data-[state=active]:text-[#e4d079]">
-                <Settings className="h-4 w-4 mr-2" />
-                Настройки
-              </TabsTrigger>
+              
             </TabsList>
             
             <TabsContent value="stats">
@@ -447,23 +380,17 @@ const UserDetails = () => {
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[320px] pr-4">
-                    {user.rewards && user.rewards.length > 0 ? (
-                      <div className="space-y-4">
-                        {user.rewards.map((reward, index) => (
-                          <div key={index} className="border border-[#e4d079]/20 rounded-lg p-4">
+                    {user.rewards && user.rewards.length > 0 ? <div className="space-y-4">
+                        {user.rewards.map((reward, index) => <div key={index} className="border border-[#e4d079]/20 rounded-lg p-4">
                             <h3 className="font-medium text-[#e4d079]">{reward.name}</h3>
                             <p className="text-sm text-muted-foreground">{reward.description}</p>
                             <p className="text-xs text-gray-500 mt-2">
                               Получено: {reward.earnedAt ? format(new Date(reward.earnedAt), 'dd.MM.yyyy') : 'Дата неизвестна'}
                             </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-4">
+                          </div>)}
+                      </div> : <p className="text-muted-foreground text-center py-4">
                         У пользователя пока нет наград
-                      </p>
-                    )}
+                      </p>}
                   </ScrollArea>
                 </CardContent>
               </Card>
@@ -502,10 +429,7 @@ const UserDetails = () => {
             <AlertDialogCancel className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
               Отмена
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteUser}
-              className="bg-red-500 hover:bg-red-600 text-white"
-            >
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-red-500 hover:bg-red-600 text-white">
               Удалить
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -520,22 +444,14 @@ const UserDetails = () => {
               {user.is_blocked ? "Разблокировать пользователя" : "Заблокировать пользователя"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {user.is_blocked 
-                ? `Вы уверены, что хотите разблокировать пользователя ${user.display_name || 'Без имени'}?`
-                : `Вы уверены, что хотите заблокировать пользователя ${user.display_name || 'Без имени'}?`
-              }
+              {user.is_blocked ? `Вы уверены, что хотите разблокировать пользователя ${user.display_name || 'Без имени'}?` : `Вы уверены, что хотите заблокировать пользователя ${user.display_name || 'Без имени'}?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
               Отмена
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBlockUser}
-              className={user.is_blocked 
-                ? "bg-green-500 hover:bg-green-600 text-white" 
-                : "bg-red-500 hover:bg-red-600 text-white"}
-            >
+            <AlertDialogAction onClick={handleBlockUser} className={user.is_blocked ? "bg-green-500 hover:bg-green-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"}>
               {user.is_blocked ? "Разблокировать" : "Заблокировать"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -550,20 +466,14 @@ const UserDetails = () => {
               {isAdmin ? "Удаление прав администратора" : "Назначение администратором"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {isAdmin 
-                ? `Вы уверены, что хотите удалить права администратора у ${user.display_name || 'Без имени'}?`
-                : `Вы уверены, что хотите назначить ${user.display_name || 'Без имени'} администратором?`
-              }
+              {isAdmin ? `Вы уверены, что хотите удалить права администратора у ${user.display_name || 'Без имени'}?` : `Вы уверены, что хотите назначить ${user.display_name || 'Без имени'} администратором?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
               Отмена
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleToggleAdmin}
-              className="bg-[#e4d079]/20 hover:bg-[#e4d079]/30 text-[#e4d079]"
-            >
+            <AlertDialogAction onClick={handleToggleAdmin} className="bg-[#e4d079]/20 hover:bg-[#e4d079]/30 text-[#e4d079]">
               {isAdmin ? "Удалить права" : "Назначить администратором"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -582,37 +492,22 @@ const UserDetails = () => {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">Имя</Label>
-              <Input 
-                id="name" 
-                value={editForm.display_name} 
-                onChange={(e) => handleEditFormChange('display_name', e.target.value)}
-                className="col-span-3 bg-black/30 border-[#e4d079]/20" 
-              />
+              <Input id="name" value={editForm.display_name} onChange={e => handleEditFormChange('display_name', e.target.value)} className="col-span-3 bg-black/30 border-[#e4d079]/20" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="phone" className="text-right">Телефон</Label>
-              <Input 
-                id="phone" 
-                value={editForm.phone_number} 
-                onChange={(e) => handleEditFormChange('phone_number', e.target.value)}
-                className="col-span-3 bg-black/30 border-[#e4d079]/20" 
-              />
+              <Input id="phone" value={editForm.phone_number} onChange={e => handleEditFormChange('phone_number', e.target.value)} className="col-span-3 bg-black/30 border-[#e4d079]/20" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Статус</Label>
-              <Select 
-                value={editForm.status} 
-                onValueChange={(value) => handleEditFormChange('status', value)}
-              >
+              <Select value={editForm.status} onValueChange={value => handleEditFormChange('status', value)}>
                 <SelectTrigger className="col-span-3 bg-black/30 border-[#e4d079]/20">
                   <SelectValue placeholder="Выберите статус" />
                 </SelectTrigger>
                 <SelectContent className="bg-black/90 border-[#e4d079]/20">
-                  {USER_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
+                  {USER_STATUSES.map(status => <SelectItem key={status} value={status}>
                       {status}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -627,8 +522,6 @@ const UserDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default UserDetails;
