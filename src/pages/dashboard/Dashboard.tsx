@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -29,14 +28,14 @@ const Dashboard = () => {
       return;
     }
 
-    // Log dashboard view activity
+    // Log dashboard view activity, but simplified
     const logDashboardView = async () => {
       try {
         const { error } = await supabase.rpc('log_activity', {
           p_user_id: user.id,
           p_category: 'user',
           p_action: 'Вход в панель управления',
-          p_details: { tab: activeTab }
+          p_details: {} // Simplified details, only record the action
         });
         
         if (error) {
@@ -67,14 +66,14 @@ const Dashboard = () => {
 
     checkAdminStatus();
     logDashboardView();
-  }, [user, navigate, activeTab]);
+  }, [user, navigate]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     navigate(`/dashboard?tab=${value}`);
 
-    // Log tab change activity
-    if (user) {
+    // Only log major tab changes to keep logs lighter
+    if (user && (value === 'passes' || value === 'rewards')) {
       // Using async IIFE to handle the asynchronous operation properly
       (async () => {
         try {
@@ -82,7 +81,7 @@ const Dashboard = () => {
             p_user_id: user.id,
             p_category: 'user',
             p_action: `Переход на вкладку ${value}`,
-            p_details: { previous_tab: activeTab, new_tab: value }
+            p_details: {} // Simplified details
           });
           
           if (error) {

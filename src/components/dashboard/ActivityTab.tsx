@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -26,14 +25,12 @@ import {
   Ticket,
   Clock,
   Award,
-  Filter,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useEffect } from "react";
 
-// Define activity types
+// Define key activity types
 type Activity = {
   id: string;
   category: 'auth' | 'points' | 'rewards' | 'passes' | 'user' | 'system';
@@ -45,26 +42,34 @@ type Activity = {
 export const ActivityTab = () => {
   const { user } = useAuth();
 
-  // Log the activity viewing event
+  // Log the activity viewing event but only once when component mounts
   useEffect(() => {
     if (user?.id) {
-      // Log that user viewed their activity
+      // Log a simplified activity - just that user viewed their activity
       const logActivity = async () => {
-        await supabase.rpc('log_activity', {
-          p_user_id: user.id,
-          p_category: 'user',
-          p_action: 'Просмотр активности',
-          p_details: {}
-        });
+        try {
+          const { error } = await supabase.rpc('log_activity', {
+            p_user_id: user.id,
+            p_category: 'user',
+            p_action: 'Просмотр истории',
+            p_details: {}
+          });
+          
+          if (error) {
+            console.error('Error logging activity view:', error);
+          }
+        } catch (error) {
+          console.error('Error logging activity view:', error);
+        }
       };
       
       logActivity();
     }
   }, [user?.id]);
 
-  // Fetch real activity data from Supabase
+  // Fetch limited activity data - only key actions, not every click
   const { data: activities = [], isLoading } = useQuery({
-    queryKey: ['user-activities', user?.id],
+    queryKey: ['user-key-activities', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -72,8 +77,10 @@ export const ActivityTab = () => {
         .from('activity_logs')
         .select('*')
         .eq('user_id', user.id)
+        // Filter to only include important actions, exclude minor interactions
+        .or('category.eq.auth,category.eq.rewards,category.eq.passes,category.eq.points')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(10);
       
       if (error) {
         console.error('Error fetching activity logs:', error);
@@ -87,21 +94,11 @@ export const ActivityTab = () => {
 
   // Function to format date in a human-readable way
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) {
-      return `${diffMins} мин. назад`;
-    } else if (diffHours < 24) {
-      return `${diffHours} ч. назад`;
-    } else if (diffDays < 7) {
-      return `${diffDays} дн. назад`;
-    } else {
-      return format(date, 'dd.MM.yyyy');
+    try {
+      const date = new Date(dateString);
+      return format(date, 'dd.MM.yyyy HH:mm');
+    } catch (e) {
+      return dateString;
     }
   };
 
@@ -142,7 +139,7 @@ export const ActivityTab = () => {
     }
   };
 
-  // If there's no real activity data yet, add some starter activities
+  // Example activities for when there's no real data yet
   const hasRealData = activities.length > 0;
   const displayActivities = hasRealData ? activities : [
     {
@@ -160,18 +157,6 @@ export const ActivityTab = () => {
     },
     {
       id: '3',
-      category: 'user' as Activity['category'],
-      action: 'Повышение уровня до 2',
-      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    },
-    {
-      id: '4',
-      category: 'rewards' as Activity['category'],
-      action: 'Получена награда "Стартовый бонус"',
-      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-    },
-    {
-      id: '5',
       category: 'passes' as Activity['category'],
       action: 'Приобретен пропуск "Стандартный"',
       created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
@@ -216,12 +201,12 @@ export const ActivityTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="h-5 w-5 text-primary" />
-            История активности
+            Основные события
           </CardTitle>
           <CardDescription>
             {hasRealData 
-              ? "Ваши последние действия и события в системе" 
-              : "Здесь будут отображаться ваши действия и события"}
+              ? "Ваши важные действия и события в системе" 
+              : "Здесь будут отображаться ваши основные события"}
           </CardDescription>
           {!hasRealData && (
             <div className="text-xs text-muted-foreground">
