@@ -11,7 +11,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Cell
 } from 'recharts';
 
 const StatsTab = () => {
@@ -103,6 +104,22 @@ const StatsTab = () => {
     show: { y: 0, opacity: 1 }
   };
 
+  // Custom colors for the chart bars
+  const chartColors = ['#e4d079', '#c8b05c', '#ac914e', '#8c7336'];
+
+  // Custom tooltip for the chart
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip bg-black/80 backdrop-blur-sm border border-[#e4d079]/20 p-3 rounded-md shadow-lg">
+          <p className="font-medium text-[#e4d079]">{`${label}`}</p>
+          <p className="text-[#e4d079]/80 text-sm">{`${payload[0].name}: ${payload[0].value} пользователей`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (isLoading) {
     return <div>Загрузка статистики...</div>;
   }
@@ -184,19 +201,44 @@ const StatsTab = () => {
         </motion.div>
       </motion.div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Статистика очков</CardTitle>
+      <Card className="border border-[#e4d079]/10 bg-black/40 backdrop-blur-md shadow-[0_8px_20px_rgba(228,208,121,0.05)]">
+        <CardHeader className="border-b border-[#e4d079]/10">
+          <CardTitle className="text-[#e4d079]">Статистика очков</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px]">
+        <CardContent className="h-[300px] pt-6">
           {stats?.chartData && stats.chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8884d8" name="Пользователей" />
+              <BarChart 
+                data={stats.chartData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+                barSize={60}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={{ stroke: '#333' }} 
+                  tick={{ fill: '#e4d079', fontSize: 12 }} 
+                />
+                <YAxis 
+                  axisLine={{ stroke: '#333' }} 
+                  tick={{ fill: '#e4d079', fontSize: 12 }} 
+                  width={30}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(228, 208, 121, 0.1)' }} />
+                <Bar 
+                  dataKey="count" 
+                  name="Пользователей" 
+                  radius={[4, 4, 0, 0]}
+                  className="hover:opacity-80 transition-opacity duration-300"
+                >
+                  {stats.chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={chartColors[index % chartColors.length]} 
+                      className="hover:filter hover:brightness-110"
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
