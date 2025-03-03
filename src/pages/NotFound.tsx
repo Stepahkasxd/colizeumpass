@@ -26,6 +26,9 @@ const NotFound = () => {
           <h1 className="text-8xl font-bold mb-4 text-yellow-400/80">404</h1>
           <p className="text-2xl text-yellow-400/60 mb-8">Страница не найдена</p>
           <div className="mb-8 text-yellow-400/40">
+            Путь: {location.pathname}
+          </div>
+          <div className="mb-8 text-yellow-400/40">
             Похоже, вы забрели не туда. Давайте вернемся на главную страницу.
           </div>
           <Link

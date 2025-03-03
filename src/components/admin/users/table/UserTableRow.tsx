@@ -36,6 +36,7 @@ export const UserTableRow = ({
   const navigate = useNavigate();
 
   const handleRowClick = () => {
+    console.log(`Navigating to user details: /admin/users/${user.id}`);
     navigate(`/admin/users/${user.id}`);
   };
 

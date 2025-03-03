@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Instructions from "./pages/passes/Instructions";
 import PassDetails from "./pages/passes/[id]";
+import UserDetails from "./pages/admin/UserDetails";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users/:userId" element={<UserDetails />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/passes/instructions" element={<Instructions />} />
               <Route path="/passes/:id" element={<PassDetails />} />
