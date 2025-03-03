@@ -77,10 +77,16 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
     console.log("Add user clicked");
   };
 
-  // Mock the required props that UsersTable expects
-  const currentUserEmail = "admin@example.com"; // Mock value
-  const isUserAdmin = (userId: string) => true; // Mock function that always returns true for this example
+  // Здесь используется пример email (в реальном приложении следует использовать актуальный email пользователя)
+  const currentUserEmail = "admin@example.com";
   
+  // Функция для проверки статуса администратора
+  const isUserAdmin = (userId: string) => {
+    // В реальном приложении здесь должна быть логика проверки
+    return true;
+  };
+  
+  // Обработчики для действий с пользователями
   const handleEditUser = (user: UserProfile) => {
     console.log("Edit user:", user);
   };
@@ -96,8 +102,6 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
   const handleToggleAdmin = (user: UserProfile) => {
     console.log("Toggle admin:", user);
   };
-
-  console.log("UsersTable rendered with users:", filteredUsers);
 
   return (
     <div className="space-y-4">
