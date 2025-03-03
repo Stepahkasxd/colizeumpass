@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UsersTable } from "./users/UsersTable";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,26 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
     console.log("Add user clicked");
   };
 
+  // Mock the required props that UsersTable expects
+  const currentUserEmail = "admin@example.com"; // Mock value
+  const isUserAdmin = (userId: string) => true; // Mock function that always returns true for this example
+  
+  const handleEditUser = (user: UserProfile) => {
+    console.log("Edit user:", user);
+  };
+  
+  const handleBlockUser = (user: UserProfile) => {
+    console.log("Block/unblock user:", user);
+  };
+  
+  const handleDeleteUser = (user: UserProfile) => {
+    console.log("Delete user:", user);
+  };
+  
+  const handleToggleAdmin = (user: UserProfile) => {
+    console.log("Toggle admin:", user);
+  };
+
   console.log("UsersTable rendered with users:", filteredUsers);
 
   return (
@@ -145,7 +166,16 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
         </Button>
       </div>
 
-      <UsersTable users={filteredUsers} isLoading={isLoading} onRefresh={refetch} />
+      <UsersTable 
+        users={filteredUsers} 
+        isLoading={isLoading} 
+        currentUserEmail={currentUserEmail}
+        onEditUser={handleEditUser}
+        onBlockUser={handleBlockUser}
+        onDeleteUser={handleDeleteUser}
+        onToggleAdmin={handleToggleAdmin}
+        isUserAdmin={isUserAdmin}
+      />
     </div>
   );
 };
