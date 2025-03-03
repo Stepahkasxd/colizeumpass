@@ -183,4 +183,8 @@
   .panel-gradient {
     background: linear-gradient(to bottom right, rgba(0,0,0,0.7), rgba(0,0,0,0.9));
   }
+  
+  .admin-page {
+    @apply pt-16;
+  }
 }

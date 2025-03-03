@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -214,9 +215,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex pt-16">
       <motion.div 
-        className="fixed h-screen bg-black/60 backdrop-blur-lg border-r border-[#e4d079]/10 z-50 shadow-lg"
+        className="fixed h-screen bg-black/60 backdrop-blur-lg border-r border-[#e4d079]/10 z-40 shadow-lg top-16"
         variants={sidebarVariants}
         initial="expanded"
         animate={isSidebarCollapsed ? "collapsed" : "expanded"}
