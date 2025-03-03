@@ -1,3 +1,4 @@
+
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Edit2, Ban, Trash2, Shield, Star, Sparkles, Medal, Users as UsersIcon } from "lucide-react";
@@ -22,7 +23,7 @@ const getStatusColor = (status: string) => {
     case 'Premium':
       return 'text-amber-500 font-medium bg-amber-500/10 border-amber-500/30 px-2 py-0.5 rounded-full';
     case 'VIP':
-      return 'text-purple-500 font-medium bg-purple-500/10 border-purple-500/30 px-2 py-0.5 rounded-full';
+      return 'text-amber-400 font-medium bg-amber-400/10 border-amber-400/30 px-2 py-0.5 rounded-full';
     default:
       return 'text-gray-500 bg-gray-500/10 border-gray-500/30 px-2 py-0.5 rounded-full';
   }
@@ -82,24 +83,24 @@ export const UsersTable = ({
   console.log("UsersTable rendered with users:", users);
 
   return (
-    <div className="rounded-md border border-purple-500/20 overflow-hidden bg-black/20 backdrop-blur-sm shadow-sm">
+    <div className="rounded-md border admin-border overflow-hidden bg-black/20 backdrop-blur-sm shadow-sm">
       <ScrollArea className="h-[calc(100vh-440px)]">
         <div className="min-w-[1200px]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-purple-500/5">
-                <th className="w-[120px] py-3 px-4 text-left font-medium text-purple-300/70">ID</th>
-                <th className="w-[180px] py-3 px-4 text-left font-medium text-purple-300/70">Имя</th>
-                <th className="w-[140px] py-3 px-4 text-left font-medium text-purple-300/70">Телефон</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium text-purple-300/70">Статус</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium text-purple-300/70">Пропуск</th>
-                <th className="w-[80px] py-3 px-4 text-left font-medium text-purple-300/70">Уровень</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium text-purple-300/70">Очки прогресса</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium text-purple-300/70">Свободные очки</th>
-                <th className="w-[120px] py-3 px-4 text-left font-medium text-purple-300/70">Состояние</th>
-                <th className="w-[100px] py-3 px-4 text-left font-medium text-purple-300/70">Роль</th>
-                <th className="w-[160px] py-3 px-4 text-left font-medium text-purple-300/70">Дата регистрации</th>
-                <th className="w-[150px] py-3 px-4 text-left font-medium text-purple-300/70">Действия</th>
+              <tr className="border-b bg-[#e4d079]/5">
+                <th className="w-[120px] py-3 px-4 text-left font-medium admin-text">ID</th>
+                <th className="w-[180px] py-3 px-4 text-left font-medium admin-text">Имя</th>
+                <th className="w-[140px] py-3 px-4 text-left font-medium admin-text">Телефон</th>
+                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Статус</th>
+                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Пропуск</th>
+                <th className="w-[80px] py-3 px-4 text-left font-medium admin-text">Уровень</th>
+                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Очки прогресса</th>
+                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Свободные очки</th>
+                <th className="w-[120px] py-3 px-4 text-left font-medium admin-text">Состояние</th>
+                <th className="w-[100px] py-3 px-4 text-left font-medium admin-text">Роль</th>
+                <th className="w-[160px] py-3 px-4 text-left font-medium admin-text">Дата регистрации</th>
+                <th className="w-[150px] py-3 px-4 text-left font-medium admin-text">Действия</th>
               </tr>
             </thead>
             <motion.tbody
@@ -111,7 +112,7 @@ export const UsersTable = ({
                 <tr>
                   <td colSpan={12} className="py-20 px-4 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="animate-spin h-8 w-8 border-4 border-purple-500/30 border-t-purple-500 rounded-full"></div>
+                      <div className="animate-spin h-8 w-8 border-4 border-[#e4d079]/30 border-t-[#e4d079] rounded-full"></div>
                       <p>Загрузка пользователей...</p>
                     </div>
                   </td>
@@ -120,7 +121,7 @@ export const UsersTable = ({
                 <tr>
                   <td colSpan={12} className="py-20 px-4 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <UsersIcon className="h-8 w-8 text-purple-500/50" />
+                      <UsersIcon className="h-8 w-8 text-[#e4d079]/50" />
                       <p>Пользователи не найдены</p>
                     </div>
                   </td>
@@ -129,10 +130,10 @@ export const UsersTable = ({
                 users.map((user) => (
                   <motion.tr 
                     key={user.id} 
-                    className="border-b border-purple-500/10 hover:bg-purple-500/5 transition-colors"
+                    className="border-b border-[#e4d079]/10 hover:bg-[#e4d079]/5 transition-colors"
                     variants={rowVariants}
                   >
-                    <td className="py-3 px-4 font-medium text-purple-300">{formatId(user.id)}</td>
+                    <td className="py-3 px-4 font-medium text-[#e4d079]">{formatId(user.id)}</td>
                     <td className="py-3 px-4 text-foreground">{user.display_name || "—"}</td>
                     <td className="py-3 px-4 text-foreground">{user.phone_number || "—"}</td>
                     <td className="py-3 px-4">
@@ -152,7 +153,7 @@ export const UsersTable = ({
                       )}
                     </td>
                     <td className="py-3 px-4 font-medium">
-                      <span className="bg-purple-500/10 border border-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
+                      <span className="bg-[#e4d079]/10 border border-[#e4d079]/20 text-[#e4d079] px-2 py-0.5 rounded-full">
                         {user.level}
                       </span>
                     </td>
@@ -171,7 +172,7 @@ export const UsersTable = ({
                     </td>
                     <td className="py-3 px-4">
                       {isUserAdmin(user.id) ? (
-                        <span className="inline-flex items-center text-purple-500 bg-purple-500/10 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">
+                        <span className="inline-flex items-center text-[#e4d079] bg-[#e4d079]/10 border border-[#e4d079]/30 px-2 py-0.5 rounded-full font-medium">
                           <Shield className="h-3 w-3 mr-1" />
                           Админ
                         </span>
@@ -191,7 +192,7 @@ export const UsersTable = ({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onEditUser(user)}
-                                className="hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
+                                className="hover:bg-[#e4d079]/10 hover:text-[#e4d079] transition-colors"
                               >
                                 <Edit2 className="h-4 w-4" />
                               </Button>
@@ -252,7 +253,7 @@ export const UsersTable = ({
                                   onClick={() => onToggleAdmin(user)}
                                   className={
                                     isUserAdmin(user.id) 
-                                      ? "text-purple-500 hover:bg-purple-500/10 hover:text-purple-400" 
+                                      ? "text-[#e4d079] hover:bg-[#e4d079]/10 hover:text-[#e4d079]" 
                                       : "text-gray-500 hover:bg-gray-500/10 hover:text-gray-400"
                                   }
                                 >
