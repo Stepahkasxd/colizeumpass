@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -7,8 +8,9 @@ import { ProfileTab } from "@/components/dashboard/ProfileTab";
 import { PassesTab } from "@/components/dashboard/PassesTab";
 import { StatsTab } from "@/components/dashboard/StatsTab";
 import { RewardsTab } from "@/components/dashboard/RewardsTab";
+import { ActivityTab } from "@/components/dashboard/ActivityTab";
 import { Button } from "@/components/ui/button";
-import { Shield, User, Ticket, BarChart3, Award } from "lucide-react";
+import { Shield, User, Ticket, BarChart3, Award, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -116,7 +118,10 @@ const Dashboard = () => {
                     <Award className="h-4 w-4 dashboard-icon" />
                     Награды
                   </TabsTrigger>
-                  
+                  <TabsTrigger value="activity" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent flex items-center gap-2 hover:text-primary transition-colors">
+                    <History className="h-4 w-4 dashboard-icon" />
+                    Активность
+                  </TabsTrigger>
                 </TabsList>
               </div>
               <TabsContent value="stats" className="h-full flex-1 animate-fade-in">
@@ -127,6 +132,9 @@ const Dashboard = () => {
               </TabsContent>
               <TabsContent value="rewards" className="h-full flex-1 animate-fade-in">
                 <RewardsTab />
+              </TabsContent>
+              <TabsContent value="activity" className="h-full flex-1 animate-fade-in">
+                <ActivityTab />
               </TabsContent>
               <TabsContent value="profile" className="h-full flex-1 animate-fade-in">
                 <ProfileTab />
