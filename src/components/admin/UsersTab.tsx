@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -103,8 +104,12 @@ const UsersTab = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+      }
       
+      console.log("Fetched users:", data);
       return (data || []).map(profile => ({
         id: profile.id,
         created_at: profile.created_at,
@@ -120,6 +125,11 @@ const UsersTab = () => {
       })) as UserProfile[];
     }
   });
+
+  // Для отладки
+  useEffect(() => {
+    console.log("UsersTab rendered, users:", users, "isLoading:", isLoading);
+  }, [users, isLoading]);
 
   const handleEditUser = (user: UserProfile) => {
     setSelectedUser(user);
@@ -166,6 +176,7 @@ const UsersTab = () => {
       setIsEditDialogOpen(false);
       refetch();
     } catch (error) {
+      console.error("Error updating user:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось обновить данные пользователя",
@@ -197,6 +208,7 @@ const UsersTab = () => {
       setIsBlockDialogOpen(false);
       refetch();
     } catch (error) {
+      console.error("Error toggling block status:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось изменить статус блокировки",

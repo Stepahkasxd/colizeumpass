@@ -81,6 +81,9 @@ export const UsersTable = ({
     }
   };
 
+  // Проверим, что users не undefined перед рендерингом
+  console.log("UsersTable rendered with users:", users);
+
   return (
     <div className="rounded-md border border-purple-500/20 overflow-hidden bg-black/20 backdrop-blur-sm shadow-sm">
       <ScrollArea className="h-[calc(100vh-440px)]">
@@ -116,7 +119,7 @@ export const UsersTable = ({
                     </div>
                   </td>
                 </tr>
-              ) : users?.length === 0 ? (
+              ) : !users || users.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="py-20 px-4 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center space-y-2">
@@ -126,7 +129,7 @@ export const UsersTable = ({
                   </td>
                 </tr>
               ) : (
-                users?.map((user) => (
+                users.map((user) => (
                   <motion.tr 
                     key={user.id} 
                     className="border-b border-purple-500/10 hover:bg-purple-500/5 transition-colors"
