@@ -1,7 +1,7 @@
 
 import { UserProfile } from "@/types/user";
 import { Button } from "@/components/ui/button";
-import { Edit2, Ban, Trash2, Shield, Star, Sparkles, Medal } from "lucide-react";
+import { Edit2, Ban, Trash2, Shield, Star, Sparkles, Medal, Users } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
