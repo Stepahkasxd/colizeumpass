@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { PassHeader } from "./PassHeader";
 import { PassProgress } from "./PassProgress";
 import { PassLevels } from "./PassLevels";
-import { Motion } from "framer-motion";
+import { motion } from "framer-motion"; // Fixed import: "Motion" to "motion"
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Pass, UserProfile, Reward } from "@/types/user";
+import { Pass, UserProfile, Reward, PassLevel } from "@/types/user";
 import { Json } from "@/integrations/supabase/types";
 
 // Helper function to convert Json rewards to Reward type
@@ -41,6 +41,38 @@ const convertJsonToRewards = (jsonRewards: Json[] | null): Reward[] => {
       passLevel: typeof rewardObj.passLevel === 'number' ? rewardObj.passLevel : 
                  typeof rewardObj.pass_level === 'number' ? rewardObj.pass_level : 
                  undefined
+    };
+  });
+};
+
+// Helper function to convert Json levels to PassLevel type
+const convertJsonToPassLevels = (jsonLevels: Json | null): PassLevel[] => {
+  if (!jsonLevels || !Array.isArray(jsonLevels)) {
+    return [];
+  }
+  
+  return jsonLevels.map(level => {
+    if (typeof level !== 'object' || level === null) {
+      return {
+        level: 0,
+        points_required: 0,
+        reward: { name: 'Unknown Reward' }
+      };
+    }
+    
+    const levelObj = level as Record<string, Json>;
+    
+    return {
+      level: typeof levelObj.level === 'number' ? levelObj.level : 0,
+      points_required: typeof levelObj.points_required === 'number' ? levelObj.points_required : 0,
+      reward: {
+        name: levelObj.reward && typeof levelObj.reward === 'object' && 
+              levelObj.reward !== null && 'name' in levelObj.reward && 
+              typeof levelObj.reward.name === 'string' ? levelObj.reward.name : 'Unknown Reward',
+        description: levelObj.reward && typeof levelObj.reward === 'object' && 
+                     levelObj.reward !== null && 'description' in levelObj.reward && 
+                     typeof levelObj.reward.description === 'string' ? levelObj.reward.description : undefined
+      }
     };
   });
 };
@@ -90,7 +122,16 @@ export const PassDetails = () => {
         throw error;
       }
       
-      return data as Pass;
+      // Convert the database pass to our Pass type
+      const typedPass: Pass = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        levels: convertJsonToPassLevels(data.levels)
+      };
+      
+      return typedPass;
     },
     enabled: !!passId
   });

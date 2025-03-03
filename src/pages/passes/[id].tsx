@@ -1,5 +1,5 @@
 
-import PassDetails from "@/components/passes/PassDetails";
+import { PassDetails } from "@/components/passes/PassDetails";
 
 const PassDetailsPage = () => {
   return <PassDetails />;

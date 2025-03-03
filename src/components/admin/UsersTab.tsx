@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserProfile, Reward, USER_STATUSES } from "@/types/user";
 import { UsersTable } from "./users/UsersTable";
 import { EditUserForm } from "./users/EditUserForm";
+import { Json } from "@/integrations/supabase/types";
 
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,8 +44,11 @@ const UsersTab = () => {
     return "Standard";
   };
 
-  const validateRewards = (rawRewards: any[]): Reward[] => {
-    if (!Array.isArray(rawRewards)) return [];
+  const validateRewards = (rawRewards: any): Reward[] => {
+    // Check if rewards is an array, if not return an empty array
+    if (!Array.isArray(rawRewards)) {
+      return [];
+    }
     
     return rawRewards.map(reward => ({
       id: reward.id || crypto.randomUUID(),
