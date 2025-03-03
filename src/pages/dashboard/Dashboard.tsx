@@ -32,12 +32,16 @@ const Dashboard = () => {
     // Log dashboard view activity
     const logDashboardView = async () => {
       try {
-        await supabase.rpc('log_activity', {
+        const { error } = await supabase.rpc('log_activity', {
           p_user_id: user.id,
           p_category: 'user',
           p_action: 'Вход в панель управления',
           p_details: { tab: activeTab }
         });
+        
+        if (error) {
+          console.error('Error logging dashboard view:', error);
+        }
       } catch (error) {
         console.error('Error logging dashboard view:', error);
       }
@@ -71,14 +75,16 @@ const Dashboard = () => {
 
     // Log tab change activity
     if (user) {
-      supabase.rpc('log_activity', {
+      const { error } = supabase.rpc('log_activity', {
         p_user_id: user.id,
         p_category: 'user',
         p_action: `Переход на вкладку ${value}`,
         p_details: { previous_tab: activeTab, new_tab: value }
-      }).catch(error => {
-        console.error('Error logging tab change:', error);
       });
+      
+      if (error) {
+        console.error('Error logging tab change:', error);
+      }
     }
   };
 
