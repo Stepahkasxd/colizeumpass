@@ -59,7 +59,7 @@ export const StatsTab = () => {
       title: "Награды",
       value: stats?.rewardsCount || 0,
       icon: Award,
-      description: "Полученные награды"
+      description: "Всего забранных наград"
     }
   ];
 

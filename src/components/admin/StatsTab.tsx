@@ -265,7 +265,7 @@ const StatsTab = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalPoints}</div>
               <p className="text-xs text-muted-foreground">
-                Всего заработано очков
+                Среднее число забранных наград
               </p>
             </CardContent>
           </Card>
