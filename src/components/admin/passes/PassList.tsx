@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 
 interface PassListProps {
   passes: Pass[] | null;
@@ -22,6 +23,8 @@ interface PassListProps {
 }
 
 export const PassList = ({ passes, isLoading, onEdit, onDelete }: PassListProps) => {
+  const navigate = useNavigate();
+  
   const tableVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -43,6 +46,11 @@ export const PassList = ({ passes, isLoading, onEdit, onDelete }: PassListProps)
         damping: 15
       }
     }
+  };
+
+  const handleViewPass = (passId: string) => {
+    console.log("Navigating to pass details with ID:", passId);
+    navigate(`/passes/${passId}`);
   };
 
   return (
@@ -129,6 +137,7 @@ export const PassList = ({ passes, isLoading, onEdit, onDelete }: PassListProps)
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleViewPass(pass.id)}
                         className="hover:bg-[#e4d079]/10 hover:text-[#e4d079] transition-colors"
                       >
                         <BookOpen className="h-4 w-4" />

@@ -95,7 +95,7 @@ const convertToUserProfile = (dbProfile: any): UserProfile => {
 };
 
 export const PassDetails = () => {
-  const { passId } = useParams<{ passId: string }>();
+  const { id: passId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -108,7 +108,7 @@ export const PassDetails = () => {
     queryFn: async () => {
       if (!passId) {
         console.error("No passId provided");
-        return null;
+        throw new Error("Pass ID is required");
       }
       
       console.log("Fetching pass with ID:", passId);
