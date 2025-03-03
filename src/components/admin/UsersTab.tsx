@@ -93,10 +93,25 @@ const UsersTab = ({ searchQuery = "" }: UsersTabProps) => {
     toast.info(`Редактирование пользователя ${user.display_name || 'Без имени'}`);
   };
   
-  const handleBlockUser = (user: UserProfile) => {
-    console.log("Block/unblock user:", user);
-    const action = user.is_blocked ? "разблокирован" : "заблокирован";
-    toast.info(`Пользователь ${user.display_name || 'Без имени'} ${action}`);
+  const handleBlockUser = async (user: UserProfile) => {
+    try {
+      console.log("Block/unblock user:", user);
+      const newBlockStatus = !user.is_blocked;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_blocked: newBlockStatus })
+        .eq('id', user.id);
+        
+      if (error) throw error;
+      
+      const action = newBlockStatus ? "заблокирован" : "разблокирован";
+      toast.success(`Пользователь ${user.display_name || 'Без имени'} ${action}`);
+      refetch();
+    } catch (error) {
+      console.error("Error updating block status:", error);
+      toast.error("Ошибка при изменении статуса блокировки");
+    }
   };
   
   const handleDeleteUser = (user: UserProfile) => {
