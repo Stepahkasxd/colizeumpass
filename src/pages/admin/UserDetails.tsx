@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { UserProfile } from "@/types/user";
@@ -20,6 +21,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { USER_STATUSES } from "@/types/user";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+
 const UserDetails = () => {
   const {
     userId
@@ -36,7 +42,10 @@ const UserDetails = () => {
   const [editForm, setEditForm] = useState({
     display_name: "",
     phone_number: "",
-    status: ""
+    status: "",
+    level: 1,
+    points: 0,
+    free_points: 0
   });
 
   // Get admin status for the user
@@ -90,10 +99,51 @@ const UserDetails = () => {
       setEditForm({
         display_name: user.display_name || "",
         phone_number: user.phone_number || "",
-        status: user.status || "Standard"
+        status: user.status || "Standard",
+        level: user.level || 1,
+        points: user.points || 0,
+        free_points: user.free_points || 0
       });
     }
   }, [user]);
+  
+  // Zod schema for form validation
+  const formSchema = z.object({
+    display_name: z.string().optional(),
+    phone_number: z.string().optional(),
+    status: z.string(),
+    level: z.number().int().min(1, "Уровень должен быть не менее 1"),
+    points: z.number().int().min(0, "Очки не могут быть отрицательными"),
+    free_points: z.number().int().min(0, "Свободные очки не могут быть отрицательными")
+  });
+  
+  // React Hook Form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      display_name: "",
+      phone_number: "",
+      status: "Standard",
+      level: 1,
+      points: 0,
+      free_points: 0
+    }
+  });
+  
+  // Update form values when user data is loaded
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        display_name: user.display_name || "",
+        phone_number: user.phone_number || "",
+        status: user.status || "Standard",
+        level: user.level || 1,
+        points: user.points || 0,
+        free_points: user.free_points || 0
+      });
+    }
+  }, [user, form]);
+  
   const handleGoBack = () => {
     navigate("/admin");
   };
@@ -167,24 +217,22 @@ const UserDetails = () => {
       setShowDeleteDialog(false);
     }
   };
-  const handleEditFormChange = (field: string, value: string) => {
-    setEditForm({
-      ...editForm,
-      [field]: value
-    });
-  };
-  const handleSaveEdit = async () => {
+  
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (!user) return;
     try {
       const {
         error
       } = await supabase.from('profiles').update({
-        display_name: editForm.display_name,
-        phone_number: editForm.phone_number,
-        status: editForm.status
+        display_name: data.display_name,
+        phone_number: data.phone_number,
+        status: data.status,
+        level: data.level,
+        points: data.points,
+        free_points: data.free_points
       }).eq('id', user.id);
       if (error) throw error;
-      toast.success(`Пользователь ${editForm.display_name || 'Без имени'} обновлен`);
+      toast.success(`Пользователь ${data.display_name || 'Без имени'} обновлен`);
       refetch();
       setShowEditDialog(false);
     } catch (error) {
@@ -192,9 +240,21 @@ const UserDetails = () => {
       toast.error("Ошибка при обновлении пользователя");
     }
   };
+  
   const handleEditUser = () => {
+    if (user) {
+      form.reset({
+        display_name: user.display_name || "",
+        phone_number: user.phone_number || "",
+        status: user.status || "Standard",
+        level: user.level || 1,
+        points: user.points || 0,
+        free_points: user.free_points || 0
+      });
+    }
     setShowEditDialog(true);
   };
+  
   if (isLoading) {
     return <div className="container py-8">
         <div className="flex items-center mb-6">
@@ -489,37 +549,151 @@ const UserDetails = () => {
               Редактирование данных пользователя {user.display_name || 'Без имени'}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Имя</Label>
-              <Input id="name" value={editForm.display_name} onChange={e => handleEditFormChange('display_name', e.target.value)} className="col-span-3 bg-black/30 border-[#e4d079]/20" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">Телефон</Label>
-              <Input id="phone" value={editForm.phone_number} onChange={e => handleEditFormChange('phone_number', e.target.value)} className="col-span-3 bg-black/30 border-[#e4d079]/20" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">Статус</Label>
-              <Select value={editForm.status} onValueChange={value => handleEditFormChange('status', value)}>
-                <SelectTrigger className="col-span-3 bg-black/30 border-[#e4d079]/20">
-                  <SelectValue placeholder="Выберите статус" />
-                </SelectTrigger>
-                <SelectContent className="bg-black/90 border-[#e4d079]/20">
-                  {USER_STATUSES.map(status => <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
-              Отмена
-            </Button>
-            <Button onClick={handleSaveEdit} className="bg-[#e4d079]/20 hover:bg-[#e4d079]/30 text-[#e4d079]">
-              Сохранить
-            </Button>
-          </DialogFooter>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="display_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Имя</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Имя пользователя" 
+                        {...field} 
+                        className="bg-black/30 border-[#e4d079]/20" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="phone_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Телефон</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Номер телефона" 
+                        {...field} 
+                        className="bg-black/30 border-[#e4d079]/20" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Статус</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-black/30 border-[#e4d079]/20">
+                          <SelectValue placeholder="Выберите статус" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-black/90 border-[#e4d079]/20">
+                        {USER_STATUSES.map(status => (
+                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Separator className="my-4 bg-[#e4d079]/20" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Уровень</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                          className="bg-black/30 border-[#e4d079]/20" 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Мин. значение: 1
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="points"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Очки прогресса</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                          className="bg-black/30 border-[#e4d079]/20" 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Мин. значение: 0
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="free_points"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Свободные очки</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                          className="bg-black/30 border-[#e4d079]/20" 
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Мин. значение: 0
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button variant="outline" type="button" onClick={() => setShowEditDialog(false)} className="border-[#e4d079]/20 hover:bg-[#e4d079]/10 hover:text-[#e4d079]">
+                  Отмена
+                </Button>
+                <Button type="submit" className="bg-[#e4d079]/20 hover:bg-[#e4d079]/30 text-[#e4d079]">
+                  Сохранить
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>;
