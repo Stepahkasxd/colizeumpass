@@ -16,7 +16,9 @@ import {
   Trash2, 
   Edit, 
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  Activity,
+  Award
 } from "lucide-react";
 import { 
   AlertDialog,
