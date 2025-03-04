@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +47,7 @@ const formSchema = z.object({
   expires_at: z.string().optional(),
 });
 
+// Define the ApiKey type to match the database schema
 type ApiKey = {
   id: string;
   name: string;
@@ -79,6 +81,7 @@ const ApiKeysTab = () => {
   const fetchApiKeys = async () => {
     try {
       setLoading(true);
+      // Use a generic type for the response since the api_keys table is not in the TypeScript types yet
       const { data, error } = await supabase
         .from('api_keys')
         .select('*')
@@ -88,7 +91,8 @@ const ApiKeysTab = () => {
         throw error;
       }
 
-      setApiKeys(data || []);
+      // Type assertion to match our ApiKey type
+      setApiKeys(data as unknown as ApiKey[]);
     } catch (error) {
       console.error('Error fetching API keys:', error);
       toast({
@@ -113,14 +117,17 @@ const ApiKeysTab = () => {
       const key = generateApiKey();
       const expiresAt = values.expires_at ? new Date(values.expires_at).toISOString() : null;
       
-      const { data, error } = await supabase.from('api_keys').insert({
-        name: values.name,
-        description: values.description || null,
-        key: key,
-        user_id: user.id,
-        expires_at: expiresAt,
-        active: true,
-      }).select();
+      const { data, error } = await supabase
+        .from('api_keys')
+        .insert({
+          name: values.name,
+          description: values.description || null,
+          key: key,
+          user_id: user.id,
+          expires_at: expiresAt,
+          active: true,
+        })
+        .select();
 
       if (error) {
         throw error;

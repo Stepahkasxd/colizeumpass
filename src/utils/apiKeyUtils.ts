@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Function to validate API key
 export const validateApiKey = async (apiKey: string): Promise<boolean> => {
   try {
+    // Since the api_keys table is not in the TypeScript types yet, we need to use a more generic approach
     const { data, error } = await supabase
       .from('api_keys')
       .select('*')

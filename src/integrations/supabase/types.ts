@@ -50,6 +50,42 @@ export type Database = {
           },
         ]
       }
+      api_keys: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          key: string
+          last_used_at: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          key: string
+          last_used_at?: string | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          key?: string
+          last_used_at?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           author_id: string | null
@@ -322,6 +358,7 @@ export type Database = {
       }
     }
     Enums: {
+      api_key_status: "active" | "revoked" | "expired"
       log_category:
         | "auth"
         | "admin"
