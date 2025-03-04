@@ -20,13 +20,21 @@ export async function generateApiKey(name: string, description?: string, expires
       Math.floor(Math.random() * 16).toString(16)
     ).join('');
     
+    // Get the current user's ID
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
     // Then create the API key record
     const { data, error } = await supabase.from('api_keys').insert({
       name,
       description,
       key: randomKey,
       expires_at: expiresAt ? expiresAt.toISOString() : null,
-      active: true
+      active: true,
+      user_id: user.id
     }).select().single();
     
     if (error) throw error;
