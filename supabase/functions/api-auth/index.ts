@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, GET, PUT, DELETE, OPTIONS',
 }
 
 serve(async (req) => {
@@ -33,7 +33,7 @@ serve(async (req) => {
     // Validate the API key by directly querying the table
     const { data, error } = await supabase
       .from('api_keys')
-      .select('user_id, active')
+      .select('user_id, active, created_at')
       .eq('key', apiKey)
       .single()
     
@@ -43,6 +43,12 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Update the last_used_at timestamp
+    await supabase
+      .from('api_keys')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('key', apiKey)
 
     // Check if user is an admin
     const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: data.user_id })
@@ -56,7 +62,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         user_id: data.user_id,
-        is_admin: !!isAdmin
+        is_admin: !!isAdmin,
+        created_at: data.created_at
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

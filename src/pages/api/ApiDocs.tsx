@@ -1,4 +1,3 @@
-
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,12 +48,259 @@ const ApiDocs = () => {
             Эндпоинты API
           </h2>
           
-          <Tabs defaultValue="passes">
+          <Tabs defaultValue="users">
             <TabsList className="mb-4">
-              <TabsTrigger value="passes">Пропуска</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
+              <TabsTrigger value="passes">Пропуска</TabsTrigger>
               <TabsTrigger value="stats">Статистика</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="users">
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>GET /api/users</CardTitle>
+                  <CardDescription>
+                    Получить список пользователей (только для администраторов)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Параметры запроса</h4>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">limit</code> - Лимит результатов (по умолчанию 10)
+                      </p>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">offset</code> - Смещение для пагинации
+                      </p>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">search</code> - Поиск по имени пользователя
+                      </p>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">has_pass</code> - Фильтр по наличию пропуска (true/false)
+                      </p>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">status</code> - Фильтр по статусу пользователя
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Пример ответа</h4>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                        <pre><code className="text-sm">
+{`{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "display_name": "Пользователь",
+      "has_pass": true,
+      "level": 2,
+      "points": 150,
+      "status": "Premium",
+      "created_at": "2023-01-01T00:00:00Z",
+      "is_admin": false,
+      "phone_number": "+12345678901",
+      "is_blocked": false
+    }
+  ],
+  "total": 100
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>GET /api/users/:id</CardTitle>
+                  <CardDescription>
+                    Получить информацию о конкретном пользователе
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Параметры пути</h4>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">id</code> - ID пользователя
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Пример ответа</h4>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                        <pre><code className="text-sm">
+{`{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "display_name": "Пользователь",
+    "has_pass": true,
+    "level": 2,
+    "points": 150,
+    "status": "Premium",
+    "created_at": "2023-01-01T00:00:00Z",
+    "is_admin": false,
+    "email": "user@example.com",
+    "phone_number": "+12345678901",
+    "is_blocked": false,
+    "free_points": 10,
+    "bio": "Профиль пользователя",
+    "last_sign_in_at": "2023-05-01T00:00:00Z"
+  }
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>POST /api/users</CardTitle>
+                  <CardDescription>
+                    Создать нового пользователя
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Тело запроса</h4>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto mb-4">
+                        <pre><code className="text-sm">
+{`{
+  "email": "newuser@example.com",
+  "password": "secure_password",
+  "display_name": "Новый пользователь",
+  "phone_number": "+12345678901",
+  "status": "Standard",
+  "is_admin": false
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Пример ответа</h4>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                        <pre><code className="text-sm">
+{`{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "display_name": "Новый пользователь",
+    "has_pass": false,
+    "level": 1,
+    "points": 0,
+    "status": "Standard",
+    "is_admin": false,
+    "email": "newuser@example.com",
+    "phone_number": "+12345678901"
+  },
+  "message": "User created successfully"
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>PUT /api/users/:id</CardTitle>
+                  <CardDescription>
+                    Обновить данные пользователя
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Параметры пути</h4>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">id</code> - ID пользователя
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Тело запроса</h4>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Все поля необязательны. Отправляйте только те поля, которые хотите обновить.
+                      </p>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto mb-4">
+                        <pre><code className="text-sm">
+{`{
+  "display_name": "Обновленное имя",
+  "phone_number": "+10987654321",
+  "level": 3,
+  "points": 200,
+  "status": "VIP",
+  "has_pass": true,
+  "is_blocked": false,
+  "is_admin": true,
+  "email": "updated@example.com"
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Пример ответа</h4>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                        <pre><code className="text-sm">
+{`{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "display_name": "Обновленное имя",
+    "has_pass": true,
+    "level": 3,
+    "points": 200,
+    "status": "VIP",
+    "is_admin": true,
+    "email": "updated@example.com",
+    "phone_number": "+10987654321",
+    "is_blocked": false
+  },
+  "message": "User updated successfully"
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>DELETE /api/users/:id</CardTitle>
+                  <CardDescription>
+                    Удалить пользователя
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Параметры пути</h4>
+                      <p className="text-sm">
+                        <code className="font-mono bg-muted px-1 py-0.5 rounded">id</code> - ID пользователя
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium">Пример ответа</h4>
+                      <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                        <pre><code className="text-sm">
+{`{
+  "message": "User deleted successfully"
+}`}
+                        </code></pre>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
             
             <TabsContent value="passes">
               <Card>
@@ -68,7 +314,7 @@ const ApiDocs = () => {
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-medium">Параметры запроса</h4>
-                      <p className="text-sm text-muted-foreground">Нет</p>
+                      <p className="text-sm">Нет</p>
                     </div>
                     
                     <div>
@@ -127,52 +373,6 @@ const ApiDocs = () => {
     ],
     "created_at": "2023-01-01T00:00:00Z"
   }
-}`}
-                        </code></pre>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="users">
-              <Card>
-                <CardHeader>
-                  <CardTitle>GET /api/users</CardTitle>
-                  <CardDescription>
-                    Получить список пользователей (только для администраторов)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium">Параметры запроса</h4>
-                      <p className="text-sm">
-                        <code className="font-mono bg-muted px-1 py-0.5 rounded">limit</code> - Лимит результатов (по умолчанию 10)
-                      </p>
-                      <p className="text-sm">
-                        <code className="font-mono bg-muted px-1 py-0.5 rounded">offset</code> - Смещение для пагинации
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium">Пример ответа</h4>
-                      <div className="bg-muted p-4 rounded-md overflow-x-auto">
-                        <pre><code className="text-sm">
-{`{
-  "data": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "email": "user@example.com",
-      "display_name": "Пользователь",
-      "has_pass": true,
-      "level": 2,
-      "points": 150,
-      "created_at": "2023-01-01T00:00:00Z"
-    }
-  ],
-  "total": 100
 }`}
                         </code></pre>
                       </div>
