@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -31,11 +30,25 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRole)
 
     // Validate the API key
-    const { data: keyData, error: keyError } = await supabase.rpc('validate_api_key', { api_key: apiKey })
+    const { data: keyData, error: keyError } = await supabase
+      .from('api_keys')
+      .select('user_id, active')
+      .eq('key', apiKey)
+      .single()
     
-    if (keyError || !keyData || keyData.length === 0 || !keyData[0].is_valid || !keyData[0].is_admin) {
+    if (keyError || !keyData || !keyData.active) {
       return new Response(
-        JSON.stringify({ error: 'Invalid API key or insufficient permissions' }),
+        JSON.stringify({ error: 'Invalid API key' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // Check if user is an admin
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: keyData.user_id })
+    
+    if (adminError || !isAdmin) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

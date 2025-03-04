@@ -30,22 +30,33 @@ serve(async (req) => {
     const supabaseServiceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceRole)
 
-    // Validate the API key
-    const { data, error } = await supabase.rpc('validate_api_key', { api_key: apiKey })
+    // Validate the API key by directly querying the table
+    const { data, error } = await supabase
+      .from('api_keys')
+      .select('user_id, active')
+      .eq('key', apiKey)
+      .single()
     
-    if (error || !data || data.length === 0 || !data[0].is_valid) {
+    if (error || !data || !data.active) {
       return new Response(
         JSON.stringify({ error: 'Invalid API key' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Check if user is an admin
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: data.user_id })
+    
+    if (adminError) {
+      console.error('Error checking admin status:', adminError)
+    }
+
     // Return the validated user information
     return new Response(
       JSON.stringify({ 
         success: true, 
-        user_id: data[0].user_id,
-        is_admin: data[0].is_admin
+        user_id: data.user_id,
+        is_admin: !!isAdmin
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -53,6 +64,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error('Error in api-auth function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
