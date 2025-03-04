@@ -1,14 +1,14 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UsersTab } from "@/components/admin/UsersTab";
-import { PassesTab } from "@/components/admin/PassesTab";
-import { PaymentsTab } from "@/components/admin/PaymentsTab";
-import { StatsTab } from "@/components/admin/StatsTab";
-import { LogsTab } from "@/components/admin/LogsTab";
-import { NewsTab } from "@/components/admin/NewsTab";
-import { TasksTab } from "@/components/admin/TasksTab";
-import { SupportTab } from "@/components/admin/SupportTab";
+import UsersTab from "@/components/admin/UsersTab";
+import PassesTab from "@/components/admin/PassesTab";
+import PaymentsTab from "@/components/admin/PaymentsTab";
+import StatsTab from "@/components/admin/StatsTab";
+import LogsTab from "@/components/admin/LogsTab";
+import NewsTab from "@/components/admin/NewsTab";
+import TasksTab from "@/components/admin/TasksTab";
+import SupportTab from "@/components/admin/SupportTab";
 import { ApiKeysTab } from "@/components/admin/ApiKeysTab";
 
 const AdminDashboard = () => {
