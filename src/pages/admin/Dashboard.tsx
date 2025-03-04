@@ -10,111 +10,62 @@ import NewsTab from "@/components/admin/NewsTab";
 import TasksTab from "@/components/admin/TasksTab";
 import SupportTab from "@/components/admin/SupportTab";
 import { ApiKeysTab } from "@/components/admin/ApiKeysTab";
+import { BarChart2, Users, Ticket, Bell, FileText, HeadphonesIcon, CreditCard, FileDigit, Key } from "lucide-react";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("stats");
 
+  const sidebarItems = [
+    { id: "stats", label: "Статистика", icon: <BarChart2 className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "users", label: "Пользователи", icon: <Users className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "passes", label: "Пропуска", icon: <Ticket className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "payments", label: "Платежи", icon: <CreditCard className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "news", label: "Новости", icon: <Bell className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "tasks", label: "Дела", icon: <FileText className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "support", label: "Поддержка", icon: <HeadphonesIcon className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "logs", label: "Логи", icon: <FileDigit className="w-5 h-5 text-[#e4d079]" /> },
+    { id: "api", label: "API Ключи", icon: <Key className="w-5 h-5 text-[#e4d079]" /> },
+  ];
+
   return (
-    <div className="container py-6 sm:py-10">
-      <div className="flex flex-col items-start gap-2 md:flex-row md:justify-between md:gap-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Админ панель</h1>
-          <p className="text-lg text-muted-foreground">
-            Управление системой и пользователями
-          </p>
+    <div className="flex h-screen bg-black pt-16">
+      {/* Sidebar */}
+      <div className="w-64 bg-black border-r border-[#e4d079]/10 pt-5 fixed h-full overflow-y-auto">
+        <div className="px-6 mb-6">
+          <h2 className="text-xl font-bold text-[#e4d079]">Админ панель</h2>
+        </div>
+        
+        <div className="space-y-1 px-3">
+          {sidebarItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex items-center w-full px-3 py-3 rounded-md transition-colors ${
+                activeTab === item.id 
+                  ? "bg-[#e4d079]/10 text-[#e4d079]" 
+                  : "text-[#e4d079]/70 hover:bg-[#e4d079]/5 hover:text-[#e4d079]"
+              }`}
+            >
+              <span className="mr-3">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      <Tabs
-        defaultValue="stats"
-        className="mt-6"
-        value={activeTab}
-        onValueChange={setActiveTab}
-      >
-        <TabsList className="flex w-full h-auto flex-wrap items-center justify-start space-x-2 overflow-visible rounded-none border-b bg-transparent p-0">
-          <TabsTrigger 
-            value="stats" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Статистика
-          </TabsTrigger>
-          <TabsTrigger 
-            value="users" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Пользователи
-          </TabsTrigger>
-          <TabsTrigger 
-            value="passes" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Пропуска
-          </TabsTrigger>
-          <TabsTrigger 
-            value="payments" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Платежи
-          </TabsTrigger>
-          <TabsTrigger 
-            value="news" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Новости
-          </TabsTrigger>
-          <TabsTrigger 
-            value="tasks" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Задачи
-          </TabsTrigger>
-          <TabsTrigger 
-            value="support" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Поддержка
-          </TabsTrigger>
-          <TabsTrigger 
-            value="logs" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Логи
-          </TabsTrigger>
-          <TabsTrigger 
-            value="api" 
-            className="h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 py-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            API Ключи
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="stats" className="mt-6">
-          <StatsTab />
-        </TabsContent>
-        <TabsContent value="users" className="mt-6">
-          <UsersTab />
-        </TabsContent>
-        <TabsContent value="passes" className="mt-6">
-          <PassesTab />
-        </TabsContent>
-        <TabsContent value="payments" className="mt-6">
-          <PaymentsTab />
-        </TabsContent>
-        <TabsContent value="news" className="mt-6">
-          <NewsTab />
-        </TabsContent>
-        <TabsContent value="tasks" className="mt-6">
-          <TasksTab />
-        </TabsContent>
-        <TabsContent value="support" className="mt-6">
-          <SupportTab />
-        </TabsContent>
-        <TabsContent value="logs" className="mt-6">
-          <LogsTab />
-        </TabsContent>
-        <TabsContent value="api" className="mt-6">
-          <ApiKeysTab />
-        </TabsContent>
-      </Tabs>
+      {/* Main content */}
+      <div className="flex-1 ml-64 p-6">
+        {/* Content for each tab */}
+        {activeTab === "stats" && <StatsTab />}
+        {activeTab === "users" && <UsersTab />}
+        {activeTab === "passes" && <PassesTab />}
+        {activeTab === "payments" && <PaymentsTab />}
+        {activeTab === "news" && <NewsTab />}
+        {activeTab === "tasks" && <TasksTab />}
+        {activeTab === "support" && <SupportTab />}
+        {activeTab === "logs" && <LogsTab />}
+        {activeTab === "api" && <ApiKeysTab />}
+      </div>
     </div>
   );
 };

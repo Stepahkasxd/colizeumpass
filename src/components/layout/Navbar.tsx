@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, User, Shield, Home, HeadphonesIcon } from "lucide-react";
@@ -49,110 +50,76 @@ const Navbar = () => {
     }
   };
 
-  const navItems = [
-    { title: "Главная", path: "/", icon: <Home className="w-4 h-4" /> },
-    { title: "Поддержка", path: "/support", icon: <HeadphonesIcon className="w-4 h-4" /> },
-  ];
-
-  const isActive = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
-  };
-
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled 
-          ? "glass-panel shadow-lg" 
-          : "bg-black/20 backdrop-blur-sm"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-black border-b border-[#e4d079]/10">
+      <div className="max-w-full mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold text-with-shadow group">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#e4d079] to-[#f0e3a1] group-hover:from-[#f0e3a1] group-hover:to-[#e4d079] transition-all duration-300">
-                COLIZEUM
-              </span>
+            <Link to="/" className="text-2xl font-bold">
+              <span className="text-[#e4d079]">COLIZEUM</span>
             </Link>
           </div>
 
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-6">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center space-x-2 transition-colors duration-200 px-3 py-2 rounded-md ${
-                    isActive(item.path) 
-                      ? "text-[#e4d079] bg-[#e4d079]/10" 
-                      : "text-foreground/80 hover:text-primary hover:bg-[#e4d079]/5"
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.title}</span>
-                </Link>
-              ))}
-            </div>
+          <div className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/"
+              className="flex items-center space-x-2 text-[#e4d079]/80 hover:text-[#e4d079]"
+            >
+              <Home className="w-4 h-4" />
+              <span>Главная</span>
+            </Link>
+            <Link
+              to="/support"
+              className="flex items-center space-x-2 text-[#e4d079]/80 hover:text-[#e4d079]"
+            >
+              <HeadphonesIcon className="w-4 h-4" />
+              <span>Поддержка</span>
+            </Link>
           </div>
 
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    className={`hover:text-primary hover:bg-[#e4d079]/5 transition-all duration-200 rounded-md ${
-                      location.pathname.includes('/dashboard') ? 'bg-[#e4d079]/10 text-[#e4d079]' : ''
-                    }`}
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Личный кабинет
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <>
+                <Button
+                  variant="ghost"
+                  className="text-[#e4d079]/80 hover:text-[#e4d079] hover:bg-[#e4d079]/5"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Личный кабинет
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-[#e4d079]/80 hover:text-[#e4d079] hover:bg-[#e4d079]/5"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Выйти
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" className="text-[#e4d079]/80 hover:text-[#e4d079] hover:bg-[#e4d079]/5">
+                    Войти
                   </Button>
-                  <Button
-                    variant="ghost"
-                    className="hover:text-primary hover:bg-[#e4d079]/5 transition-all duration-200"
-                    onClick={handleLogout}
+                </Link>
+                <Link to="/register">
+                  <Button 
+                    variant="default" 
+                    className="bg-[#e4d079] text-black hover:bg-[#e4d079]/90"
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Выйти
+                    Регистрация
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login">
-                    <Button variant="ghost" className="hover:text-primary hover:bg-[#e4d079]/5 transition-all duration-200">
-                      Войти
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button 
-                        variant="default" 
-                        className="neon-glow bg-gradient-to-r from-[#e4d079] to-[#f0e3a1] text-black font-medium"
-                      >
-                        Регистрация
-                      </Button>
-                    </motion.div>
-                  </Link>
-                </>
-              )}
-            </div>
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-foreground hover:text-primary transition-colors duration-200 p-2 rounded-md hover:bg-[#e4d079]/5"
+              className="text-[#e4d079]"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -161,39 +128,30 @@ const Navbar = () => {
       </div>
 
       {isOpen && (
-        <motion.div 
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.2 }}
-          className="md:hidden glass-panel animate-fade-in"
-        >
+        <div className="md:hidden bg-black border-t border-[#e4d079]/10">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md ${
-                  isActive(item.path) 
-                    ? "text-[#e4d079] bg-[#e4d079]/10" 
-                    : "text-foreground/80 hover:text-primary hover:bg-[#e4d079]/5"
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                {item.icon}
-                <span>{item.title}</span>
-              </Link>
-            ))}
-            <div className="border-t border-white/10 mt-2 pt-2 space-y-2">
+            <Link
+              to="/"
+              className="flex items-center space-x-2 px-3 py-2 text-[#e4d079]/80 hover:text-[#e4d079]"
+              onClick={() => setIsOpen(false)}
+            >
+              <Home className="w-4 h-4" />
+              <span>Главная</span>
+            </Link>
+            <Link
+              to="/support"
+              className="flex items-center space-x-2 px-3 py-2 text-[#e4d079]/80 hover:text-[#e4d079]"
+              onClick={() => setIsOpen(false)}
+            >
+              <HeadphonesIcon className="w-4 h-4" />
+              <span>Поддержка</span>
+            </Link>
+            <div className="border-t border-[#e4d079]/10 mt-2 pt-2 space-y-2">
               {user ? (
                 <>
                   <Link
                     to="/dashboard"
-                    className={`flex items-center px-3 py-2 rounded-md ${
-                      location.pathname.includes('/dashboard') 
-                        ? 'bg-[#e4d079]/10 text-[#e4d079]' 
-                        : 'text-foreground/80 hover:text-primary hover:bg-[#e4d079]/5'
-                    }`}
+                    className="flex items-center px-3 py-2 text-[#e4d079]/80 hover:text-[#e4d079]"
                     onClick={() => setIsOpen(false)}
                   >
                     <User className="w-4 h-4 mr-2" />
@@ -204,7 +162,7 @@ const Navbar = () => {
                       handleLogout();
                       setIsOpen(false);
                     }}
-                    className="flex w-full items-center px-3 py-2 text-foreground/80 hover:text-primary hover:bg-[#e4d079]/5 rounded-md"
+                    className="flex w-full items-center px-3 py-2 text-[#e4d079]/80 hover:text-[#e4d079]"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Выйти
@@ -214,7 +172,7 @@ const Navbar = () => {
                 <>
                   <Link
                     to="/login"
-                    className="flex items-center px-3 py-2 text-foreground/80 hover:text-primary hover:bg-[#e4d079]/5 rounded-md"
+                    className="flex items-center px-3 py-2 text-[#e4d079]/80 hover:text-[#e4d079]"
                     onClick={() => setIsOpen(false)}
                   >
                     <User className="w-4 h-4 mr-2" />
@@ -222,7 +180,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     to="/register"
-                    className="flex items-center px-3 py-2 bg-gradient-to-r from-[#e4d079]/10 to-[#f0e3a1]/10 text-[#e4d079] rounded-md"
+                    className="flex items-center px-3 py-2 bg-[#e4d079]/10 text-[#e4d079] rounded-md"
                     onClick={() => setIsOpen(false)}
                   >
                     <Shield className="w-4 h-4 mr-2" />
@@ -232,9 +190,9 @@ const Navbar = () => {
               )}
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
-    </motion.nav>
+    </header>
   );
 };
 
