@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Error500 from "./pages/Error500";
 import AdminDashboard from "./pages/admin/Dashboard";
+import ApiDocs from "./pages/admin/ApiDocs";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Instructions from "./pages/passes/Instructions";
 import PassDetails from "./pages/passes/[id]";
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/register" element={<Register />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users/:userId" element={<UserDetails />} />
+              <Route path="/admin/api-docs" element={<ApiDocs />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/passes/instructions" element={<Instructions />} />
               <Route path="/passes/:id" element={<PassDetails />} />
