@@ -17,6 +17,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import Instructions from "./pages/passes/Instructions";
 import PassDetails from "./pages/passes/[id]";
 import UserDetails from "./pages/admin/UserDetails";
+import ApiDocs from "./pages/api/ApiDocs";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/passes/instructions" element={<Instructions />} />
               <Route path="/passes/:id" element={<PassDetails />} />
+              <Route path="/api/docs" element={<ApiDocs />} />
               <Route path="/500" element={<Error500 />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
