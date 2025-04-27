@@ -9,6 +9,7 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Создаем клиента с увеличенными таймаутами и дополнительными параметрами
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
@@ -16,29 +17,80 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
   },
   global: {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-Info': 'lovable-app',
+    },
     fetch: (url: RequestInfo | URL, options?: RequestInit) => {
-      return fetch(url, options).catch(err => {
-        console.error("Supabase fetch error:", err);
-        throw err;
-      });
+      const fetchOptions: RequestInit = {
+        ...options,
+        // Увеличиваем таймаут запросов
+        signal: AbortSignal.timeout(15000), // 15 секунд вместо стандартных
+      };
+
+      return fetch(url, fetchOptions)
+        .catch(err => {
+          console.error("Supabase fetch error:", err);
+          throw err;
+        });
     }
   }
 });
 
-// Функция для проверки подключения к Supabase
+// Работающая в оффлайн режиме функция тестирования подключения
 export const testSupabaseConnection = async () => {
   try {
-    // Простой запрос для проверки соединения
+    // Проверяем, есть ли соединение с интернетом
+    if (!navigator.onLine) {
+      return { success: false, message: "Отсутствует подключение к интернету", offline: true };
+    }
+
+    // Проверяем доступность сервера Supabase через простой fetch
+    try {
+      const pingResponse = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+        method: 'HEAD',
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY,
+        },
+        // Короткий таймаут для проверки доступности
+        signal: AbortSignal.timeout(5000),
+      });
+      
+      if (!pingResponse.ok) {
+        return { 
+          success: false, 
+          message: `Сервер Supabase недоступен: ${pingResponse.status}`, 
+          status: pingResponse.status 
+        };
+      }
+    } catch (pingError) {
+      console.error("Ping to Supabase failed:", pingError);
+      return { 
+        success: false, 
+        message: `Не удалось подключиться к серверу Supabase: ${pingError.message}`, 
+        pingError: true 
+      };
+    }
+
+    // Если ping успешен, пробуем сделать простой запрос через клиент
     const { data, error } = await supabase.from('profiles').select('count').limit(1);
     
     if (error) {
       console.error("Supabase connection test error:", error);
-      return { success: false, message: `Ошибка подключения: ${error.message}` };
+      return { 
+        success: false, 
+        message: `Ошибка подключения к базе данных: ${error.message}`,
+        error 
+      };
     }
     
     return { success: true, message: "Подключение к базе данных установлено" };
   } catch (err) {
     console.error("Failed to connect to Supabase:", err);
-    return { success: false, message: `Ошибка подключения: ${err.message}` };
+    return { 
+      success: false, 
+      message: `Критическая ошибка подключения: ${err.message}`,
+      error: err 
+    };
   }
 };
