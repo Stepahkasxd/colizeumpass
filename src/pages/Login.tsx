@@ -53,6 +53,10 @@ const Login = () => {
     
     setIsTesting(true);
     try {
+      // Clear previous connection details
+      setConnectionStatus(null);
+      setConnectionSuccess(null);
+      
       const result = await testSupabaseConnection();
       setConnectionSuccess(result.success);
       setConnectionStatus(result.message);
@@ -75,7 +79,7 @@ const Login = () => {
     } catch (err) {
       console.error("Connection test error:", err);
       setConnectionSuccess(false);
-      setConnectionStatus(`Критическая ошибка подключения: ${err.message}`);
+      setConnectionStatus(`Критическая ошибка подключения: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsTesting(false);
     }
@@ -112,7 +116,18 @@ const Login = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
-    if (!connectionSuccess) {
+    // Handle offline mode specially
+    if (isOffline) {
+      toast({
+        title: "Нет подключения к интернету",
+        description: "Невозможно войти в систему без подключения к интернету",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Only check for success if we're not offline
+    if (!isOffline && !connectionSuccess) {
       toast({
         title: "Ошибка подключения",
         description: "Невозможно выполнить вход без подключения к базе данных.",
@@ -125,10 +140,25 @@ const Login = () => {
     try {
       console.log("Attempting to sign in with:", values.email);
       
-      const { data: signInData, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      // Try-catch to handle network errors
+      let signInData, error;
+      try {
+        const response = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+        signInData = response.data;
+        error = response.error;
+      } catch (networkError) {
+        console.error("Network error during sign in:", networkError);
+        toast({
+          title: "Ошибка сети",
+          description: "Не удалось подключиться к серверу авторизации. Проверьте ваше интернет-соединение.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       console.log("Sign in response:", { data: signInData, error });
 
@@ -147,7 +177,7 @@ const Login = () => {
           });
         }
 
-        // Log failed login attempt
+        // Log failed login attempt - with error handling
         try {
           await logActivity({
             user_id: values.email, // In case of failed login, use email as identifier
@@ -160,12 +190,13 @@ const Login = () => {
           });
         } catch (logError) {
           console.error("Error logging activity:", logError);
+          // Don't show this error to the user, it's not critical
         }
         return;
       }
 
       if (signInData?.user) {
-        // Log successful login
+        // Log successful login - with error handling
         try {
           await logActivity({
             user_id: signInData.user.id,
@@ -177,6 +208,7 @@ const Login = () => {
           });
         } catch (logError) {
           console.error("Error logging activity:", logError);
+          // Don't show this error to the user, it's not critical
         }
 
         toast({
@@ -190,7 +222,7 @@ const Login = () => {
       console.error("Login error:", error);
       toast({
         title: "Ошибка",
-        description: `Произошла ошибка при входе: ${error.message || "Неизвестная ошибка"}`,
+        description: `Произошла ошибка при входе: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`,
         variant: "destructive",
       });
     } finally {
@@ -234,7 +266,7 @@ const Login = () => {
             {connectionStatus}
             {connectionDetails && connectionDetails.pingError && (
               <div className="mt-2 text-xs">
-                Возможно, сервер Supabase недоступен или заблокирован. Попробуйте позже.
+                Возможно, сервер Supabase недоступен или заблокирован. Попробуйте позже или используйте VPN.
               </div>
             )}
           </AlertDescription>
@@ -257,6 +289,9 @@ const Login = () => {
       </Alert>
     );
   };
+
+  // Add offline mode detection
+  const isFormEnabled = !isLoading && (connectionSuccess || isOffline);
 
   return (
     <div className="min-h-screen pt-24 pb-12">
@@ -292,7 +327,7 @@ const Login = () => {
                             placeholder="example@mail.com"
                             type="email"
                             {...field}
-                            disabled={isLoading || !connectionSuccess}
+                            disabled={isLoading || (!connectionSuccess && !isOffline)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -310,7 +345,7 @@ const Login = () => {
                           <Input
                             type="password"
                             {...field}
-                            disabled={isLoading || !connectionSuccess}
+                            disabled={isLoading || (!connectionSuccess && !isOffline)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -321,10 +356,10 @@ const Login = () => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={isLoading || !connectionSuccess}
+                    disabled={isLoading || (!connectionSuccess && !isOffline)}
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Войти
+                    {isOffline ? "Войти (офлайн режим)" : "Войти"}
                   </Button>
                 </form>
               </Form>
@@ -338,12 +373,13 @@ const Login = () => {
                 </Link>
               </p>
               
-              {!connectionSuccess && (
+              {!connectionSuccess && !isOffline && (
                 <div className="mt-4 text-center text-xs text-muted-foreground">
                   <p>Если проблема не исчезает, возможно:</p>
                   <ul className="list-disc text-left pl-4 mt-1">
                     <li>Проблемы со стороны Supabase (сервис временно недоступен)</li>
                     <li>Ваше интернет-соединение блокирует доступ к API</li>
+                    <li>Попробуйте использовать VPN для обхода блокировок</li>
                     <li>Необходимо очистить кэш браузера</li>
                   </ul>
                 </div>

@@ -19,63 +19,106 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     headers: {
       'Content-Type': 'application/json',
       'X-Client-Info': 'lovable-app',
+    },
+    // Increase timeout to handle slow connections
+    fetch: (url, options) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      return fetch(url, { 
+        ...options, 
+        signal: controller.signal 
+      }).then(response => {
+        clearTimeout(timeoutId);
+        return response;
+      }).catch(error => {
+        clearTimeout(timeoutId);
+        throw error;
+      });
     }
   }
 });
 
-// Function to test connection to Supabase
-export const testSupabaseConnection = async () => {
-  try {
-    // Check if there's internet connection
-    if (!navigator.onLine) {
-      return { success: false, message: "Отсутствует подключение к интернету", offline: true };
-    }
-
-    // Check Supabase server availability with a simple fetch
+// Function to test connection to Supabase with retry logic
+export const testSupabaseConnection = async (retries = 2) => {
+  let attempt = 0;
+  
+  while (attempt <= retries) {
     try {
-      const pingResponse = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-        method: 'HEAD',
-        headers: {
-          'apikey': SUPABASE_PUBLISHABLE_KEY,
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-      
-      if (!pingResponse.ok) {
+      // Check if there's internet connection
+      if (!navigator.onLine) {
+        return { success: false, message: "Отсутствует подключение к интернету", offline: true };
+      }
+
+      // Check Supabase server availability with a simple fetch
+      try {
+        const pingResponse = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          method: 'HEAD',
+          headers: {
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+          },
+          signal: AbortSignal.timeout(8000), // Increased timeout
+          // Add cache control to prevent caching issues
+          cache: 'no-store',
+        });
+        
+        if (!pingResponse.ok) {
+          return { 
+            success: false, 
+            message: `Сервер Supabase недоступен: ${pingResponse.status}`, 
+            status: pingResponse.status 
+          };
+        }
+      } catch (pingError) {
+        console.error(`Ping to Supabase failed (attempt ${attempt + 1}/${retries + 1}):`, pingError);
+        
+        // If we haven't used all retries yet, try again
+        if (attempt < retries) {
+          attempt++;
+          // Wait a bit before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        
         return { 
           success: false, 
-          message: `Сервер Supabase недоступен: ${pingResponse.status}`, 
-          status: pingResponse.status 
+          message: `Не удалось подключиться к серверу Supabase: ${pingError instanceof Error ? pingError.message : String(pingError)}`, 
+          pingError: true 
         };
       }
-    } catch (pingError) {
-      console.error("Ping to Supabase failed:", pingError);
-      return { 
-        success: false, 
-        message: `Не удалось подключиться к серверу Supabase: ${pingError instanceof Error ? pingError.message : String(pingError)}`, 
-        pingError: true 
-      };
-    }
 
-    // If ping is successful, try to make a simple request through the client
-    const { data, error } = await supabase.from('profiles').select('count').limit(1);
-    
-    if (error) {
-      console.error("Supabase connection test error:", error);
+      // If ping is successful, try to make a simple request through the client
+      const { data, error } = await supabase.from('profiles').select('count').limit(1);
+      
+      if (error) {
+        console.error("Supabase connection test error:", error);
+        return { 
+          success: false, 
+          message: `Ошибка подключения к базе данных: ${error.message}`,
+          error 
+        };
+      }
+      
+      return { success: true, message: "Подключение к базе данных установлено" };
+    } catch (err) {
+      console.error(`Failed to connect to Supabase (attempt ${attempt + 1}/${retries + 1}):`, err);
+      
+      // If we haven't used all retries yet, try again
+      if (attempt < retries) {
+        attempt++;
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        continue;
+      }
+      
       return { 
         success: false, 
-        message: `Ошибка подключения к базе данных: ${error.message}`,
-        error 
+        message: `Критическая ошибка подключения: ${err instanceof Error ? err.message : String(err)}`,
+        error: err 
       };
     }
-    
-    return { success: true, message: "Подключение к базе данных установлено" };
-  } catch (err) {
-    console.error("Failed to connect to Supabase:", err);
-    return { 
-      success: false, 
-      message: `Критическая ошибка подключения: ${err instanceof Error ? err.message : String(err)}`,
-      error: err 
-    };
   }
+  
+  // This shouldn't be reached due to the returns inside the loop
+  return { success: false, message: "Не удалось подключиться к Supabase после нескольких попыток" };
 };
