@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -30,8 +30,31 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Test connection to Supabase on component mount
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('id').limit(1);
+        
+        if (error) {
+          console.error("Supabase connection test error:", error);
+          setConnectionStatus(`Ошибка подключения: ${error.message}`);
+        } else {
+          setConnectionStatus("Подключение к базе данных установлено");
+          console.log("Supabase connection test successful:", data);
+        }
+      } catch (err) {
+        console.error("Failed to connect to Supabase:", err);
+        setConnectionStatus(`Ошибка подключения: ${err.message}`);
+      }
+    };
+    
+    testConnection();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -44,10 +67,14 @@ const Login = () => {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
+      console.log("Attempting to sign in with:", values.email);
+      
       const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
+
+      console.log("Sign in response:", { data: signInData, error });
 
       if (error) {
         if (error.message.includes('not confirmed')) {
@@ -59,46 +86,55 @@ const Login = () => {
         } else {
           toast({
             title: "Ошибка",
-            description: "Неверный email или пароль",
+            description: `Неверный email или пароль. Детали: ${error.message}`,
             variant: "destructive",
           });
         }
 
-        // Логируем неудачную попытку входа
-        await logActivity({
-          user_id: values.email, // В случае неудачного входа используем email как идентификатор
-          category: 'auth',
-          action: 'login_failed',
-          details: {
-            email: values.email,
-            error: error.message
-          }
-        });
+        // Log failed login attempt
+        try {
+          await logActivity({
+            user_id: values.email, // In case of failed login, use email as identifier
+            category: 'auth',
+            action: 'login_failed',
+            details: {
+              email: values.email,
+              error: error.message
+            }
+          });
+        } catch (logError) {
+          console.error("Error logging activity:", logError);
+        }
         return;
       }
 
-      if (signInData.user) {
-        // Логируем успешный вход
-        await logActivity({
-          user_id: signInData.user.id,
-          category: 'auth',
-          action: 'login_success',
-          details: {
-            email: signInData.user.email
-          }
+      if (signInData?.user) {
+        // Log successful login
+        try {
+          await logActivity({
+            user_id: signInData.user.id,
+            category: 'auth',
+            action: 'login_success',
+            details: {
+              email: signInData.user.email
+            }
+          });
+        } catch (logError) {
+          console.error("Error logging activity:", logError);
+        }
+
+        toast({
+          title: "Успешный вход",
+          description: "Добро пожаловать в Colizeum!",
         });
+
+        navigate("/");
       }
-
-      toast({
-        title: "Успешный вход",
-        description: "Добро пожаловать в Colizeum!",
-      });
-
-      navigate("/");
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Ошибка",
-        description: "Произошла ошибка при входе",
+        description: `Произошла ошибка при входе: ${error.message || "Неизвестная ошибка"}`,
         variant: "destructive",
       });
     } finally {
@@ -118,6 +154,12 @@ const Login = () => {
           <h1 className="text-2xl font-bold mb-6 text-center text-glow">
             Вход в Colizeum
           </h1>
+
+          {connectionStatus && (
+            <div className={`mb-4 p-3 text-sm rounded ${connectionStatus.includes('Ошибка') ? 'bg-red-900/50 text-red-200' : 'bg-green-900/50 text-green-200'}`}>
+              {connectionStatus}
+            </div>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
