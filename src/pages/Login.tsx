@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2, RefreshCw } from "lucide-react";
+import { supabase, testSupabaseConnection } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -30,29 +30,40 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
+  const [connectionSuccess, setConnectionSuccess] = useState<boolean | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const testConnection = async () => {
+    if (isTesting) return;
+    
+    setIsTesting(true);
+    try {
+      const result = await testSupabaseConnection();
+      setConnectionSuccess(result.success);
+      setConnectionStatus(result.message);
+      
+      if (!result.success && retryCount < 3) {
+        // Автоматически пытаемся переподключиться 3 раза
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          testConnection();
+        }, 3000); // Повторная попытка через 3 секунды
+      }
+    } catch (err) {
+      console.error("Connection test error:", err);
+      setConnectionSuccess(false);
+      setConnectionStatus(`Критическая ошибка подключения: ${err.message}`);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   useEffect(() => {
     // Test connection to Supabase on component mount
-    const testConnection = async () => {
-      try {
-        const { data, error } = await supabase.from('profiles').select('id').limit(1);
-        
-        if (error) {
-          console.error("Supabase connection test error:", error);
-          setConnectionStatus(`Ошибка подключения: ${error.message}`);
-        } else {
-          setConnectionStatus("Подключение к базе данных установлено");
-          console.log("Supabase connection test successful:", data);
-        }
-      } catch (err) {
-        console.error("Failed to connect to Supabase:", err);
-        setConnectionStatus(`Ошибка подключения: ${err.message}`);
-      }
-    };
-    
     testConnection();
   }, []);
 
@@ -65,6 +76,15 @@ const Login = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
+    if (!connectionSuccess) {
+      toast({
+        title: "Ошибка подключения",
+        description: "Невозможно выполнить вход без подключения к базе данных.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       console.log("Attempting to sign in with:", values.email);
@@ -142,6 +162,12 @@ const Login = () => {
     }
   };
 
+  // Функция для принудительного обновления соединения
+  const handleRetryConnection = () => {
+    setRetryCount(0);
+    testConnection();
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container max-w-md">
@@ -156,8 +182,29 @@ const Login = () => {
           </h1>
 
           {connectionStatus && (
-            <div className={`mb-4 p-3 text-sm rounded ${connectionStatus.includes('Ошибка') ? 'bg-red-900/50 text-red-200' : 'bg-green-900/50 text-green-200'}`}>
-              {connectionStatus}
+            <div 
+              className={`mb-4 p-4 text-sm rounded flex items-center justify-between ${
+                connectionSuccess 
+                  ? 'bg-green-900/50 text-green-200 border border-green-700' 
+                  : 'bg-red-900/50 text-red-200 border border-red-700'
+              }`}
+            >
+              <span>{connectionStatus}</span>
+              {!connectionSuccess && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="ml-2 h-8" 
+                  onClick={handleRetryConnection}
+                  disabled={isTesting}
+                >
+                  {isTesting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
             </div>
           )}
 
@@ -174,7 +221,7 @@ const Login = () => {
                         placeholder="example@mail.com"
                         type="email"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || !connectionSuccess}
                       />
                     </FormControl>
                     <FormMessage />
@@ -192,7 +239,7 @@ const Login = () => {
                       <Input
                         type="password"
                         {...field}
-                        disabled={isLoading}
+                        disabled={isLoading || !connectionSuccess}
                       />
                     </FormControl>
                     <FormMessage />
@@ -200,7 +247,11 @@ const Login = () => {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || !connectionSuccess}
+              >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Войти
               </Button>
