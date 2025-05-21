@@ -48,24 +48,24 @@ export const getActivityIcon = (category: Activity['category']) => {
 export const getActivityBadge = (category: Activity['category']) => {
   switch (category) {
     case 'rewards':
-      return <Badge variant="outline" className="border-purple-500/30 text-purple-300">Награда</Badge>;
+      return <Badge variant="outline" className="border-purple-500/50 bg-purple-500/10 text-purple-300">Награда</Badge>;
     case 'passes':
-      return <Badge variant="outline" className="border-blue-500/30 text-blue-300">Пропуск</Badge>;
+      return <Badge variant="outline" className="border-blue-500/50 bg-blue-500/10 text-blue-300">Пропуск</Badge>;
     case 'points':
-      return <Badge variant="outline" className="border-yellow-500/30 text-yellow-300">Очки</Badge>;
+      return <Badge variant="outline" className="border-yellow-500/50 bg-yellow-500/10 text-yellow-300">Очки</Badge>;
     case 'auth':
-      return <Badge variant="outline" className="border-green-500/30 text-green-300">Вход</Badge>;
+      return <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-300">Вход</Badge>;
     case 'user':
-      return <Badge variant="outline" className="border-teal-500/30 text-teal-300">Действие</Badge>;
+      return <Badge variant="outline" className="border-teal-500/50 bg-teal-500/10 text-teal-300">Действие</Badge>;
     case 'system':
     default:
-      return <Badge variant="outline" className="border-gray-500/30 text-gray-300">Система</Badge>;
+      return <Badge variant="outline" className="border-gray-500/50 bg-gray-500/10 text-gray-300">Система</Badge>;
   }
 };
 
 export const ActivityItem = ({ activity }: ActivityItemProps) => {
   return (
-    <TableRow key={activity.id} className="hover:bg-black/40">
+    <TableRow key={activity.id} className="hover:bg-black/40 border-b border-primary/5">
       <TableCell className="font-medium">
         <div className="flex items-center gap-2">
           {getActivityIcon(activity.category)}
@@ -74,19 +74,19 @@ export const ActivityItem = ({ activity }: ActivityItemProps) => {
       </TableCell>
       <TableCell>
         <div className="flex flex-col">
-          <span>{activity.action}</span>
+          <span className="text-gray-200">{activity.action}</span>
           {activity.details?.points && (
-            <span className="text-xs text-yellow-400/70">+{activity.details.points} очков</span>
+            <span className="text-xs text-yellow-400/90">+{activity.details.points} очков</span>
           )}
           {activity.details?.price && (
-            <span className="text-xs text-blue-400/70">{activity.details.price} руб.</span>
+            <span className="text-xs text-blue-400/90">{activity.details.price} руб.</span>
           )}
         </div>
       </TableCell>
       <TableCell className="text-right">
         <div className="flex items-center justify-end gap-2">
-          <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">{formatDate(activity.created_at)}</span>
+          <Clock className="h-3 w-3 text-gray-400" />
+          <span className="text-sm text-gray-400">{formatDate(activity.created_at)}</span>
         </div>
       </TableCell>
     </TableRow>
