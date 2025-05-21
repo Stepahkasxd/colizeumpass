@@ -1,1 +1,11 @@
+
 project_id = "lmgfzqaewmenlmawdrxn"
+
+[functions.api-auth]
+verify_jwt = false
+
+[functions.admin-api]
+verify_jwt = false
+
+[functions.api-keys-api]
+verify_jwt = false

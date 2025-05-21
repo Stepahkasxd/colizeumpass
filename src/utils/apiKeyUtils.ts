@@ -115,10 +115,13 @@ export async function validateApiKey(apiKey: string) {
     
     if (error) throw error;
     
-    // Check if the key exists and is active
-    const isValid = !!data && data.active === true;
+    // Проверяем, истёк ли срок действия ключа
+    const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
     
-    // Check if we need to validate admin status
+    // Проверяем, существует и активен ли ключ
+    const isValid = !!data && data.active === true && !isExpired;
+    
+    // Проверяем статус администратора
     let isAdmin = false;
     let userId = null;
     
@@ -135,10 +138,245 @@ export async function validateApiKey(apiKey: string) {
       success: true, 
       isValid, 
       isAdmin,
-      userId
+      userId,
+      isExpired: isExpired || false
     };
   } catch (error) {
     console.error('Error validating API key:', error);
+    return { success: false, error };
+  }
+}
+
+// Новые функции для работы с API через Edge Function
+
+export async function fetchApiKeys() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Получить собственный API ключ для авторизации запроса
+    const { data: apiKeys } = await supabase
+      .from('api_keys')
+      .select('key')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (!apiKeys || apiKeys.length === 0) {
+      throw new Error('No active API key found');
+    }
+    
+    const authApiKey = apiKeys[0].key;
+    
+    // Вызываем API endpoint для получения ключей
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/keys`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': authApiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch API keys');
+    }
+    
+    const result = await response.json();
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error('Error fetching API keys via API:', error);
+    return { success: false, error };
+  }
+}
+
+export async function createApiKeyViaApi(name: string, description?: string, expiresAt?: Date) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Получить собственный API ключ для авторизации запроса
+    const { data: apiKeys } = await supabase
+      .from('api_keys')
+      .select('key')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (!apiKeys || apiKeys.length === 0) {
+      throw new Error('No active API key found');
+    }
+    
+    const authApiKey = apiKeys[0].key;
+    
+    // Вызываем API endpoint для создания ключа
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/keys`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': authApiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        expires_at: expiresAt ? expiresAt.toISOString() : null
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create API key');
+    }
+    
+    const result = await response.json();
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error('Error creating API key via API:', error);
+    return { success: false, error };
+  }
+}
+
+export async function revokeApiKeyViaApi(id: string) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Получить собственный API ключ для авторизации запроса
+    const { data: apiKeys } = await supabase
+      .from('api_keys')
+      .select('key')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (!apiKeys || apiKeys.length === 0) {
+      throw new Error('No active API key found');
+    }
+    
+    const authApiKey = apiKeys[0].key;
+    
+    // Вызываем API endpoint для отзыва ключа
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/keys/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-api-key': authApiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to revoke API key');
+    }
+    
+    const result = await response.json();
+    return { success: true, message: result.message };
+  } catch (error) {
+    console.error('Error revoking API key via API:', error);
+    return { success: false, error };
+  }
+}
+
+// Административные функции
+export async function fetchAllApiKeysAdmin() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Получить собственный API ключ для авторизации запроса
+    const { data: apiKeys } = await supabase
+      .from('api_keys')
+      .select('key')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (!apiKeys || apiKeys.length === 0) {
+      throw new Error('No active API key found');
+    }
+    
+    const authApiKey = apiKeys[0].key;
+    
+    // Вызываем API endpoint для получения всех ключей (только для админа)
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/admin/keys`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': authApiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch API keys');
+    }
+    
+    const result = await response.json();
+    return { success: true, data: result.data, total: result.total };
+  } catch (error) {
+    console.error('Error fetching admin API keys:', error);
+    return { success: false, error };
+  }
+}
+
+export async function toggleApiKeyStatusAdmin(id: string, active: boolean) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Получить собственный API ключ для авторизации запроса
+    const { data: apiKeys } = await supabase
+      .from('api_keys')
+      .select('key')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (!apiKeys || apiKeys.length === 0) {
+      throw new Error('No active API key found');
+    }
+    
+    const authApiKey = apiKeys[0].key;
+    
+    // Вызываем API endpoint для изменения статуса ключа
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/admin/keys/${id}`, {
+      method: 'PUT',
+      headers: {
+        'x-api-key': authApiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ active })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update API key status');
+    }
+    
+    const result = await response.json();
+    return { success: true, message: result.message, data: result.data };
+  } catch (error) {
+    console.error('Error updating API key status:', error);
     return { success: false, error };
   }
 }
