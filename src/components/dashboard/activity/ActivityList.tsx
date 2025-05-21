@@ -111,13 +111,13 @@ export const ActivityList = () => {
   }
 
   return (
-    <Card className="dashboard-card overflow-hidden border border-primary/10 bg-black/50 backdrop-blur-sm">
-      <CardHeader className="border-b border-primary/10 bg-black/30">
-        <CardTitle className="flex items-center gap-2 text-primary">
+    <Card className="dashboard-card overflow-hidden">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
           Основные события
         </CardTitle>
-        <CardDescription className="text-gray-300">
+        <CardDescription>
           {hasRealData 
             ? "Ваши важные действия и события в системе" 
             : "Здесь будут отображаться ваши основные события"}
@@ -128,14 +128,14 @@ export const ActivityList = () => {
           </div>
         )}
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="rounded-md">
+      <CardContent>
+        <div className="rounded-md border">
           <Table>
-            <TableHeader className="bg-black/20">
-              <TableRow className="hover:bg-transparent border-b border-primary/10">
-                <TableHead className="w-[100px] text-primary/70">Тип</TableHead>
-                <TableHead className="text-primary/70">Описание</TableHead>
-                <TableHead className="text-right text-primary/70">Дата</TableHead>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Тип</TableHead>
+                <TableHead>Описание</TableHead>
+                <TableHead className="text-right">Дата</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
