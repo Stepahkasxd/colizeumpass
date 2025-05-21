@@ -1,3 +1,4 @@
+
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,20 +33,466 @@ const ApiDocs = () => {
               </p>
               <div className="bg-muted p-4 rounded-md overflow-x-auto mb-4">
                 <pre><code className="text-sm">
-                  {`curl -X GET "https://example.com/api/endpoint" \\
+                  {`curl -X GET "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/keys" \\
   -H "x-api-key: YOUR_API_KEY"`}
                 </code></pre>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-6">
                 API ключи можно создать и управлять ими в <a href="/admin" className="underline">панели администратора</a>.
               </p>
+              
+              <h3 className="text-lg font-semibold mb-2">Шаги для использования API ключей:</h3>
+              <ol className="list-decimal pl-6 mb-6 space-y-2">
+                <li>Сгенерируйте API ключ в <a href="/admin" className="underline">панели администратора</a></li>
+                <li>Сохраните полученный ключ (он показывается только один раз)</li>
+                <li>Используйте ключ в заголовке <code className="font-mono bg-muted px-1 py-0.5 rounded">x-api-key</code> для всех запросов к API</li>
+                <li>Для административных действий убедитесь, что ваш пользователь имеет права администратора</li>
+              </ol>
             </CardContent>
           </Card>
         </section>
         
         <section>
           <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4">
-            Эндпоинты API
+            Эндпоинты API ключей
+          </h2>
+          
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Управление API ключами</CardTitle>
+              <CardDescription>
+                Эти эндпоинты позволяют взаимодействовать с API ключами
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div>
+                <h3 className="text-lg font-medium mb-2">GET /functions/v1/api-keys-api/keys</h3>
+                <p className="text-muted-foreground mb-2">Получить список всех ваших API ключей</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X GET "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/keys" \\
+  -H "x-api-key: YOUR_API_KEY"`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Мой API ключ",
+      "description": "Для мобильного приложения",
+      "key": "abcdef1234567890...",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2023-01-01T00:00:00Z",
+      "last_used_at": "2023-01-02T00:00:00Z",
+      "expires_at": null,
+      "status": "active"
+    }
+  ]
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-2">GET /functions/v1/api-keys-api/keys/:id</h3>
+                <p className="text-muted-foreground mb-2">Получить информацию о конкретном API ключе по ID</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X GET "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/keys/550e8400-e29b-41d4-a716-446655440000" \\
+  -H "x-api-key: YOUR_API_KEY"`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Мой API ключ",
+    "description": "Для мобильного приложения",
+    "key": "abcdef1234567890...",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "created_at": "2023-01-01T00:00:00Z",
+    "last_used_at": "2023-01-02T00:00:00Z",
+    "expires_at": null,
+    "status": "active"
+  }
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-2">POST /functions/v1/api-keys-api/keys</h3>
+                <p className="text-muted-foreground mb-2">Создать новый API ключ</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X POST "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/keys" \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Новый API ключ",
+    "description": "Описание нового ключа",
+    "expires_at": "2024-12-31T23:59:59Z"
+  }'`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Параметры</h4>
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 px-1 text-left">Параметр</th>
+                        <th className="py-2 px-1 text-left">Тип</th>
+                        <th className="py-2 px-1 text-left">Описание</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>name</code></td>
+                        <td className="py-2 px-1">string</td>
+                        <td className="py-2 px-1">Обязательное. Название API ключа</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>description</code></td>
+                        <td className="py-2 px-1">string</td>
+                        <td className="py-2 px-1">Необязательное. Описание API ключа</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>expires_at</code></td>
+                        <td className="py-2 px-1">string (ISO 8601)</td>
+                        <td className="py-2 px-1">Необязательное. Дата истечения срока действия ключа</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="space-y-2 mt-3">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Новый API ключ",
+    "description": "Описание нового ключа",
+    "key": "abcdef1234567890...", 
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "created_at": "2023-01-01T00:00:00Z",
+    "last_used_at": null,
+    "expires_at": "2024-12-31T23:59:59Z",
+    "status": "active"
+  },
+  "message": "API key created successfully"
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-2">DELETE /functions/v1/api-keys-api/keys/:id</h3>
+                <p className="text-muted-foreground mb-2">Отозвать API ключ</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X DELETE "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/keys/550e8400-e29b-41d4-a716-446655440000" \\
+  -H "x-api-key: YOUR_API_KEY"`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "message": "API key revoked successfully"
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Административные эндпоинты API ключей</CardTitle>
+              <CardDescription>
+                Эти эндпоинты доступны только пользователям с правами администратора
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div>
+                <h3 className="text-lg font-medium mb-2">GET /functions/v1/api-keys-api/admin/keys</h3>
+                <p className="text-muted-foreground mb-2">Получить список всех API ключей в системе (только для администраторов)</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X GET "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/admin/keys" \\
+  -H "x-api-key: YOUR_ADMIN_API_KEY"`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Параметры запроса</h4>
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 px-1 text-left">Параметр</th>
+                        <th className="py-2 px-1 text-left">Тип</th>
+                        <th className="py-2 px-1 text-left">Описание</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>limit</code></td>
+                        <td className="py-2 px-1">number</td>
+                        <td className="py-2 px-1">Лимит результатов (по умолчанию 50)</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>offset</code></td>
+                        <td className="py-2 px-1">number</td>
+                        <td className="py-2 px-1">Смещение для пагинации</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>search</code></td>
+                        <td className="py-2 px-1">string</td>
+                        <td className="py-2 px-1">Поиск по названию ключа</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>active</code></td>
+                        <td className="py-2 px-1">boolean</td>
+                        <td className="py-2 px-1">Фильтр по активности ключа (true/false)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="space-y-2 mt-3">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "API ключ пользователя",
+      "description": "Для мобильного приложения",
+      "key": "abcdef1234567890...",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_name": "Имя Пользователя",
+      "created_at": "2023-01-01T00:00:00Z",
+      "last_used_at": "2023-01-02T00:00:00Z",
+      "expires_at": null,
+      "status": "active"
+    }
+  ],
+  "total": 100
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-2">GET /functions/v1/api-keys-api/admin/keys/:id</h3>
+                <p className="text-muted-foreground mb-2">Получить информацию о конкретном API ключе (только для администраторов)</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X GET "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/admin/keys/550e8400-e29b-41d4-a716-446655440000" \\
+  -H "x-api-key: YOUR_ADMIN_API_KEY"`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "API ключ пользователя",
+    "description": "Для мобильного приложения",
+    "key": "abcdef1234567890...",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "user_name": "Имя Пользователя",
+    "created_at": "2023-01-01T00:00:00Z",
+    "last_used_at": "2023-01-02T00:00:00Z",
+    "expires_at": null,
+    "status": "active"
+  }
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-2">PUT /functions/v1/api-keys-api/admin/keys/:id</h3>
+                <p className="text-muted-foreground mb-2">Обновить статус API ключа (только для администраторов)</p>
+                
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-3">
+                  <pre><code className="text-sm">
+{`curl -X PUT "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/admin/keys/550e8400-e29b-41d4-a716-446655440000" \\
+  -H "x-api-key: YOUR_ADMIN_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "active": false
+  }'`}
+                  </code></pre>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Параметры</h4>
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 px-1 text-left">Параметр</th>
+                        <th className="py-2 px-1 text-left">Тип</th>
+                        <th className="py-2 px-1 text-left">Описание</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-2 px-1"><code>active</code></td>
+                        <td className="py-2 px-1">boolean</td>
+                        <td className="py-2 px-1">Обязательное. Новый статус активности ключа</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="space-y-2 mt-3">
+                  <h4 className="font-medium">Ответ</h4>
+                  <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                    <pre><code className="text-sm">
+{`{
+  "message": "API key revoked successfully",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "API ключ пользователя",
+    "status": "revoked"
+  }
+}`}
+                    </code></pre>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4">
+            Примеры использования API ключей
+          </h2>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Руководство по интеграции</CardTitle>
+              <CardDescription>
+                Пошаговые инструкции по использованию API ключей для доступа к API
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">1. Генерация API ключа</h3>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>Войдите в <a href="/admin" className="underline">панель администратора</a></li>
+                  <li>Перейдите в раздел "API ключи"</li>
+                  <li>Нажмите "Создать API ключ"</li>
+                  <li>Введите название и описание ключа</li>
+                  <li>Нажмите "Создать ключ"</li>
+                  <li>Скопируйте сгенерированный ключ (показывается только один раз)</li>
+                </ol>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2. Использование API ключа в запросах</h3>
+                <p className="mb-2">
+                  Добавьте заголовок <code className="font-mono bg-muted px-1 py-0.5 rounded">x-api-key</code> с вашим API ключом к каждому запросу:
+                </p>
+                <div className="bg-muted p-4 rounded-md overflow-x-auto mb-4">
+                  <pre><code className="text-sm">
+{`// JavaScript пример
+async function fetchApiData() {
+  const response = await fetch(
+    "https://lmgfzqaewmenlmawdrxn.supabase.co/functions/v1/api-keys-api/keys", 
+    {
+      headers: {
+        "x-api-key": "YOUR_API_KEY",
+        "Content-Type": "application/json"
+      }
+    }
+  );
+  
+  const data = await response.json();
+  return data;
+}`}
+                  </code></pre>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-2">3. Доступ к административным функциям</h3>
+                <p className="mb-2">
+                  Для доступа к административным эндпоинтам необходимо:
+                </p>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>Ваш пользователь должен иметь роль администратора в системе</li>
+                  <li>Используйте API ключ, принадлежащий пользователю с правами администратора</li>
+                  <li>Административные эндпоинты начинаются с <code className="font-mono bg-muted px-1 py-0.5 rounded">/functions/v1/api-keys-api/admin/...</code></li>
+                </ol>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-2">4. Работа с ответами API</h3>
+                <p className="mb-2">
+                  Все ответы API имеют стандартную структуру:
+                </p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Успешные запросы возвращают <code className="font-mono bg-muted px-1 py-0.5 rounded">data</code> с результатом</li>
+                  <li>Ошибки возвращают <code className="font-mono bg-muted px-1 py-0.5 rounded">error</code> с сообщением</li>
+                  <li>Некоторые запросы возвращают <code className="font-mono bg-muted px-1 py-0.5 rounded">message</code> с информацией о результате</li>
+                  <li>Запросы с пагинацией могут возвращать <code className="font-mono bg-muted px-1 py-0.5 rounded">total</code> с общим количеством</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-2">5. Безопасность API ключей</h3>
+                <p className="mb-2">
+                  Соблюдайте следующие рекомендации:
+                </p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Никогда не публикуйте API ключи в общедоступных репозиториях</li>
+                  <li>Храните API ключи в безопасном месте</li>
+                  <li>Используйте срок действия ключей для временного доступа</li>
+                  <li>Периодически обновляйте ключи для повышения безопасности</li>
+                  <li>При подозрении на компрометацию немедленно отзывайте ключи</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+        
+        <section id="other-api-endpoints">
+          <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4">
+            Прочие эндпоинты API
           </h2>
           
           <Tabs defaultValue="users">
@@ -418,6 +865,7 @@ const ApiDocs = () => {
           <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4">
             Обработка ошибок
           </h2>
+          
           <Card>
             <CardHeader>
               <CardTitle>Коды ошибок</CardTitle>
@@ -437,6 +885,10 @@ const ApiDocs = () => {
                   <tr className="m-0 border-t p-0 even:bg-muted">
                     <td className="border px-4 py-2 text-left">200 - OK</td>
                     <td className="border px-4 py-2 text-left">Запрос выполнен успешно</td>
+                  </tr>
+                  <tr className="m-0 border-t p-0 even:bg-muted">
+                    <td className="border px-4 py-2 text-left">201 - Created</td>
+                    <td className="border px-4 py-2 text-left">Ресурс успешно создан</td>
                   </tr>
                   <tr className="m-0 border-t p-0 even:bg-muted">
                     <td className="border px-4 py-2 text-left">400 - Bad Request</td>
@@ -460,6 +912,43 @@ const ApiDocs = () => {
                   </tr>
                 </tbody>
               </table>
+              
+              <div className="mt-6 space-y-3">
+                <h3 className="text-lg font-medium">Специфичные ошибки API ключей</h3>
+                <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                  <pre><code className="text-sm">
+{`// API ключ отсутствует в заголовке
+{
+  "error": "Missing API key"
+}
+
+// API ключ недействительный или отозванный
+{
+  "error": "Invalid API key"
+}
+
+// API ключ истек
+{
+  "error": "API key has expired"
+}
+
+// Пользователь не имеет прав администратора для доступа
+{
+  "error": "Unauthorized. Admin access required."
+}
+
+// API ключ не найден
+{
+  "error": "API key not found"
+}
+
+// Отсутствует обязательное поле
+{
+  "error": "API key name is required"
+}`}
+                  </code></pre>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -469,3 +958,4 @@ const ApiDocs = () => {
 };
 
 export default ApiDocs;
+
