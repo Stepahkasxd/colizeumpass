@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, RefreshCw, AlertTriangle, WifiOff } from "lucide-react";
-import { supabase, testSupabaseConnection } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -28,7 +28,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -39,73 +38,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
-  const [connectionSuccess, setConnectionSuccess] = useState<boolean | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [connectionDetails, setConnectionDetails] = useState<any>(null);
-  const [isOffline, setIsOffline] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const testConnection = async () => {
-    if (isTesting) return;
-    
-    setIsTesting(true);
-    try {
-      // Clear previous connection details
-      setConnectionStatus(null);
-      setConnectionSuccess(null);
-      
-      const result = await testSupabaseConnection();
-      setConnectionSuccess(result.success);
-      setConnectionStatus(result.message);
-      setConnectionDetails(result);
-      
-      // Проверяем, офлайн ли мы
-      if (result.offline) {
-        setIsOffline(true);
-      } else {
-        setIsOffline(false);
-      }
-      
-      if (!result.success && retryCount < 3) {
-        // Автоматически пытаемся переподключиться 3 раза
-        setTimeout(() => {
-          setRetryCount(prev => prev + 1);
-          testConnection();
-        }, 3000); // Повторная попытка через 3 секунды
-      }
-    } catch (err) {
-      console.error("Connection test error:", err);
-      setConnectionSuccess(false);
-      setConnectionStatus(`Критическая ошибка подключения: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  useEffect(() => {
-    // Проверяем подключение к Supabase при монтировании компонента
-    testConnection();
-
-    // Добавляем слушатель события online/offline
-    const handleOnlineStatus = () => {
-      setIsOffline(!navigator.onLine);
-      if (navigator.onLine) {
-        // Если подключение восстановлено, проверяем подключение к Supabase
-        testConnection();
-      }
-    };
-
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-
-    return () => {
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
-    };
-  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -116,26 +50,6 @@ const Login = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
-    // Handle offline mode specially
-    if (isOffline) {
-      toast({
-        title: "Нет подключения к интернету",
-        description: "Невозможно войти в систему без подключения к интернету",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Only check for success if we're not offline
-    if (!isOffline && !connectionSuccess) {
-      toast({
-        title: "Ошибка подключения",
-        description: "Невозможно выполнить вход без подключения к базе данных.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
       console.log("Attempting to sign in with:", values.email);
@@ -192,6 +106,7 @@ const Login = () => {
           console.error("Error logging activity:", logError);
           // Don't show this error to the user, it's not critical
         }
+        setIsLoading(false);
         return;
       }
 
@@ -230,69 +145,6 @@ const Login = () => {
     }
   };
 
-  // Функция для принудительного обновления соединения
-  const handleRetryConnection = () => {
-    setRetryCount(0);
-    testConnection();
-  };
-
-  const renderConnectionStatus = () => {
-    if (isOffline) {
-      return (
-        <Alert variant="destructive" className="mb-4">
-          <WifiOff className="h-4 w-4" />
-          <AlertTitle>Нет подключения к интернету</AlertTitle>
-          <AlertDescription>
-            Проверьте ваше соединение и попробуйте снова.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    if (!connectionStatus) return null;
-
-    return (
-      <Alert 
-        className={`mb-4 ${
-          connectionSuccess 
-            ? 'bg-green-900/50 text-green-200 border border-green-700' 
-            : 'bg-red-900/50 text-red-200 border border-red-700'
-        }`}
-      >
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>{connectionSuccess ? "Подключено" : "Ошибка подключения"}</AlertTitle>
-        <div className="flex justify-between items-center w-full">
-          <AlertDescription>
-            {connectionStatus}
-            {connectionDetails && connectionDetails.pingError && (
-              <div className="mt-2 text-xs">
-                Возможно, сервер Supabase недоступен или заблокирован. Попробуйте позже или используйте VPN.
-              </div>
-            )}
-          </AlertDescription>
-          {!connectionSuccess && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="ml-2 h-8" 
-              onClick={handleRetryConnection}
-              disabled={isTesting}
-            >
-              {isTesting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-            </Button>
-          )}
-        </div>
-      </Alert>
-    );
-  };
-
-  // Add offline mode detection
-  const isFormEnabled = !isLoading && (connectionSuccess || isOffline);
-
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container max-w-md">
@@ -312,8 +164,6 @@ const Login = () => {
             </CardHeader>
             
             <CardContent>
-              {renderConnectionStatus()}
-
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -327,7 +177,7 @@ const Login = () => {
                             placeholder="example@mail.com"
                             type="email"
                             {...field}
-                            disabled={isLoading || (!connectionSuccess && !isOffline)}
+                            disabled={isLoading}
                           />
                         </FormControl>
                         <FormMessage />
@@ -345,7 +195,7 @@ const Login = () => {
                           <Input
                             type="password"
                             {...field}
-                            disabled={isLoading || (!connectionSuccess && !isOffline)}
+                            disabled={isLoading}
                           />
                         </FormControl>
                         <FormMessage />
@@ -356,10 +206,10 @@ const Login = () => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={isLoading || (!connectionSuccess && !isOffline)}
+                    disabled={isLoading}
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isOffline ? "Войти (офлайн режим)" : "Войти"}
+                    Войти
                   </Button>
                 </form>
               </Form>
@@ -372,18 +222,6 @@ const Login = () => {
                   Зарегистрироваться
                 </Link>
               </p>
-              
-              {!connectionSuccess && !isOffline && (
-                <div className="mt-4 text-center text-xs text-muted-foreground">
-                  <p>Если проблема не исчезает, возможно:</p>
-                  <ul className="list-disc text-left pl-4 mt-1">
-                    <li>Проблемы со стороны Supabase (сервис временно недоступен)</li>
-                    <li>Ваше интернет-соединение блокирует доступ к API</li>
-                    <li>Попробуйте использовать VPN для обхода блокировок</li>
-                    <li>Необходимо очистить кэш браузера</li>
-                  </ul>
-                </div>
-              )}
             </CardFooter>
           </Card>
         </motion.div>
