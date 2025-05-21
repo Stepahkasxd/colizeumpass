@@ -1,6 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Import the SUPABASE_URL from the client file
+import { createClient } from '@supabase/supabase-js';
+
+// Define the Supabase URL to use in API calls
+const SUPABASE_URL = "https://lmgfzqaewmenlmawdrxn.supabase.co";
+
 export interface ApiKey {
   id: string;
   name: string;
@@ -173,7 +179,7 @@ export async function fetchApiKeys() {
     const authApiKey = apiKeys[0].key;
     
     // Вызываем API endpoint для получения ключей
-    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/keys`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/api-keys-api/keys`, {
       method: 'GET',
       headers: {
         'x-api-key': authApiKey,
@@ -218,7 +224,7 @@ export async function createApiKeyViaApi(name: string, description?: string, exp
     const authApiKey = apiKeys[0].key;
     
     // Вызываем API endpoint для создания ключа
-    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/keys`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/api-keys-api/keys`, {
       method: 'POST',
       headers: {
         'x-api-key': authApiKey,
@@ -268,7 +274,7 @@ export async function revokeApiKeyViaApi(id: string) {
     const authApiKey = apiKeys[0].key;
     
     // Вызываем API endpoint для отзыва ключа
-    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/keys/${id}`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/api-keys-api/keys/${id}`, {
       method: 'DELETE',
       headers: {
         'x-api-key': authApiKey,
@@ -314,7 +320,7 @@ export async function fetchAllApiKeysAdmin() {
     const authApiKey = apiKeys[0].key;
     
     // Вызываем API endpoint для получения всех ключей (только для админа)
-    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/admin/keys`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/api-keys-api/admin/keys`, {
       method: 'GET',
       headers: {
         'x-api-key': authApiKey,
@@ -359,7 +365,7 @@ export async function toggleApiKeyStatusAdmin(id: string, active: boolean) {
     const authApiKey = apiKeys[0].key;
     
     // Вызываем API endpoint для изменения статуса ключа
-    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/api-keys-api/admin/keys/${id}`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/api-keys-api/admin/keys/${id}`, {
       method: 'PUT',
       headers: {
         'x-api-key': authApiKey,
