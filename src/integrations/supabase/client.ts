@@ -6,35 +6,46 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://lmgfzqaewmenlmawdrxn.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZ2Z6cWFld21lbmxtYXdkcnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk3MzI1MjEsImV4cCI6MjA1NTMwODUyMX0.rd3pwYXm6Ka1Twr4rZHlRQvQPc3ZjPqbI0ZSXSwNMq8";
 
+// Creating a singleton instance to avoid multiple instances warnings
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
-
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    storage: localStorage,
-  },
-  global: {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Client-Info': 'lovable-app',
+export const supabase = (() => {
+  if (supabaseInstance) return supabaseInstance;
+  
+  supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storage: localStorage,
     },
-    // Increase timeout to handle slow connections
-    fetch: (url, options) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-      
-      return fetch(url, { 
-        ...options, 
-        signal: controller.signal 
-      }).then(response => {
-        clearTimeout(timeoutId);
-        return response;
-      }).catch(error => {
-        clearTimeout(timeoutId);
-        throw error;
-      });
+    global: {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Client-Info': 'lovable-app',
+      },
+      // Increase timeout to handle slow connections
+      fetch: (url, options) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
+        return fetch(url, { 
+          ...options, 
+          signal: controller.signal 
+        }).then(response => {
+          clearTimeout(timeoutId);
+          return response;
+        }).catch(error => {
+          clearTimeout(timeoutId);
+          throw error;
+        });
+      }
     }
-  }
-});
+  });
+  
+  return supabaseInstance;
+})();
+
+// Экспортируем константу URL для использования в API вызовах
+export const SUPABASE_API_URL = SUPABASE_URL;
